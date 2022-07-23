@@ -6,9 +6,7 @@ async function main() {
   // If we had constructor arguments, they would be passed into deploy()
   let contract = await factory.deploy();
 
-  console.log(
-      `The address the Contract WILL have once mined: ${contract.address}`
-  );
+  console.log(`The address the Contract WILL have once mined: ${contract.address}`);
 
   console.log(
       `The transaction that was sent to the network to deploy the Contract: ${
