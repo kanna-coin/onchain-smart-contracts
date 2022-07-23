@@ -3,8 +3,14 @@
 # Smart Contracts Single Repository
 
 ---
+
+## Local environment requirements:
+* Node.js v16.x.x
+* NVM (https://github.com/nvm-sh/nvm)
+
 ## How to Install:
 
+`nvm use`
 `npm install`
 `npm run build`
 
@@ -35,9 +41,6 @@ Create/modify network config in `hardhat.config.ts` and add API key and private 
 Using the [hardhat-etherscan plugin](https://hardhat.org/plugins/nomiclabs-hardhat-etherscan.html), add Etherscan API key to `hardhat.config.ts`, then run:
 
 `npx hardhat verify --network rinkeby <DEPLOYED ADDRESS>`
-
-
-
 
 
 ----

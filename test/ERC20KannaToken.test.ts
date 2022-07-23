@@ -1,6 +1,6 @@
-import { ethers} from "hardhat";
-import chai from "chai";
-import chaiAsPromised from "chai-as-promised";
+import { ethers} from 'hardhat';
+import chai from 'chai';
+import chaiAsPromised from 'chai-as-promised';
 import { ERC20KannaToken__factory, ERC20KannaToken } from "../typechain";
 
 chai.use(chaiAsPromised);
