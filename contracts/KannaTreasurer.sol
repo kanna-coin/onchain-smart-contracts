@@ -19,9 +19,12 @@ contract KannaTreasurer is ITreasurer, AccessControl, Ownable {
 
     bytes32 public constant YIELD_PAYER_ROLE = keccak256("YIELD_PAYER_ROLE");
 
-    constructor(address kannaTokenAddress, address yieldPayerAddress) {
+    constructor(address kannaTokenAddress) {
         erc20kannaTokenAddress = kannaTokenAddress;
         tokenContract = IKannaToken(kannaTokenAddress);
+    }
+
+    function addYieldContract(address yieldPayerAddress) external onlyOwner {
         _grantRole(YIELD_PAYER_ROLE, yieldPayerAddress);
     }
 

@@ -10,17 +10,25 @@ struct Subscription {
     uint256 vmt;
 }
 
+import "@openzeppelin/contracts/access/Ownable.sol";
 import {ITreasurer} from "./interfaces/ITreasurer.sol";
 
-contract KannaYield {
+contract KannaYield is Ownable {
     ITreasurer private treasurer;
+    bool private initialized = false;
     mapping(address => Subscription[]) private subscriptions;
+    uint256 private initialLoadAmount;
     uint256 private maxSubscriptionAmount = 123000 * 10**18; // TODO: max subscriptions = ?
     uint256 private minSubscriptionAmount = 123 * 10**18; // TODO: max subscriptions = ?
 
-    constructor(address knnTreasuryContractAddress, uint256 initialLoadAmount) {
+    constructor(address knnTreasuryContractAddress, uint256 loadAmount) {
         treasurer = ITreasurer(knnTreasuryContractAddress);
+        initialLoadAmount = loadAmount;
+    }
 
+    function initialize() external onlyOwner {
+        require(!initialized, "Yield contract already initialized");
+        initialized = true;
         treasurer.prepareYield(initialLoadAmount);
     }
 
