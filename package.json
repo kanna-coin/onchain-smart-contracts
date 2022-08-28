@@ -8,7 +8,10 @@
     "clean": "npx hardhat clean",
     "compile": "npx hardhat compile",
     "test": "npx hardhat test",
-    "coverage": "npm run build && npx hardhat coverage --temp artifacts --network coverage"
+    "coverage": "npm run build && npx hardhat coverage --temp artifacts --network coverage",
+    "deploy:token": "npx hardhat run --network goerli deploy/1_ERC20KannaToken_deploy.ts",
+    "deploy:treasurer": "npx hardhat run --network goerli deploy/2_KannaTreasurer_deploy.ts",
+    "deploy:yield": "npx hardhat run --network goerli deploy/3_KannaYield_deploy.ts"
   },
   "repository": {
     "type": "git",
