@@ -2,11 +2,12 @@ import { ethers } from "hardhat";
 
 const treasurerContractName = "KannaTreasurer";
 const tokenContractName = "ERC20KannaToken";
-
+// TODO: transferir ownership Deployer => Treasurer (utilizando onlyOwner)
 async function main() {
   const treasurerFactory = await ethers.getContractFactory(
     treasurerContractName
   );
+
   const tokenFactory = await ethers.getContractFactory(tokenContractName);
 
   const tokenContract = await tokenFactory.deploy();

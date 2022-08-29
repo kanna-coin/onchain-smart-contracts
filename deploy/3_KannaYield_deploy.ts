@@ -1,12 +1,18 @@
+import { config as dotEnvConfig } from "dotenv";
+dotEnvConfig();
+
 import { ethers } from "hardhat";
 
 const treasurerContractName = "KannaTreasurer";
 const tokenContractName = "ERC20KannaToken";
 const yieldContractName = "KannaYield";
 
-const initialLoad = "1500000000000000000000000";
+const decimals = new Array(18).fill("0").join("");
+const initialLoad = "400000".concat(decimals);
 
 async function main() {
+  const deployerAddress = process.env.DEPLOYER_ADDRESS;
+
   const treasurerFactory = await ethers.getContractFactory(
     treasurerContractName
   );
@@ -39,10 +45,7 @@ async function main() {
 
   console.log(`${treasurerContractName} mined!`);
 
-  let yieldContract = await yieldFactory.deploy(
-    treasurerContract.address,
-    initialLoad
-  );
+  let yieldContract = await yieldFactory.deploy(treasurerContract.address);
 
   console.log(`deploying ${yieldContractName}`);
   console.log(
@@ -58,8 +61,14 @@ async function main() {
     yieldContract.address
   );
 
-  await treasurerContract.addYieldContract(yieldContract.address);
-  await yieldContract.initialize();
+  await tokenContract.approve(treasurerContract.address, initialLoad);
+  await tokenContract.approve(yieldContract.address, initialLoad);
+  await tokenContract.approve(deployerAddress, initialLoad);
+
+  await treasurerContract.addYieldContract(yieldContract.address, initialLoad, {
+    gasPrice: 100, // TODO: Entender REPLACEMENT_UNDERPRICED e como isso pode afetar o fluxo de DEPLOY. Isso pode ser um problema?
+    gasLimit: 9000000,
+  });
 }
 
 main()
