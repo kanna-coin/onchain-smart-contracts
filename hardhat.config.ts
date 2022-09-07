@@ -25,7 +25,13 @@ const config: HardhatUserEtherscanConfig = {
     compilers: [{ version: '0.8.9', settings: {} }],
   },
   networks: {
-    hardhat: {},
+    hardhat: {
+      mining: {
+        mempool: {
+          order: "fifo"
+        }
+      }
+    },
     localhost: {},
     goerli: {
       url: API_URL,
