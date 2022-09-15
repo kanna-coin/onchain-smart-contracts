@@ -159,7 +159,7 @@ contract KannaYield is Ownable, ReentrancyGuard {
         claim();
     }
 
-    function addReward(uint256 reward, uint256 rewardsDuration)
+    function addReward(uint256 reward, uint rewardsDuration)
         external
         onlyOwner
         updateReward(address(0))
