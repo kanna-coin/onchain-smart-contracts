@@ -2,6 +2,7 @@ import { ethers, network } from "hardhat";
 import chai from "chai";
 import chaiAsPromised from "chai-as-promised";
 import { KannaYield__factory, KannaYield, ERC20KannaToken } from "../typechain";
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
 chai.use(chaiAsPromised);
 const { expect } = chai;
@@ -11,6 +12,8 @@ const yieldContractName = "KannaYield";
 
 const parseKNN = (bigNumberish: any): number =>
   parseInt(ethers.utils.formatEther(bigNumberish).split(".")[0], 10);
+
+const parse1e18 = (integer: number): string => `${integer}000000000000000000`;
 
 describe("KNN Yield⬆", async () => {
   let knnToken: ERC20KannaToken;
@@ -22,6 +25,7 @@ describe("KNN Yield⬆", async () => {
     secondHolder,
     thirdHolder,
     fourthHolder,
+    fifthHolder,
     anyHolder,
   ] = await ethers.getSigners();
 
@@ -53,7 +57,7 @@ describe("KNN Yield⬆", async () => {
     await tx400k.wait();
   });
 
-  describe("should initialize KNN Yield", async () => {
+  describe("KANNA Yield Tests", () => {
     it("should start with a 400K balance", async () => {
       const yieldBalance = await knnToken.balanceOf(knnYield.address);
       const balance = parseInt(yieldBalance._hex, 16);
@@ -447,6 +451,211 @@ describe("KNN Yield⬆", async () => {
       console.info(
         "Earned KNN Rewards | 2nd Holder =>",
         parseKNN(secondHolderBalance) - parseKNN(secondAmount)
+      );
+    });
+
+    it("should reproduce a 5-Holder serial distribution", async () => {
+      const timeSeries = 60;
+      const interval = 1 * 60;
+      const rewardsDuration = interval * timeSeries;
+
+      const rewardAmount = parse1e18(600);
+
+      await knnToken.mint(rewardAmount);
+      await knnToken.transfer(knnYield.address, rewardAmount);
+
+      await network.provider.send("evm_setAutomine", [false]);
+
+      await knnYield.addReward(rewardAmount, rewardsDuration);
+
+      const givenTokens: Record<string, number> = {};
+
+      const increaseTime = async (
+        timeToIncrease: number | undefined = interval
+      ) => {
+        await network.provider.send("evm_increaseTime", [timeToIncrease]);
+        await network.provider.send("evm_mine");
+      };
+
+      const subscribe = async (holder: SignerWithAddress, amount: number) => {
+        if (!givenTokens[holder.address]) givenTokens[holder.address] = 0;
+
+        givenTokens[holder.address] += amount;
+
+        const amount1e18 = parse1e18(amount);
+        await knnToken.transfer(holder.address, amount1e18);
+
+        const scopedToken = await ethers.getContractAt(
+          tokenContractName,
+          knnToken.address,
+          holder
+        );
+
+        await scopedToken.approve(knnYield.address, amount1e18);
+
+        const scopedYield = await ethers.getContractAt(
+          yieldContractName,
+          knnYield.address,
+          holder
+        );
+
+        await scopedYield.subscribe(amount1e18);
+        await network.provider.send("evm_mine");
+      };
+
+      const withdraw = async (holder: SignerWithAddress, amount: number) => {
+        // await exit(holder);
+        const amount1e18 = parse1e18(amount);
+        const scopedYield = await ethers.getContractAt(
+          yieldContractName,
+          knnYield.address,
+          holder
+        );
+
+        await scopedYield.withdraw(amount1e18);
+        await network.provider.send("evm_mine");
+      };
+
+      const exit = async (holder: SignerWithAddress) => {
+        const scopedYield = await ethers.getContractAt(
+          yieldContractName,
+          knnYield.address,
+          holder
+        );
+
+        await scopedYield.exit();
+        await network.provider.send("evm_mine");
+      };
+
+      // SERIES 1 TO 60
+      await subscribe(firstHolder, 100);
+      await increaseTime();
+      await increaseTime();
+      await increaseTime();
+
+      await subscribe(fourthHolder, 200);
+      await increaseTime();
+
+      await subscribe(secondHolder, 200);
+      await increaseTime();
+      await increaseTime();
+
+      await subscribe(thirdHolder, 100); // Seg 7
+      await increaseTime();
+
+      await subscribe(firstHolder, 200);
+      await increaseTime();
+
+      await subscribe(thirdHolder, 100); // Seg 9
+      await increaseTime();
+      await increaseTime();
+
+      await subscribe(thirdHolder, 100); // Seg 11
+      await increaseTime();
+
+      await exit(secondHolder); // Seg 12
+      await increaseTime();
+      await increaseTime();
+
+      await subscribe(thirdHolder, 200); // Seg 14
+      await increaseTime();
+
+      await exit(firstHolder);
+      await increaseTime(); // Seg 15
+
+      await increaseTime();
+      await increaseTime();
+      await increaseTime();
+      await increaseTime();
+
+      await subscribe(fifthHolder, 200); // Seg 20
+      await increaseTime();
+
+      await increaseTime();
+      await increaseTime();
+      await increaseTime();
+      await increaseTime();
+      await increaseTime();
+      await increaseTime();
+
+      await exit(fifthHolder); // 27
+      await increaseTime();
+
+      await increaseTime();
+      await increaseTime();
+
+      await withdraw(thirdHolder, 300); // Seg 30, partial withdraw
+      await increaseTime();
+      await increaseTime();
+      await increaseTime();
+
+      await increaseTime();
+      await increaseTime();
+      await increaseTime();
+      await increaseTime();
+      await increaseTime();
+      await increaseTime();
+      await increaseTime();
+      await increaseTime();
+
+      await subscribe(firstHolder, 100); // Seg 39
+      await increaseTime();
+
+      await increaseTime();
+      await increaseTime();
+      await increaseTime();
+      await increaseTime();
+      await increaseTime();
+      await increaseTime();
+      await increaseTime();
+      await increaseTime();
+      await increaseTime();
+
+      await exit(firstHolder);
+      await increaseTime();
+
+      await increaseTime();
+      await increaseTime();
+      await increaseTime();
+      await increaseTime();
+      await increaseTime();
+      await increaseTime();
+      await increaseTime();
+      await increaseTime();
+      await increaseTime();
+
+      // EXITS
+
+      await exit(secondHolder);
+      await exit(fourthHolder);
+      await exit(thirdHolder);
+      await exit(fifthHolder);
+      await exit(firstHolder);
+
+      // BALANCES
+      const firstHolderBalance = await knnToken.balanceOf(firstHolder.address);
+      const secondHolderBalance = await knnToken.balanceOf(
+        secondHolder.address
+      );
+      const thirdHolderBalance = await knnToken.balanceOf(thirdHolder.address);
+      const fourthHolderBalance = await knnToken.balanceOf(
+        fourthHolder.address
+      );
+
+      const fifthHolderBalance = await knnToken.balanceOf(fifthHolder.address);
+
+      // DEBUG CONSOLES
+      console.info(
+        "\n| 1st Holder =>",
+        parseKNN(firstHolderBalance) - givenTokens[firstHolder.address],
+        "\n| 2nd Holder =>",
+        parseKNN(secondHolderBalance) - givenTokens[secondHolder.address],
+        "\n| 3rd Holder =>",
+        parseKNN(thirdHolderBalance) - givenTokens[thirdHolder.address],
+        "\n| 4th Holder =>",
+        parseKNN(fourthHolderBalance) - givenTokens[fourthHolder.address],
+        "\n| 5th Holder =>",
+        parseKNN(fifthHolderBalance) - givenTokens[fifthHolder.address]
       );
     });
   });
