@@ -26,27 +26,8 @@ describe("KNN Token", () => {
     await erc20KannaToken.deployed();
   });
 
-  describe("MaxSupply", async () => {
-    it("should allow minting when bellow maximum supply (<=19MM)", async () => {
-      const { blockNumber, blockHash } = await erc20KannaToken.mint("1");
-
-      expect(blockNumber).to.greaterThan(1);
-      expect(blockHash).to.contain("0x");
-    });
-
-    it("should prevent minting above maximum supply (>19MM)", async () => {
-      const mintOverflow = await erc20KannaToken
-        .mint("9000000000000000000000001")
-        .catch((e) => e);
-
-      expect(mintOverflow).to.be.an.instanceOf(Error);
-    });
-  });
-
   describe("Allowance", async () => {
-    beforeEach(async () => {
-      await erc20KannaToken.mint("10000000000000000000000");
-    });
+    beforeEach(async () => {});
 
     it("should transfer KNN from account to another", async () => {
       const [deployerWallet, kannaWallet] = signers;
@@ -62,5 +43,9 @@ describe("KNN Token", () => {
 
       expect(result).to.not.null;
     });
+
+    // TODO: testar taxas
+    // TODO: testar inclusão de contratos
+    // TODO: revisar planilha do rapha
   });
 });

@@ -13,6 +13,14 @@ import "hardhat/console.sol";
 
 import {IKannaToken} from "./interfaces/IKannaToken.sol";
 
+/** @title KNN Yield
+    @author KANNA
+    @notice KANNA Staking Pool SmartContract
+    @dev distributes a reward within a given duration to its holders.
+    rates are weighted according to its {subscription} amount over the total {poolSize}.
+    @custom:github  https://github.com/kanna-coin
+    @custom:site https://kannacoin.io
+    */
 contract KannaYield is Ownable, ReentrancyGuard {
     using SafeERC20 for IKannaToken;
     using SafeMath for uint256;
