@@ -68,6 +68,8 @@ contract ERC20KannaToken is IKannaToken, ERC20, Ownable, AccessControl {
      *
      * Addressed to be used by DAO voting contract
      *
+     * @param newFee should consider {transactionFeeDecimalAdjust} to avoid overflow
+     *
      * Requirements:
      *
      * - must be a voting contract (requires VOTER_ROLE)
@@ -80,13 +82,59 @@ contract ERC20KannaToken is IKannaToken, ERC20, Ownable, AccessControl {
         transactionFee = newFee;
     }
 
+    /**
+     * @dev See {IERC20-transferFrom}.
+     *
+     *  May emit {TransactionFee} event.
+     * Requirements:
+     *
+     * - `to` cannot be the zero address.
+     * - the caller must have a balance of at least `amount`.
+     */
     function transferFrom(
         address from,
         address to,
         uint256 amount
     ) public override(ERC20, IKannaToken) returns (bool) {
-        // TODO: apply fee
-        return super.transferFrom(from, to, amount);
+        require(amount > 0, "Invalid amount");
+
+        uint256 finalAmount = applyTransactionFee(from, to, amount);
+
+        return super.transferFrom(from, to, finalAmount);
+    }
+
+    /**
+     * @notice Apply transaction fee (when applicable)
+     * for transfers without KANNA SmartContracts
+     * or peer/market transactions.
+     *
+     * @dev requires {transactionFee} to be set above 0
+     * otherwise, fees are ignored.
+     *
+     * see {updateTransactionFee}
+     */
+    function applyTransactionFee(
+        address from,
+        address to,
+        uint256 amount
+    ) private returns (uint256) {
+        if (
+            transactionFee == 0 ||
+            hasRole(NO_TRANSFER_FEE, from) ||
+            hasRole(NO_TRANSFER_FEE, to)
+        ) return amount;
+
+        uint256 feeAmount = amount.mul(transactionFee).div(
+            100 * transactionFeeDecimalAdjust
+        );
+        require(feeAmount > 0, "Invalid fee amount");
+
+        uint256 finalAmount = amount.sub(feeAmount);
+        super._transfer(from, kannaDeployerAddress, feeAmount);
+
+        emit TransactionFee(from, to, amount, block.timestamp, feeAmount);
+
+        return finalAmount;
     }
 
     /**
@@ -108,24 +156,7 @@ contract ERC20KannaToken is IKannaToken, ERC20, Ownable, AccessControl {
 
         address owner = _msgSender();
 
-        uint256 finalAmount = amount;
-        uint256 feeAmount = 0;
-
-        if (
-            transactionFee > 0 &&
-            !hasRole(NO_TRANSFER_FEE, owner) &&
-            !hasRole(NO_TRANSFER_FEE, to)
-        ) {
-            feeAmount = amount.mul(transactionFee).div(
-                100 * transactionFeeDecimalAdjust
-            );
-            require(feeAmount > 0, "Invalid fee amount");
-
-            finalAmount = amount.sub(feeAmount);
-            super._transfer(owner, kannaDeployerAddress, feeAmount);
-
-            emit TransactionFee(owner, to, amount, block.timestamp, feeAmount);
-        }
+        uint256 finalAmount = applyTransactionFee(owner, to, amount);
 
         super._transfer(owner, to, finalAmount);
 
@@ -156,9 +187,9 @@ contract ERC20KannaToken is IKannaToken, ERC20, Ownable, AccessControl {
             "Maximum Supply reached!"
         );
 
-        emit Minted(address(msg.sender), amount, block.timestamp);
+        emit Minted(_msgSender(), amount, block.timestamp);
 
-        _mint(address(msg.sender), amount);
+        _mint(_msgSender(), amount);
     }
 
     /**
