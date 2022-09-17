@@ -8,6 +8,8 @@ import "hardhat/console.sol";
 import {IKannaToken} from "./interfaces/IKannaToken.sol";
 import {ITreasurer} from "./interfaces/ITreasurer.sol";
 
+/** @dev deprecation warning (possible deprecation)
+ */
 contract KannaTreasurer is ITreasurer, AccessControl, Ownable {
     IKannaToken private immutable tokenContract;
     address private erc20kannaTokenAddress;
@@ -30,11 +32,11 @@ contract KannaTreasurer is ITreasurer, AccessControl, Ownable {
     {
         _grantRole(YIELD_PAYER_ROLE, yieldPayerAddress);
 
-        // tokenContract.transferFrom(
-        //     address(msg.sender),
-        //     yieldPayerAddress,
-        //     transferAmount
-        // );
+        tokenContract.transferFrom(
+            address(msg.sender),
+            yieldPayerAddress,
+            transferAmount
+        );
     }
 
     function transferYield(address to, uint256 transferAmount)

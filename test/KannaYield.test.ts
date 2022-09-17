@@ -107,6 +107,8 @@ describe("KNN Yield⬆", async () => {
       const [firstAmount] = ["800000000000000000000000"];
       const rewardAmount = "400000000000000000000000";
 
+      await knnToken.transfer(knnYield.address, rewardAmount);
+
       const txTransfer = await knnToken.transfer(
         firstHolder.address,
         firstAmount
@@ -193,7 +195,6 @@ describe("KNN Yield⬆", async () => {
       ];
       const rewardAmount = "400000000000000000000000";
 
-      await knnToken.mint("9000000000000000000000000");
       await knnToken.transfer(knnYield.address, rewardAmount);
 
       const firstTxTransfer = await knnToken.transfer(
@@ -329,7 +330,6 @@ describe("KNN Yield⬆", async () => {
       ];
       const rewardAmount = "400000000000000000000000";
 
-      await knnToken.mint("9000000000000000000000000");
       await knnToken.transfer(knnYield.address, rewardAmount);
 
       const firstTxTransfer = await knnToken.transfer(
@@ -456,12 +456,11 @@ describe("KNN Yield⬆", async () => {
 
     it("should reproduce a 5-Holder serial distribution", async () => {
       const timeSeries = 60;
-      const interval = 1 * 60;
+      const interval = 1;
       const rewardsDuration = interval * timeSeries;
 
       const rewardAmount = parse1e18(600);
 
-      await knnToken.mint(rewardAmount);
       await knnToken.transfer(knnYield.address, rewardAmount);
 
       await network.provider.send("evm_setAutomine", [false]);

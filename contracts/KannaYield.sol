@@ -13,31 +13,71 @@ import "hardhat/console.sol";
 
 import {IKannaToken} from "./interfaces/IKannaToken.sol";
 
+/** @title KNN Yield
+    @author KANNA
+    @notice KANNA Staking Pool SmartContract
+    @dev distributes a reward within a given duration to its holders.
+    rates are weighted according to its {subscription} amount over the total {poolSize}.
+    @custom:github  https://github.com/kanna-coin
+    @custom:site https://kannacoin.io
+    */
 contract KannaYield is Ownable, ReentrancyGuard {
     using SafeERC20 for IKannaToken;
     using SafeMath for uint256;
+    using Address for address;
 
-    event RewardAdded(address indexed user, uint256 reward, uint timestamp);
-    event Subscription(address indexed user, uint256 amount, uint timestamp);
-    event Withdraw(address indexed user, uint256 amount, uint timestamp);
-    event Reward(address indexed user, uint256 reward, uint timestamp);
-    event RewardRefreshed(address indexed user, uint timestamp);
+    event RewardAdded(address user, uint256 reward, uint256 indexed date);
+    event Subscription(address user, uint256 amount, uint256 indexed date);
+    event Withdraw(address user, uint256 amount, uint256 indexed date);
+    event Reward(address user, uint256 reward, uint256 indexed date);
+    event RewardRefreshed(address user, uint256 indexed date);
+    event Fee(
+        address user,
+        uint256 amount,
+        uint256 fee,
+        uint256 finalAmount,
+        uint256 indexed date
+    );
 
-    IKannaToken public immutable knnToken;
+    IKannaToken private immutable knnToken;
 
-    uint256 public endDate = 0;
-    uint256 public rewardRate = 0;
-    uint256 public lastUpdateTime;
-    uint256 public rewardPerTokenStored;
-
-    mapping(address => uint256) public holderRewardPerTokenPaid;
-    mapping(address => uint256) public rewardsToPay;
-
+    uint256 private feeDecimalAdjust = 1000;
+    uint256 private reducedFee = 10;
     uint256 private knnYieldPool;
+    uint256 private startDate = 0;
+    uint256 private endDate = 0;
+    uint256 private rewardRate = 0;
+    uint256 private lastUpdateTime;
+    uint256 private rewardPerTokenStored;
+    uint256[] private tier = [1 days, 7 days, 30 days, 60 days, 90 days];
+
+    mapping(address => uint256) private holderRewardPerTokenPaid;
+    mapping(address => uint256) private earned;
     mapping(address => uint256) private rawBalances;
+    mapping(uint256 => uint256) private fee;
+    mapping(address => uint256) private subscriptionStart;
 
     constructor(address knnTokenAddress) {
         knnToken = IKannaToken(knnTokenAddress);
+        initialize();
+    }
+
+    function initialize() private {
+        fee[tier[0]] = 10000;
+        fee[tier[1]] = 5000;
+        fee[tier[2]] = 2500;
+        fee[tier[3]] = 1500;
+        fee[tier[4]] = reducedFee;
+    }
+
+    function getFee(uint256 subscriptionDuration) public view returns (uint) {
+        if (block.timestamp >= endDate) return reducedFee;
+
+        for (uint i = 0; i < tier.length; i++) {
+            if (subscriptionDuration < tier[i]) return fee[tier[i]];
+        }
+
+        return reducedFee;
     }
 
     function poolSize() external view returns (uint256) {
@@ -68,20 +108,22 @@ contract KannaYield is Ownable, ReentrancyGuard {
     }
 
     function applyLastInterest(address holder) private {
-        uint256 currentPayment = rewardsToPay[holder];
-        rewardsToPay[holder] = rewardsToPay[holder].sub(currentPayment);
+        uint256 currentPayment = earned[holder];
+        earned[holder] = earned[holder].sub(currentPayment);
         rawBalances[holder] = rawBalances[holder].add(currentPayment);
         knnYieldPool = knnYieldPool.add(currentPayment);
     }
 
+    /// @dev deprecation notice! moving to "re-stake" for gas optimization
     function applyHoldersInterests(address[] calldata holders)
         external
         onlyOwner
+        updateReward(address(0))
     {
         for (uint i = 0; i < holders.length; i++) {
             rewardPerTokenStored = rewardPerToken();
             lastUpdateTime = lastPaymentEvent();
-            rewardsToPay[holders[i]] = calculateReward(holders[i]);
+            earned[holders[i]] = calculateReward(holders[i]);
 
             applyLastInterest(holders[i]);
 
@@ -94,7 +136,7 @@ contract KannaYield is Ownable, ReentrancyGuard {
             rawBalances[holder]
                 .mul(rewardPerToken().sub(holderRewardPerTokenPaid[holder]))
                 .div(1e18)
-                .add(rewardsToPay[holder]);
+                .add(earned[holder]);
     }
 
     function subscribe(uint256 subscriptionAmount)
@@ -127,36 +169,72 @@ contract KannaYield is Ownable, ReentrancyGuard {
         nonReentrant
         updateReward(msg.sender)
     {
-        require(amount > 0, "Cannot withdraw 0 KNN. Provide a valid amount");
-        require(
-            rawBalances[msg.sender] >= amount,
-            "Insufficient KNN. Provide a smaller amount"
-        );
+        require(amount > 0, "Invalid amount. Provide a value above 0 KNN");
+        require(rawBalances[msg.sender] >= amount, "Insufficient KNN balance");
 
         knnYieldPool = knnYieldPool.sub(amount);
         rawBalances[msg.sender] = rawBalances[msg.sender].sub(amount);
 
-        knnToken.safeTransfer(msg.sender, amount);
+        subscriptionStart[msg.sender] = block.timestamp;
+
+        transfer(msg.sender, rawBalances[msg.sender]);
 
         emit Withdraw(msg.sender, amount, block.timestamp);
     }
 
     function claim() public nonReentrant updateReward(msg.sender) {
-        uint256 currentPayment = rewardsToPay[msg.sender];
-        if (currentPayment > 0) {
-            rewardsToPay[msg.sender] = rewardsToPay[msg.sender].sub(
-                currentPayment
-            );
+        uint256 reward = earned[msg.sender];
+        if (reward > 0) {
+            earned[msg.sender] = 0;
 
-            knnToken.safeTransfer(msg.sender, currentPayment);
+            knnToken.safeTransfer(msg.sender, reward);
 
-            emit Reward(msg.sender, currentPayment, block.timestamp);
+            emit Reward(msg.sender, reward, block.timestamp);
         }
     }
 
-    function exit() external {
-        withdraw(rawBalances[msg.sender]);
-        claim();
+    function exit() external nonReentrant updateReward(msg.sender) {
+        uint256 balance = rawBalances[msg.sender];
+
+        if (balance > 0) {
+            knnYieldPool = knnYieldPool.sub(balance);
+        }
+
+        rawBalances[msg.sender] = rawBalances[msg.sender].sub(balance);
+
+        uint256 reward = earned[msg.sender];
+
+        if (reward > 0) {
+            earned[msg.sender] = 0;
+            balance = balance.add(reward);
+        }
+
+        if (balance == 0) {
+            return;
+        }
+
+        transfer(msg.sender, balance);
+
+        emit Reward(msg.sender, reward, block.timestamp);
+    }
+
+    function transfer(address to, uint256 amount) private returns (uint) {
+        uint256 subscriptionLength = block.timestamp.sub(
+            subscriptionStart[msg.sender]
+        );
+
+        uint256 userFee = getFee(subscriptionLength);
+
+        uint256 finalAmount = amount.sub(
+            amount.mul(userFee).div(feeDecimalAdjust)
+        );
+
+        knnToken.safeTransfer(to, finalAmount);
+        emit Fee(to, amount, userFee, finalAmount, block.timestamp);
+
+        console.log(userFee, amount, finalAmount);
+
+        return userFee;
     }
 
     function addReward(uint256 reward, uint rewardsDuration)
@@ -176,12 +254,13 @@ contract KannaYield is Ownable, ReentrancyGuard {
             rewardRate = reward.add(leftover).div(rewardsDuration);
         }
 
-        uint balance = knnToken.balanceOf(address(this));
+        uint256 balance = knnToken.balanceOf(address(this));
         require(
             rewardRate <= balance.div(rewardsDuration),
             "Insufficient KNN to pay rewards. Transfer KNN first prior to initiate yield distribution"
         );
 
+        startDate = block.timestamp;
         lastUpdateTime = block.timestamp;
         endDate = block.timestamp.add(rewardsDuration);
 
@@ -192,7 +271,7 @@ contract KannaYield is Ownable, ReentrancyGuard {
         rewardPerTokenStored = rewardPerToken();
         lastUpdateTime = lastPaymentEvent();
         if (holder != address(0)) {
-            rewardsToPay[holder] = calculateReward(holder);
+            earned[holder] = calculateReward(holder);
             holderRewardPerTokenPaid[holder] = rewardPerTokenStored;
         }
         _;
