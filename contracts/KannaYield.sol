@@ -41,40 +41,44 @@ contract KannaYield is Ownable, ReentrancyGuard {
 
     IKannaToken private immutable knnToken;
 
-    uint256 private feeDecimalAdjust = 1000;
-    uint256 private reducedFee = 10;
+    uint256 private constant feeDecimalAdjust = 1000;
+    uint256 private constant reducedFee = 10;
+
     uint256 private knnYieldPool;
     uint256 private startDate = 0;
     uint256 private endDate = 0;
     uint256 private rewardRate = 0;
     uint256 private lastUpdateTime;
     uint256 private rewardPerTokenStored;
+
     uint256[] private tier = [1 days, 7 days, 30 days, 60 days, 90 days];
 
     mapping(address => uint256) private holderRewardPerTokenPaid;
     mapping(address => uint256) private earned;
     mapping(address => uint256) private rawBalances;
-    mapping(uint256 => uint256) private fee;
-    mapping(address => uint256) private subscriptionStart;
+    mapping(address => uint256) private started;
+    mapping(uint256 => uint256) private fees;
+
+    // TODO: subscription fee!
 
     constructor(address knnTokenAddress) {
         knnToken = IKannaToken(knnTokenAddress);
-        initialize();
+        tiering();
     }
 
-    function initialize() private {
-        fee[tier[0]] = 10000;
-        fee[tier[1]] = 5000;
-        fee[tier[2]] = 2500;
-        fee[tier[3]] = 1500;
-        fee[tier[4]] = reducedFee;
+    function tiering() private {
+        fees[tier[0]] = 10000;
+        fees[tier[1]] = 5000;
+        fees[tier[2]] = 2500;
+        fees[tier[3]] = 1500;
+        fees[tier[4]] = reducedFee;
     }
 
-    function getFee(uint256 subscriptionDuration) public view returns (uint) {
+    function feeOf(uint256 subscriptionDuration) public view returns (uint) {
         if (block.timestamp >= endDate) return reducedFee;
 
         for (uint i = 0; i < tier.length; i++) {
-            if (subscriptionDuration < tier[i]) return fee[tier[i]];
+            if (subscriptionDuration < tier[i]) return fees[tier[i]];
         }
 
         return reducedFee;
@@ -149,6 +153,10 @@ contract KannaYield is Ownable, ReentrancyGuard {
             "Cannot subscribe 0 KNN. Provide a valid subscription amount"
         );
 
+        if (started[msg.sender] == 0) {
+            started[msg.sender] = block.timestamp;
+        }
+
         knnToken.safeTransferFrom(
             msg.sender,
             address(this),
@@ -175,9 +183,9 @@ contract KannaYield is Ownable, ReentrancyGuard {
         knnYieldPool = knnYieldPool.sub(amount);
         rawBalances[msg.sender] = rawBalances[msg.sender].sub(amount);
 
-        subscriptionStart[msg.sender] = block.timestamp;
+        started[msg.sender] = block.timestamp;
 
-        transfer(msg.sender, rawBalances[msg.sender]);
+        transferFee(msg.sender, rawBalances[msg.sender]);
 
         emit Withdraw(msg.sender, amount, block.timestamp);
     }
@@ -213,17 +221,15 @@ contract KannaYield is Ownable, ReentrancyGuard {
             return;
         }
 
-        transfer(msg.sender, balance);
+        transferFee(msg.sender, balance);
 
         emit Reward(msg.sender, reward, block.timestamp);
     }
 
-    function transfer(address to, uint256 amount) private returns (uint) {
-        uint256 subscriptionLength = block.timestamp.sub(
-            subscriptionStart[msg.sender]
-        );
+    function transferFee(address to, uint256 amount) private returns (uint) {
+        uint256 duration = block.timestamp.sub(started[msg.sender]);
 
-        uint256 userFee = getFee(subscriptionLength);
+        uint256 userFee = feeOf(duration);
 
         uint256 finalAmount = amount.sub(
             amount.mul(userFee).div(feeDecimalAdjust)
@@ -231,8 +237,6 @@ contract KannaYield is Ownable, ReentrancyGuard {
 
         knnToken.safeTransfer(to, finalAmount);
         emit Fee(to, amount, userFee, finalAmount, block.timestamp);
-
-        console.log(userFee, amount, finalAmount);
 
         return userFee;
     }
