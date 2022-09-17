@@ -22,33 +22,35 @@ contract ERC20KannaToken is IKannaToken, ERC20, Ownable, AccessControl {
     using SafeMath for uint256;
     using Address for address;
 
-    bytes32 public constant NO_TRANSFER_FEE = keccak256("NO_TRANSFER_FEE");
-    bytes32 public constant VOTER_ROLE = keccak256("VOTER_ROLE");
-    bytes32 public constant MILESTONES_MINTER_ROLE =
+    bytes32 private constant NO_TRANSFER_FEE = keccak256("NO_TRANSFER_FEE");
+    bytes32 private constant VOTER_ROLE = keccak256("VOTER_ROLE");
+    bytes32 private constant MILESTONES_MINTER_ROLE =
         keccak256("MILESTONES_MINTER_ROLE");
 
-    uint256 private initialSupply = 10000000 * 10**decimals();
-    uint256 private maxSupply = 19000000 * 10**decimals();
+    uint256 private immutable initialSupply = 10000000 * 10**decimals();
 
-    uint private transactionFeeDecimalAdjust = 1000;
-    uint private transactionFee = 1 * transactionFeeDecimalAdjust;
+    uint256 private immutable maxSupply = 19000000 * 10**decimals();
+
+    uint256 private constant transactionFeeDecimalAdjust = 1000;
+    uint256 private transactionFee = 1 * transactionFeeDecimalAdjust;
+
     address private kannaDeployerAddress;
 
     event TransactionFee(
-        address indexed from,
-        address indexed to,
+        address from,
+        address to,
         uint256 amount,
-        uint date,
+        uint indexed date,
         uint fee
     );
 
-    event FeeChangedByDAOVoting(
+    event ChangeOfFee(
         address indexed votingContractAddress,
         uint date,
         uint newFee
     );
 
-    event Minted(address indexed to, uint256 amount, uint date);
+    event Minted(address to, uint256 amount, uint indexed date);
 
     /**
      * @dev Initializes KNN Token (KNN) with {initialSupply} to
@@ -64,22 +66,22 @@ contract ERC20KannaToken is IKannaToken, ERC20, Ownable, AccessControl {
     }
 
     /**
-     * @dev May emit a {FeeChangedByDAOVoting} event.
+     * @dev May emit a {ChangeOfFee} event.
      *
      * Addressed to be used by DAO voting contract
      *
-     * @param newFee should consider {transactionFeeDecimalAdjust} to avoid overflow
+     * @param fee should consider {transactionFeeDecimalAdjust} to avoid overflow
      *
      * Requirements:
      *
      * - must be a voting contract (requires VOTER_ROLE)
      */
-    function updateTransactionFee(uint newFee) external onlyRole(VOTER_ROLE) {
-        require(_msgSender().isContract());
-        require(newFee >= 0, "Invalid fee");
+    function updateTransactionFee(uint fee) external onlyRole(VOTER_ROLE) {
+        require(address(msg.sender).isContract());
+        require(fee >= 0, "Invalid fee");
 
-        emit FeeChangedByDAOVoting(_msgSender(), block.timestamp, newFee);
-        transactionFee = newFee;
+        emit ChangeOfFee(address(msg.sender), block.timestamp, fee);
+        transactionFee = fee;
     }
 
     /**
@@ -105,8 +107,6 @@ contract ERC20KannaToken is IKannaToken, ERC20, Ownable, AccessControl {
 
     /**
      * @notice Apply transaction fee (when applicable)
-     * for transfers without KANNA SmartContracts
-     * or peer/market transactions.
      *
      * @dev requires {transactionFee} to be set above 0
      * otherwise, fees are ignored.
@@ -154,7 +154,7 @@ contract ERC20KannaToken is IKannaToken, ERC20, Ownable, AccessControl {
     {
         require(amount > 0, "Invalid amount");
 
-        address owner = _msgSender();
+        address owner = address(msg.sender);
 
         uint256 finalAmount = applyTransactionFee(owner, to, amount);
 
@@ -163,7 +163,7 @@ contract ERC20KannaToken is IKannaToken, ERC20, Ownable, AccessControl {
         return true;
     }
 
-    /** @dev Creates `amount` tokens and assigns them to `_msgSender()`, increasing
+    /** @dev Creates `amount` tokens and assigns them to `address(msg.sender)`, increasing
      * the total supply.
      *
      * Limited to 19MM KNN Token Maximum Supply availability.
@@ -181,15 +181,15 @@ contract ERC20KannaToken is IKannaToken, ERC20, Ownable, AccessControl {
         onlyRole(MILESTONES_MINTER_ROLE)
     {
         require(amount > 0, "Invalid Amount");
-        require(_msgSender().isContract());
+        require(address(msg.sender).isContract());
         require(
             amount.add(super.totalSupply()) <= maxSupply,
             "Maximum Supply reached!"
         );
 
-        emit Minted(_msgSender(), amount, block.timestamp);
+        emit Minted(address(msg.sender), amount, block.timestamp);
 
-        _mint(_msgSender(), amount);
+        _mint(address(msg.sender), amount);
     }
 
     /**

@@ -1,12 +1,13 @@
 ![KannaCoin.io](https://kannacoin.io/wp-content/uploads/2022/02/logo-kanna.png)
 
-# Smart Contracts Single Repository
+# Smart Contracts MONO Repository
 
 ---
 
 ## Local environment requirements:
-* Node.js v16.x.x
-* NVM (https://github.com/nvm-sh/nvm)
+
+- Node.js v16.x.x
+- NVM (https://github.com/nvm-sh/nvm)
 
 ## How to Install:
 
@@ -15,6 +16,7 @@
 `npm run build`
 
 ---
+
 ### Build and Export Types:
 
 `npm run compile`
@@ -42,7 +44,6 @@ Using the [hardhat-etherscan plugin](https://hardhat.org/plugins/nomiclabs-hardh
 
 `npx hardhat verify --network rinkeby <DEPLOYED ADDRESS>`
 
-
-----
+---
 
 `// TODO: work in progress`

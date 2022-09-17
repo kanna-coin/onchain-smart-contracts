@@ -8,7 +8,7 @@ import "hardhat/console.sol";
 import {IKannaToken} from "./interfaces/IKannaToken.sol";
 import {ITreasurer} from "./interfaces/ITreasurer.sol";
 
-/** @dev deprecation warning (possible deprecation soon)
+/** @dev deprecation warning (possible deprecation)
  */
 contract KannaTreasurer is ITreasurer, AccessControl, Ownable {
     IKannaToken private immutable tokenContract;
