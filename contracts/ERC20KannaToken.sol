@@ -9,6 +9,8 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 import {IKannaToken} from "./interfaces/IKannaToken.sol";
 
+import "hardhat/console.sol";
+
 /** @title KNN Token
     @author KANNA
     @notice This is a OpenZeppelin {IERC20} token contract implementation of KNN Token.
@@ -31,8 +33,8 @@ contract ERC20KannaToken is IKannaToken, ERC20, Ownable, AccessControl {
 
     uint256 private immutable maxSupply = 19000000 * 10**decimals();
 
-    uint256 private constant transactionFeeDecimalAdjust = 1000;
-    uint256 private transactionFee = 1 * transactionFeeDecimalAdjust;
+    uint256 private constant transactionFeeDecimalAdjust = 1000 * 100;
+    uint256 private transactionFee = 1000;
 
     address private kannaDeployerAddress;
 
@@ -122,10 +124,13 @@ contract ERC20KannaToken is IKannaToken, ERC20, Ownable, AccessControl {
             transactionFee == 0 ||
             hasRole(NO_TRANSFER_FEE, from) ||
             hasRole(NO_TRANSFER_FEE, to)
-        ) return amount;
+        ) {
+            console.log("noFee", amount / 1e18, address(from), address(to));
+            return amount;
+        }
 
         uint256 feeAmount = amount.mul(transactionFee).div(
-            100 * transactionFeeDecimalAdjust
+            transactionFeeDecimalAdjust
         );
         require(feeAmount > 0, "Invalid fee amount");
 
@@ -133,6 +138,13 @@ contract ERC20KannaToken is IKannaToken, ERC20, Ownable, AccessControl {
         super._transfer(from, kannaDeployerAddress, feeAmount);
 
         emit TransactionFee(from, to, amount, block.timestamp, feeAmount);
+
+        console.log(
+            "transactionFee",
+            amount / 1e18,
+            feeAmount / 1e18,
+            finalAmount / 1e18
+        );
 
         return finalAmount;
     }

@@ -6,7 +6,7 @@ import {
   KannaTreasurer,
   ERC20KannaToken,
   ERC20KannaToken__factory,
-} from "../typechain";
+} from "../../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
 chai.use(chaiAsPromised);
