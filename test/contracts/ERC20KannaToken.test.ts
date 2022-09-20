@@ -1,11 +1,17 @@
 import { ethers } from "hardhat";
 import chai from "chai";
 import chaiAsPromised from "chai-as-promised";
-import { ERC20KannaToken__factory, ERC20KannaToken } from "../typechain";
+import { ERC20KannaToken__factory, ERC20KannaToken } from "../../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
 chai.use(chaiAsPromised);
 const { expect } = chai;
+const parseKNN = (bigNumberish: any): number => {
+  const parts = ethers.utils.formatEther(bigNumberish).split(".");
+  return parseFloat(
+    `${parseFloat(parts[0])}.${parseFloat(parts[1]).toFixed(2)}`
+  );
+};
 
 describe("KNN Token", () => {
   let erc20KannaToken: ERC20KannaToken;
@@ -30,18 +36,29 @@ describe("KNN Token", () => {
     beforeEach(async () => {});
 
     it("should transfer KNN from account to another", async () => {
-      const [deployerWallet, kannaWallet] = signers;
-      const amount: string = "50000";
+      const [deployerWallet, kannaWallet, randomWallet, randomWallet2] =
+        signers;
+      const amount: string = "50000000000000000000";
 
       await erc20KannaToken.approve(deployerWallet.address, amount);
 
       const result = await erc20KannaToken.transferFrom(
         deployerWallet.address,
-        kannaWallet.address,
+        randomWallet.address,
         amount
       );
 
-      expect(result).to.not.null;
+      const scopedToken = await ethers.getContractAt(
+        "ERC20KannaToken",
+        erc20KannaToken.address,
+        randomWallet
+      );
+
+      await scopedToken.transfer(randomWallet2.address, amount);
+
+      const balance = await scopedToken.balanceOf(randomWallet2.address);
+      console.log(parseKNN(balance));
+      expect(parseKNN(balance)).to.eq(50 * 0.99);
     });
 
     // TODO: testar taxas
