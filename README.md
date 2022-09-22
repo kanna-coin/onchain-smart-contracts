@@ -11,20 +11,16 @@
 
 ## How to Install:
 
-# install nodejs on v16 using NVM (if not installed)
-
+install nodejs on v16 using NVM (if not installed):
 `nvm install 16.16.0`
 
-# use project version on NVM
-
+use project version on NVM:
 `nvm use`
 
-# install dependencies
-
+install dependencies:
 `npm install`
 
-# compile objects
-
+compile objects:
 `npm run build`
 
 ---
