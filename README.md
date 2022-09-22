@@ -11,7 +11,9 @@
 
 ## How to Install:
 
+`nvm install 16.16.0`
 `nvm use`
+
 `npm install`
 `npm run build`
 
