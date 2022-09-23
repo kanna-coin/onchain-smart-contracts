@@ -60,9 +60,5 @@ describe("KNN Token", () => {
       console.log(parseKNN(balance));
       expect(parseKNN(balance)).to.eq(50 * 0.99);
     });
-
-    // TODO: testar taxas
-    // TODO: testar inclusão de contratos
-    // TODO: revisar planilha do rapha
   });
 });

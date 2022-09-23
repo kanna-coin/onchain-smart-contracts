@@ -124,7 +124,7 @@ contract ERC20KannaToken is IKannaToken, ERC20, Ownable, AccessControl {
             hasRole(NO_TRANSFER_FEE, from) ||
             hasRole(NO_TRANSFER_FEE, to)
         ) {
-            console.log("noFee", amount / 1e18, address(from), address(to));
+            // console.log("noFee", amount / 1e18, address(from), address(to));
             return amount;
         }
 
