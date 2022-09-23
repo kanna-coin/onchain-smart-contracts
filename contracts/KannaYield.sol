@@ -67,9 +67,9 @@ contract KannaYield is Ownable, ReentrancyGuard {
 
     uint256 private subscriptionFee = 200;
 
-    constructor(address knnTokenAddress) {
+    constructor(address knnTokenAddress, address knnDeployerAddress) {
         knnToken = IKannaToken(knnTokenAddress);
-        knnDeployer = msg.sender;
+        knnDeployer = knnDeployerAddress;
         tiering();
     }
 
@@ -90,8 +90,6 @@ contract KannaYield is Ownable, ReentrancyGuard {
 
         for (uint i = 0; i < tier.length; i++) {
             if (subscriptionDuration < tier[i]) {
-                console.log("tier applied", i);
-
                 return fees[tier[i]];
             }
         }
@@ -140,16 +138,7 @@ contract KannaYield is Ownable, ReentrancyGuard {
         updateReward(msg.sender)
     {
         require(endDate > block.timestamp, "No reward available");
-        console.log("endDate", endDate, block.timestamp);
         require(subscriptionAmount > 0, "Cannot subscribe 0 KNN");
-
-        if (started[msg.sender] == 0) {
-            started[msg.sender] = block.timestamp;
-        }
-
-        uint256 finalAmount = subscriptionAmount.sub(
-            subscriptionAmount.mul(subscriptionFee).div(feeDecimalAdjust)
-        );
 
         knnToken.safeTransferFrom(
             msg.sender,
@@ -157,7 +146,17 @@ contract KannaYield is Ownable, ReentrancyGuard {
             subscriptionAmount
         );
 
+        uint256 finalAmount = subscriptionAmount.sub(
+            subscriptionAmount.mul(subscriptionFee).div(feeDecimalAdjust)
+        );
+
+        // TODO: criar mapping para fazer o resgate dos fees por um owner
+
         knnYieldPool = knnYieldPool.add(finalAmount);
+
+        if (started[msg.sender] == 0) {
+            started[msg.sender] = block.timestamp;
+        }
 
         rawBalances[msg.sender] = rawBalances[msg.sender].add(finalAmount);
 
@@ -168,63 +167,50 @@ contract KannaYield is Ownable, ReentrancyGuard {
             finalAmount,
             block.timestamp
         );
-
-        console.log(
-            "subscriptionFee",
-            subscriptionAmount / 1e18,
-            subscriptionFee,
-            finalAmount / 1e18
-        );
     }
 
     function withdraw(uint256 amount)
-        public
+        external
         nonReentrant
         updateReward(msg.sender)
     {
+        uint256 availableAmount = rawBalances[msg.sender].add(
+            earned[msg.sender]
+        );
+
         require(amount > 0, "Invalid amount");
-        require(rawBalances[msg.sender] >= amount, "Insufficient balance");
+        require(availableAmount >= amount, "Insufficient balance");
 
-        knnYieldPool = knnYieldPool.sub(amount);
-        rawBalances[msg.sender] = rawBalances[msg.sender].sub(amount);
+        uint256 leftover = availableAmount.sub(amount);
 
-        started[msg.sender] = block.timestamp;
+        knnYieldPool = knnYieldPool.sub(availableAmount);
 
-        transferFee(msg.sender, rawBalances[msg.sender]);
+        rawBalances[msg.sender] = leftover;
+        earned[msg.sender] = 0;
+
+        transferFee(msg.sender, amount);
 
         emit Withdraw(msg.sender, amount, block.timestamp);
     }
 
-    function claim() public nonReentrant updateReward(msg.sender) {
-        uint256 reward = earned[msg.sender];
-        if (reward > 0) {
-            earned[msg.sender] = 0;
-
-            knnToken.safeTransfer(msg.sender, reward);
-
-            emit Reward(msg.sender, reward, block.timestamp);
-        }
+    function reStake() external nonReentrant updateReward(msg.sender) {
+        // TODO: testar restake
     }
 
     function exit() external nonReentrant updateReward(msg.sender) {
         uint256 balance = rawBalances[msg.sender];
+        uint256 reward = earned[msg.sender];
+        rawBalances[msg.sender] = 0;
+        started[msg.sender] = 0;
+        earned[msg.sender] = 0;
 
         if (balance > 0) {
             knnYieldPool = knnYieldPool.sub(balance);
         }
 
-        rawBalances[msg.sender] = rawBalances[msg.sender].sub(balance);
+        balance.add(reward);
 
-        uint256 reward = earned[msg.sender];
-
-        if (reward > 0) {
-            earned[msg.sender] = 0;
-            balance = balance.add(reward);
-        }
-
-        if (balance == 0) {
-            return;
-        }
+        require(balance > 0, "No funds");
 
         transferFee(msg.sender, balance);
 
@@ -243,7 +229,6 @@ contract KannaYield is Ownable, ReentrancyGuard {
 
         knnToken.safeTransfer(to, finalAmount);
         emit Fee(to, amount, userFee, finalAmount, block.timestamp);
-        console.log("retentionFee", amount / 1e18, userFee, finalAmount / 1e18);
 
         return userFee;
     }
