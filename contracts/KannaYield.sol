@@ -51,7 +51,7 @@ contract KannaYield is Ownable, ReentrancyGuard {
     uint64 private constant reducedFee = 100;
 
     uint256 private knnYieldPool;
-    uint256 private startDate = 0;
+    uint256 private poolStartDate = 0;
     uint256 private endDate = 0;
     uint256 private rewardRate = 0;
     uint256 private lastUpdateTime;
@@ -90,7 +90,14 @@ contract KannaYield is Ownable, ReentrancyGuard {
 
         for (uint i = 0; i < tier.length; i++) {
             if (subscriptionDuration < tier[i]) {
-                return fees[tier[i]];
+                console.log(
+                    "# Subscription Duration: ",
+                    subscriptionDuration,
+                    i
+                );
+                if (i == 0) return fees[tier[0]];
+
+                return fees[tier[i - 1]];
             }
         }
 
@@ -153,9 +160,10 @@ contract KannaYield is Ownable, ReentrancyGuard {
         // TODO: criar mapping para fazer o resgate dos fees por um owner
 
         knnYieldPool = knnYieldPool.add(finalAmount);
+        uint256 subscriptionDate = started[msg.sender];
 
-        if (started[msg.sender] == 0) {
-            started[msg.sender] = block.timestamp;
+        if (subscriptionDate == 0 || subscriptionDate < poolStartDate) {
+            started[msg.sender] = poolStartDate;
         }
 
         rawBalances[msg.sender] = rawBalances[msg.sender].add(finalAmount);
@@ -170,47 +178,53 @@ contract KannaYield is Ownable, ReentrancyGuard {
     }
 
     function withdraw(uint256 amount)
-        external
+        public
         nonReentrant
         updateReward(msg.sender)
     {
-        uint256 availableAmount = rawBalances[msg.sender].add(
-            earned[msg.sender]
-        );
-
         require(amount > 0, "Invalid amount");
-        require(availableAmount >= amount, "Insufficient balance");
+        require(rawBalances[msg.sender] >= amount, "Insufficient balance");
 
-        uint256 leftover = availableAmount.sub(amount);
+        knnYieldPool = knnYieldPool.sub(amount);
+        rawBalances[msg.sender] = rawBalances[msg.sender].sub(amount);
 
-        knnYieldPool = knnYieldPool.sub(availableAmount);
+        transferFee(msg.sender, rawBalances[msg.sender]);
 
-        rawBalances[msg.sender] = leftover;
-        earned[msg.sender] = 0;
-
-        transferFee(msg.sender, amount);
+        started[msg.sender] = block.timestamp;
 
         emit Withdraw(msg.sender, amount, block.timestamp);
     }
 
-    function reStake() external nonReentrant updateReward(msg.sender) {
-        // TODO: testar restake
+    function claim() public nonReentrant updateReward(msg.sender) {
+        uint256 reward = earned[msg.sender];
+        if (reward > 0) {
+            earned[msg.sender] = 0;
+
+            transferFee(msg.sender, reward);
+
+            emit Reward(msg.sender, reward, block.timestamp);
+        }
     }
 
     function exit() external nonReentrant updateReward(msg.sender) {
         uint256 balance = rawBalances[msg.sender];
-        uint256 reward = earned[msg.sender];
-        rawBalances[msg.sender] = 0;
-        started[msg.sender] = 0;
-        earned[msg.sender] = 0;
 
         if (balance > 0) {
             knnYieldPool = knnYieldPool.sub(balance);
         }
 
-        balance.add(reward);
+        rawBalances[msg.sender] = 0;
 
-        require(balance > 0, "No funds");
+        uint256 reward = earned[msg.sender];
+
+        if (reward > 0) {
+            earned[msg.sender] = 0;
+            balance = balance.add(reward);
+        }
+
+        if (balance == 0) {
+            return;
+        }
 
         transferFee(msg.sender, balance);
 
@@ -223,12 +237,15 @@ contract KannaYield is Ownable, ReentrancyGuard {
 
         uint256 userFee = feeOf(duration);
 
+        console.log(block.timestamp, started[msg.sender], duration, userFee);
+
         uint256 finalAmount = amount.sub(
             amount.mul(userFee).div(feeDecimalAdjust)
         );
 
         knnToken.safeTransfer(to, finalAmount);
         emit Fee(to, amount, userFee, finalAmount, block.timestamp);
+        console.log("emit Fee: ", amount, userFee, finalAmount);
 
         return userFee;
     }
@@ -256,7 +273,7 @@ contract KannaYield is Ownable, ReentrancyGuard {
             "Insufficient balance"
         );
 
-        startDate = block.timestamp;
+        poolStartDate = block.timestamp;
         lastUpdateTime = block.timestamp;
         endDate = block.timestamp.add(rewardsDuration);
 
@@ -267,13 +284,10 @@ contract KannaYield is Ownable, ReentrancyGuard {
         rewardPerTokenStored = rewardPerToken();
         lastUpdateTime = lastPaymentEvent();
         if (holder != address(0)) {
-            uint256 subscriptionDate = started[msg.sender];
+            uint256 init = started[msg.sender];
 
-            if (
-                subscriptionDate > 0 &&
-                subscriptionDate < startDate &&
-                rawBalances[msg.sender] > 0
-            ) started[msg.sender] = startDate;
+            if (init < poolStartDate && rawBalances[msg.sender] > 0)
+                started[msg.sender] = poolStartDate;
 
             earned[holder] = calculateReward(holder);
             holderRewardPerTokenPaid[holder] = rewardPerTokenStored;
