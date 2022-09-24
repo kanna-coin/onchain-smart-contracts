@@ -50,6 +50,14 @@ contract KannaPreSale is ReentrancyGuard, Ownable {
     }
 
     /**
+     * @dev Retrieves current token price in ETH
+     */
+    function price() external view returns (uint256) {
+        require(tokenQuotation > 0, "Quotation unavailable");
+        return tokenQuotation;
+    }
+
+    /**
      * @dev Update tokenQuotation to a new value in ETH
      *
      * Emits a {ChangeOfQuotation} event.
@@ -84,9 +92,18 @@ contract KannaPreSale is ReentrancyGuard, Ownable {
      */
     function buyTokens(uint256 amountOfTokens) external payable nonReentrant {
         require(tokenQuotation > 0, "Quotation unavailable");
-        require(msg.value == amountOfTokens.mul(tokenQuotation));
-        require(knnToken.balanceOf(address(this)) >= amountOfTokens);
-        require(knnToken.transfer(msg.sender, amountOfTokens));
+        require(
+            msg.value == amountOfTokens.mul(tokenQuotation),
+            "Incorrect amount in eth"
+        );
+        require(
+            knnToken.balanceOf(address(this)) >= amountOfTokens,
+            "Insufficient supply!"
+        );
+        require(
+            knnToken.transfer(msg.sender, amountOfTokens),
+            "Transaction reverted!"
+        );
 
         tokensSold += amountOfTokens;
 
