@@ -8,8 +8,6 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-import "hardhat/console.sol";
-
 import {IKannaToken} from "./interfaces/IKannaToken.sol";
 
 /** @title KNN Yield
@@ -102,11 +100,6 @@ contract KannaYield is Ownable, ReentrancyGuard {
 
         for (uint i = 0; i < tier.length; i++) {
             if (subscriptionDuration < tier[i]) {
-                console.log(
-                    "# Subscription Duration: ",
-                    subscriptionDuration,
-                    i
-                );
                 if (i == 0) return fees[tier[0]];
 
                 return fees[tier[i - 1]];
@@ -275,8 +268,6 @@ contract KannaYield is Ownable, ReentrancyGuard {
 
         uint256 userFee = feeOf(duration);
 
-        console.log(block.timestamp, started[msg.sender], duration, userFee);
-
         uint256 finalAmount = amount.sub(
             amount.mul(userFee).div(feeDecimalAdjust)
         );
@@ -285,7 +276,6 @@ contract KannaYield is Ownable, ReentrancyGuard {
 
         knnToken.safeTransfer(to, finalAmount);
         emit Fee(to, amount, userFee, finalAmount, block.timestamp);
-        console.log("emit Fee: ", amount, userFee, finalAmount);
 
         return userFee;
     }

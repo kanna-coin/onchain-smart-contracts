@@ -9,8 +9,6 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 import {IKannaToken} from "./interfaces/IKannaToken.sol";
 
-import "hardhat/console.sol";
-
 /** @title KNN Token
     @author KANNA
     @notice This is a OpenZeppelin {IERC20} token contract implementation of KNN Token.
@@ -124,7 +122,6 @@ contract ERC20KannaToken is IKannaToken, ERC20, Ownable, AccessControl {
             hasRole(NO_TRANSFER_FEE, from) ||
             hasRole(NO_TRANSFER_FEE, to)
         ) {
-            // console.log("noFee", amount / 1e18, address(from), address(to));
             return amount;
         }
 
