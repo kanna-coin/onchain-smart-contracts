@@ -1,11 +1,6 @@
 import "@nomiclabs/hardhat-waffle";
 import { ethers } from "hardhat";
-import {
-  KannaTreasurer__factory,
-  KannaTreasurer,
-  ERC20KannaToken__factory,
-  ERC20KannaToken,
-} from "../../../typechain";
+import { ERC20KannaToken__factory, ERC20KannaToken } from "../../../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
 const instance = async (

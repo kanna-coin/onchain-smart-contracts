@@ -1,12 +1,7 @@
 import { ethers } from "hardhat";
 import chai from "chai";
 import chaiAsPromised from "chai-as-promised";
-import {
-  KannaTreasurer__factory,
-  KannaTreasurer,
-  ERC20KannaToken__factory,
-  ERC20KannaToken,
-} from "../../typechain";
+import { KannaTreasurer, ERC20KannaToken } from "../../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import getKnnToken from "../../src/infrastructure/factories/KannaTokenFactory";
 
