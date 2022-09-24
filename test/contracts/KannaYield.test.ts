@@ -9,6 +9,9 @@ import {
   ERC20KannaToken,
 } from "../../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import getKnnToken from "../../src/infrastructure/factories/KannaTokenFactory";
+import getKnnTreasurer from "../../src/infrastructure/factories/KannaTreasurerFactory";
+import getKnnYield from "../../src/infrastructure/factories/KannaYieldFactory";
 
 chai.use(chaiAsPromised);
 const { expect } = chai;
@@ -39,45 +42,11 @@ describe("KNN Yield⬆", async () => {
   ] = await ethers.getSigners();
 
   beforeEach(async () => {
-    const tokenFactory = await ethers.getContractFactory(
-      tokenContractName,
-      deployerWallet
-    );
+    knnToken = await getKnnToken(deployerWallet);
 
-    knnToken = (await tokenFactory.deploy(
-      deployerWallet.address
-    )) as ERC20KannaToken;
-    await knnToken.deployed();
+    knnTreasurer = await getKnnTreasurer(deployerWallet, knnToken);
 
-    const yieldFactory = (await ethers.getContractFactory(
-      yieldContractName,
-      deployerWallet
-    )) as KannaYield__factory;
-
-    const treasurerFactory = (await ethers.getContractFactory(
-      treasurerContractName,
-      deployerWallet
-    )) as KannaTreasurer__factory;
-
-    knnToken = (await tokenFactory.deploy(
-      deployerWallet.address
-    )) as ERC20KannaToken;
-    await knnToken.deployed();
-
-    knnTreasurer = (await treasurerFactory.deploy(
-      knnToken.address
-    )) as KannaTreasurer;
-
-    knnYield = (await yieldFactory.deploy(
-      knnToken.address,
-      deployerWallet.address
-    )) as KannaYield;
-
-    await knnYield.deployed();
-    await knnToken.initializeTreasury(knnTreasurer.address);
-    await knnToken.noTransferFee(knnYield.address);
-
-    await knnTreasurer.release(knnYield.address, yieldDefaultReward);
+    knnYield = await getKnnYield(deployerWallet, knnToken, knnTreasurer);
   });
 
   describe("KANNA Yield Tests", () => {

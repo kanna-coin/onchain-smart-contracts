@@ -8,6 +8,7 @@ import {
   ERC20KannaToken,
 } from "../../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import getKnnToken from "../../src/infrastructure/factories/KannaTokenFactory";
 
 chai.use(chaiAsPromised);
 const { expect } = chai;
@@ -27,14 +28,9 @@ let signers: SignerWithAddress[];
 const deployContracts = async () => {
   signers = await ethers.getSigners();
 
-  const [deployerWallet] = signers;
+  const [deployerAddress] = signers;
 
-  const erc20kannaTokenFactory = (await ethers.getContractFactory(
-    "ERC20KannaToken",
-    deployerWallet
-  )) as ERC20KannaToken__factory;
-  erc20KannaToken = await erc20kannaTokenFactory.deploy(deployerWallet.address);
-  await erc20KannaToken.deployed();
+  erc20KannaToken = await getKnnToken(deployerAddress);
 };
 
 describe("KNN Token", () => {
