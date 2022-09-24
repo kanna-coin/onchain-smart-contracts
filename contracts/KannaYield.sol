@@ -27,18 +27,6 @@ contract KannaYield is Ownable, ReentrancyGuard {
     using Address for address;
 
     event RewardAdded(address user, uint256 reward, uint256 indexed date);
-    event Interest(
-        address user,
-        uint256 subscriptionAmount,
-        uint256 fee,
-        uint256 indexed date
-    );
-    event Collect(
-        address user,
-        address returnAccount,
-        uint256 fee,
-        uint256 indexed date
-    );
     event Subscription(
         address user,
         uint256 subscriptionAmount,
@@ -62,8 +50,7 @@ contract KannaYield is Ownable, ReentrancyGuard {
     uint64 private constant feeDecimalAdjust = 1000 * 100;
     uint64 private constant reducedFee = 100;
 
-    uint256 private knnYieldPool = 0;
-    uint256 private knnYieldTotalFee = 0;
+    uint256 private knnYieldPool;
     uint256 private poolStartDate = 0;
     uint256 private endDate = 0;
     uint256 private rewardRate = 0;
@@ -115,17 +102,6 @@ contract KannaYield is Ownable, ReentrancyGuard {
         }
 
         return reducedFee;
-    }
-
-    function collectFees() external onlyOwner returns (uint256) {
-        uint256 paid = knnYieldTotalFee;
-        knnYieldTotalFee = 0;
-
-        knnToken.safeTransfer(knnDeployer, paid);
-
-        emit Collect(msg.sender, knnDeployer, paid, block.timestamp);
-
-        return paid;
     }
 
     function poolSize() external view returns (uint256) {
@@ -181,12 +157,9 @@ contract KannaYield is Ownable, ReentrancyGuard {
             subscriptionAmount.mul(subscriptionFee).div(feeDecimalAdjust)
         );
 
-        knnYieldTotalFee = knnYieldTotalFee.add(
-            subscriptionAmount.sub(finalAmount)
-        );
+        // TODO: criar mapping para fazer o resgate dos fees por um owner
 
         knnYieldPool = knnYieldPool.add(finalAmount);
-
         uint256 subscriptionDate = started[msg.sender];
 
         if (subscriptionDate == 0 || subscriptionDate < poolStartDate) {
@@ -258,18 +231,6 @@ contract KannaYield is Ownable, ReentrancyGuard {
         emit Reward(msg.sender, reward, block.timestamp);
     }
 
-    /// @dev experimental feature for lazy compound
-    function reApply() external nonReentrant updateReward(msg.sender) {
-        uint256 claimed = earned[msg.sender];
-        uint256 balance = rawBalances[msg.sender];
-        earned[msg.sender] = 0;
-
-        knnYieldPool = knnYieldPool.add(claimed);
-        rawBalances[msg.sender] = balance.add(claimed);
-
-        emit Interest(msg.sender, claimed, balance, block.timestamp);
-    }
-
     function transferFee(address to, uint256 amount) private returns (uint) {
         require(started[msg.sender] > 0, "Not in pool");
         uint256 duration = block.timestamp.sub(started[msg.sender]);
@@ -281,10 +242,6 @@ contract KannaYield is Ownable, ReentrancyGuard {
         uint256 finalAmount = amount.sub(
             amount.mul(userFee).div(feeDecimalAdjust)
         );
-
-        knnYieldTotalFee = knnYieldTotalFee.add(amount.sub(finalAmount));
-
-        knnYieldPool = knnYieldPool.add(finalAmount);
 
         knnToken.safeTransfer(to, finalAmount);
         emit Fee(to, amount, userFee, finalAmount, block.timestamp);
