@@ -125,6 +125,112 @@ describe("KNN Yield⬆", async () => {
       expect(parseKNN(balance)).to.eq(userBalanceOnPool);
     });
 
+    it("should distribute a 400K rewards over a yearly duration for 3holders EQUALY", async () => {
+      const rewardsDuration = 365 * 24 * 60 ** 2;
+
+      const amount = "800000000000000000000000";
+      const rewardAmount = "400000000000000000000000";
+
+      // await knnToken.mint("9000000000000000000000000");
+      await knnToken.transfer(knnYield.address, rewardAmount);
+      await knnToken.transfer(firstHolder.address, amount);
+      await knnToken.transfer(secondHolder.address, amount);
+      await knnToken.transfer(thirdHolder.address, amount);
+
+      const firstHolderTokenSession = await ethers.getContractAt(
+        tokenContractName,
+        knnToken.address,
+        firstHolder
+      );
+
+      const secondHolderTokenSession = await ethers.getContractAt(
+        tokenContractName,
+        knnToken.address,
+        secondHolder
+      );
+
+      const thirdHolderTokenSession = await ethers.getContractAt(
+        tokenContractName,
+        knnToken.address,
+        thirdHolder
+      );
+
+      const firstHolderYieldSession = await ethers.getContractAt(
+        yieldContractName,
+        knnYield.address,
+        firstHolder
+      );
+
+      const secondHolderYieldSession = await ethers.getContractAt(
+        yieldContractName,
+        knnYield.address,
+        secondHolder
+      );
+
+      const thirdHolderYieldSession = await ethers.getContractAt(
+        yieldContractName,
+        knnYield.address,
+        thirdHolder
+      );
+
+      await firstHolderTokenSession.approve(knnYield.address, amount);
+      await secondHolderTokenSession.approve(knnYield.address, amount);
+      await thirdHolderTokenSession.approve(knnYield.address, amount);
+
+      await knnYield.addReward(rewardAmount, rewardsDuration);
+
+      await firstHolderYieldSession.subscribe(amount);
+      await secondHolderYieldSession.subscribe(amount);
+      await thirdHolderYieldSession.subscribe(amount);
+
+      await network.provider.send("evm_increaseTime", [90 * 24 * 60 ** 2]);
+      await network.provider.send("evm_mine");
+
+      await firstHolderYieldSession.exit();
+      await secondHolderYieldSession.exit();
+      await thirdHolderYieldSession.exit();
+
+      const firstHolderBalance = await knnToken.balanceOf(firstHolder.address);
+      const secondHolderBalance = await knnToken.balanceOf(
+        secondHolder.address
+      );
+
+      const thirdHolderBalance = await knnToken.balanceOf(thirdHolder.address);
+
+      console.info(
+        "Earned KNN Rewards | 1st Holder =>",
+        parseKNN(firstHolderBalance) - parseKNN(amount)
+      );
+
+      console.info(
+        "Earned KNN Rewards | 2nd Holder =>",
+        parseKNN(secondHolderBalance) - parseKNN(amount)
+      );
+
+      console.info(
+        "Earned KNN Rewards | 3rd Holder =>",
+        parseKNN(thirdHolderBalance) - parseKNN(amount)
+      );
+
+      expect(parseKNN(firstHolderBalance)).to.greaterThan(parseKNN(amount));
+
+      expect(parseKNN(firstHolderBalance)).to.lessThanOrEqual(
+        parseKNN(amount) + parseKNN(rewardAmount) / 3
+      );
+
+      expect(parseKNN(secondHolderBalance)).to.greaterThan(parseKNN(amount));
+
+      expect(parseKNN(secondHolderBalance)).to.lessThanOrEqual(
+        parseKNN(amount) + parseKNN(rewardAmount) / 3
+      );
+
+      expect(parseKNN(thirdHolderBalance)).to.greaterThan(parseKNN(amount));
+
+      expect(parseKNN(thirdHolderBalance)).to.lessThanOrEqual(
+        parseKNN(amount) + parseKNN(rewardAmount) / 3
+      );
+    });
+
     it("should distribute a 400K rewards over a yearly duration for a single holder", async () => {
       const rewardsDuration = 365 * 24 * 60 ** 2;
 
@@ -702,9 +808,9 @@ describe("KNN Yield⬆", async () => {
       await network.provider.send("evm_increaseTime", [1 * 24 * 60 ** 2]);
       await network.provider.send("evm_mine");
 
-      await (await firstHolderYieldSession.subscribe(amount)).wait();
-      await (await secondHolderYieldSession.subscribe(amount)).wait();
-      await (await thirdHolderYieldSession.subscribe(amount)).wait();
+      await firstHolderYieldSession.subscribe(amount);
+      await secondHolderYieldSession.subscribe(amount);
+      await thirdHolderYieldSession.subscribe(amount);
 
       await network.provider.send("evm_increaseTime", [300 * 24 * 60 ** 2]);
       await network.provider.send("evm_mine");
@@ -899,133 +1005,6 @@ describe("KNN Yield⬆", async () => {
         parseKNN(fourthHolderBalance) - givenTokens[fourthHolder.address],
         "\n| 5th Holder =>",
         parseKNN(fifthHolderBalance) - givenTokens[fifthHolder.address]
-      );
-    });
-
-    it("should distribute a 400K rewards over a yearly duration for 3holders EQUALY", async () => {
-      const rewardsDuration = 365 * 24 * 60 ** 2;
-
-      const amount = "800000000000000000000000";
-      const rewardAmount = "400000000000000000000000";
-
-      // await knnToken.mint("9000000000000000000000000");
-      await knnToken.transfer(knnYield.address, rewardAmount);
-
-      const firstTxTransfer = await knnToken.transfer(
-        firstHolder.address,
-        amount
-      );
-
-      await firstTxTransfer.wait();
-
-      const secondTxTransfer = await knnToken.transfer(
-        secondHolder.address,
-        amount
-      );
-
-      await secondTxTransfer.wait();
-
-      const thirdTxTransfer = await knnToken.transfer(
-        thirdHolder.address,
-        amount
-      );
-
-      await thirdTxTransfer.wait();
-
-      const firstHolderTokenSession = await ethers.getContractAt(
-        tokenContractName,
-        knnToken.address,
-        firstHolder
-      );
-
-      const secondHolderTokenSession = await ethers.getContractAt(
-        tokenContractName,
-        knnToken.address,
-        secondHolder
-      );
-
-      const thirdHolderTokenSession = await ethers.getContractAt(
-        tokenContractName,
-        knnToken.address,
-        thirdHolder
-      );
-
-      const firstHolderYieldSession = await ethers.getContractAt(
-        yieldContractName,
-        knnYield.address,
-        firstHolder
-      );
-
-      const secondHolderYieldSession = await ethers.getContractAt(
-        yieldContractName,
-        knnYield.address,
-        secondHolder
-      );
-
-      const thirdHolderYieldSession = await ethers.getContractAt(
-        yieldContractName,
-        knnYield.address,
-        thirdHolder
-      );
-
-      await firstHolderTokenSession.approve(knnYield.address, amount);
-      await secondHolderTokenSession.approve(knnYield.address, amount);
-      await thirdHolderTokenSession.approve(knnYield.address, amount);
-
-      await knnYield.addReward(rewardAmount, rewardsDuration);
-
-      await firstHolderYieldSession.subscribe(amount);
-      await secondHolderYieldSession.subscribe(amount);
-      await thirdHolderYieldSession.subscribe(amount);
-
-      await network.provider.send("evm_increaseTime", [90 * 24 * 60 ** 2]);
-      await network.provider.send("evm_mine");
-
-      const firstExitTx = await firstHolderYieldSession.exit();
-      const secondExitTx = await secondHolderYieldSession.exit();
-      const thirdExitTx = await thirdHolderYieldSession.exit();
-      await firstExitTx.wait();
-      await secondExitTx.wait();
-      await thirdExitTx.wait();
-
-      const firstHolderBalance = await knnToken.balanceOf(firstHolder.address);
-      const secondHolderBalance = await knnToken.balanceOf(
-        secondHolder.address
-      );
-
-      const thirdHolderBalance = await knnToken.balanceOf(thirdHolder.address);
-
-      console.info(
-        "Earned KNN Rewards | 1st Holder =>",
-        parseKNN(firstHolderBalance) - parseKNN(amount)
-      );
-
-      console.info(
-        "Earned KNN Rewards | 2nd Holder =>",
-        parseKNN(secondHolderBalance) - parseKNN(amount)
-      );
-
-      console.info(
-        "Earned KNN Rewards | 3rd Holder =>",
-        parseKNN(thirdHolderBalance) - parseKNN(amount)
-      );
-
-      expect(parseKNN(firstHolderBalance)).to.greaterThan(parseKNN(amount));
-
-      expect(parseKNN(firstHolderBalance)).to.lessThanOrEqual(
-        parseKNN(amount) + parseKNN(rewardAmount) / 3
-      );
-
-      expect(parseKNN(secondHolderBalance)).to.greaterThan(parseKNN(amount));
-
-      expect(parseKNN(secondHolderBalance)).to.lessThanOrEqual(
-        parseKNN(amount) + parseKNN(rewardAmount) / 3
-      );
-
-      expect(parseKNN(thirdHolderBalance)).to.greaterThan(parseKNN(amount));
-
-      expect(parseKNN(thirdHolderBalance)).to.lessThanOrEqual(
-        parseKNN(amount) + parseKNN(rewardAmount) / 3
       );
     });
   });
