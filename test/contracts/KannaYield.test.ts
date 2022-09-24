@@ -839,19 +839,22 @@ describe("KNN Yield⬆", async () => {
 
       const thirdHolderBalance = await knnToken.balanceOf(thirdHolder.address);
 
-      console.info(
-        "WITHDRAWN Earned KNN Rewards | 1st Holder =>",
-        parseKNN(firstHolderBalance) - parseKNN(amount)
-      );
+      const beforeCollect = await knnToken.balanceOf(deployerWallet.address);
+      await network.provider.send("evm_mine");
+      await knnYield.collectFees();
+      await network.provider.send("evm_mine");
+      const afterCollect = await knnToken.balanceOf(deployerWallet.address);
+      await network.provider.send("evm_mine");
 
       console.info(
-        "WITHDRAWN Earned KNN Rewards | 2nd Holder =>",
-        parseKNN(secondHolderBalance) - parseKNN(amount)
-      );
-
-      console.info(
-        "WITHDRAWN Earned KNN Rewards | 3rd Holder =>",
-        parseKNN(thirdHolderBalance) - parseKNN(amount)
+        "\nWITHDRAWN Earned KNN Rewards | 1st Holder =>",
+        parseKNN(firstHolderBalance) - parseKNN(amount),
+        "\nWITHDRAWN Earned KNN Rewards | 2nd Holder =>",
+        parseKNN(secondHolderBalance) - parseKNN(amount),
+        "\nWITHDRAWN Earned KNN Rewards | 3rd Holder =>",
+        parseKNN(thirdHolderBalance) - parseKNN(amount),
+        "\n| Collected =>",
+        parseKNN(afterCollect) - parseKNN(beforeCollect)
       );
     });
 
@@ -993,6 +996,15 @@ describe("KNN Yield⬆", async () => {
 
       const fifthHolderBalance = await knnToken.balanceOf(fifthHolder.address);
 
+      const beforeCollect = await knnToken.balanceOf(deployerWallet.address);
+      await network.provider.send("evm_mine");
+      await knnYield.collectFees();
+      await network.provider.send("evm_mine");
+      const afterCollect = await knnToken.balanceOf(deployerWallet.address);
+      await network.provider.send("evm_mine");
+
+      expect(parseKNN(afterCollect)).to.greaterThan(parseKNN(beforeCollect));
+
       // DEBUG CONSOLES
       console.info(
         "\n| 1st Holder =>",
@@ -1004,7 +1016,9 @@ describe("KNN Yield⬆", async () => {
         "\n| 4th Holder =>",
         parseKNN(fourthHolderBalance) - givenTokens[fourthHolder.address],
         "\n| 5th Holder =>",
-        parseKNN(fifthHolderBalance) - givenTokens[fifthHolder.address]
+        parseKNN(fifthHolderBalance) - givenTokens[fifthHolder.address],
+        "\n| Collected =>",
+        parseKNN(afterCollect) - parseKNN(beforeCollect)
       );
     });
   });
