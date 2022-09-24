@@ -26,8 +26,7 @@ contract ERC20KannaToken is IKannaToken, ERC20, Ownable, AccessControl {
 
     bytes32 private constant NO_TRANSFER_FEE = keccak256("NO_TRANSFER_FEE");
     bytes32 private constant VOTER_ROLE = keccak256("VOTER_ROLE");
-    bytes32 private constant MILESTONES_MINTER_ROLE =
-        keccak256("MILESTONES_MINTER_ROLE");
+    bytes32 private constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
     uint256 private immutable initialSupply = 10000000 * 10**decimals();
 
@@ -139,13 +138,6 @@ contract ERC20KannaToken is IKannaToken, ERC20, Ownable, AccessControl {
 
         emit TransactionFee(from, to, amount, block.timestamp, feeAmount);
 
-        console.log(
-            "transactionFee",
-            amount / 1e18,
-            feeAmount / 1e18,
-            finalAmount / 1e18
-        );
-
         return finalAmount;
     }
 
@@ -184,13 +176,13 @@ contract ERC20KannaToken is IKannaToken, ERC20, Ownable, AccessControl {
      *
      * Requirements:
      *
-     * - must be a `MILESTONES_MINTER_ROLE` contract
+     * - must be a `MINTER_ROLE` contract
      * - totalSupply should not exceed {maxSupply}
      */
     function mint(uint256 amount)
         external
         override(IKannaToken)
-        onlyRole(MILESTONES_MINTER_ROLE)
+        onlyRole(MINTER_ROLE)
     {
         require(amount > 0, "Invalid Amount");
         require(address(msg.sender).isContract());
@@ -239,13 +231,13 @@ contract ERC20KannaToken is IKannaToken, ERC20, Ownable, AccessControl {
      *
      * - must be a voting contract (requires VOTER_ROLE)
      */
-    function addMilestoneContract(address milestoneMinterAddress)
+    function addMinterContract(address minterAddress)
         external
         onlyRole(VOTER_ROLE)
     {
-        require(milestoneMinterAddress.isContract());
+        require(minterAddress.isContract());
 
-        _grantRole(MILESTONES_MINTER_ROLE, milestoneMinterAddress);
-        _grantRole(NO_TRANSFER_FEE, milestoneMinterAddress);
+        _grantRole(MINTER_ROLE, minterAddress);
+        _grantRole(NO_TRANSFER_FEE, minterAddress);
     }
 }
