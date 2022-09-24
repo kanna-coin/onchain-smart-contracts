@@ -1,11 +1,19 @@
 import { ethers } from "hardhat";
 import chai from "chai";
 import chaiAsPromised from "chai-as-promised";
-import { ERC20KannaToken__factory, ERC20KannaToken } from "../../typechain";
+import {
+  KannaTreasurer__factory,
+  KannaTreasurer,
+  ERC20KannaToken__factory,
+  ERC20KannaToken,
+} from "../../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
 chai.use(chaiAsPromised);
 const { expect } = chai;
+
+const parse1e18 = (integer: number): string => `${integer}000000000000000000`;
+
 const parseKNN = (bigNumberish: any): number => {
   const parts = ethers.utils.formatEther(bigNumberish).split(".");
   return parseFloat(
@@ -13,52 +21,62 @@ const parseKNN = (bigNumberish: any): number => {
   );
 };
 
+let erc20KannaToken: ERC20KannaToken;
+let signers: SignerWithAddress[];
+
+const deployContracts = async () => {
+  signers = await ethers.getSigners();
+
+  const [deployerWallet] = signers;
+
+  const erc20kannaTokenFactory = (await ethers.getContractFactory(
+    "ERC20KannaToken",
+    deployerWallet
+  )) as ERC20KannaToken__factory;
+  erc20KannaToken = await erc20kannaTokenFactory.deploy(deployerWallet.address);
+  await erc20KannaToken.deployed();
+};
+
 describe("KNN Token", () => {
-  let erc20KannaToken: ERC20KannaToken;
-  let signers: SignerWithAddress[];
-
-  beforeEach(async () => {
-    signers = await ethers.getSigners();
-
-    const [deployerWallet] = signers;
-
-    const erc20kannaTokenFactory = (await ethers.getContractFactory(
-      "ERC20KannaToken",
-      deployerWallet
-    )) as ERC20KannaToken__factory;
-    erc20KannaToken = await erc20kannaTokenFactory.deploy(
-      deployerWallet.address
-    );
-    await erc20KannaToken.deployed();
+  describe(".initializeTreasury", async () => {
+    beforeEach(async () => {
+      await deployContracts();
+    });
   });
 
-  describe("Allowance", async () => {
-    beforeEach(async () => {});
+  describe(".updateTransactionFee", async () => {
+    beforeEach(async () => {
+      await deployContracts();
+    });
+  });
 
-    it("should transfer KNN from account to another", async () => {
-      const [deployerWallet, kannaWallet, randomWallet, randomWallet2] =
-        signers;
-      const amount: string = "50000000000000000000";
+  describe(".transferFrom", async () => {
+    beforeEach(async () => {
+      await deployContracts();
+    });
+  });
 
-      await erc20KannaToken.approve(deployerWallet.address, amount);
+  describe(".transfer", async () => {
+    beforeEach(async () => {
+      await deployContracts();
+    });
+  });
 
-      const result = await erc20KannaToken.transferFrom(
-        deployerWallet.address,
-        randomWallet.address,
-        amount
-      );
+  describe(".mint", async () => {
+    beforeEach(async () => {
+      await deployContracts();
+    });
+  });
 
-      const scopedToken = await ethers.getContractAt(
-        "ERC20KannaToken",
-        erc20KannaToken.address,
-        randomWallet
-      );
+  describe(".noTransferFee", async () => {
+    beforeEach(async () => {
+      await deployContracts();
+    });
+  });
 
-      await scopedToken.transfer(randomWallet2.address, amount);
-
-      const balance = await scopedToken.balanceOf(randomWallet2.address);
-      console.log(parseKNN(balance));
-      expect(parseKNN(balance)).to.eq(50 * 0.99);
+  describe(".addMinter", async () => {
+    beforeEach(async () => {
+      await deployContracts();
     });
   });
 });

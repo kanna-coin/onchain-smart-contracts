@@ -4,6 +4,8 @@ import chaiAsPromised from "chai-as-promised";
 import {
   KannaYield__factory,
   KannaYield,
+  KannaTreasurer__factory,
+  KannaTreasurer,
   ERC20KannaToken,
 } from "../../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
@@ -13,6 +15,7 @@ const { expect } = chai;
 
 const tokenContractName = "ERC20KannaToken";
 const yieldContractName = "KannaYield";
+const treasurerContractName = "KannaTreasurer";
 const yieldDefaultReward = "400000000000000000000000";
 
 const parseKNN = (bigNumberish: any): number =>
@@ -22,6 +25,7 @@ const parse1e18 = (integer: number): string => `${integer}000000000000000000`;
 
 describe("KNN Yield⬆", async () => {
   let knnToken: ERC20KannaToken;
+  let knnTreasurer: KannaTreasurer;
   let knnYield: KannaYield;
 
   const [
@@ -50,20 +54,30 @@ describe("KNN Yield⬆", async () => {
       deployerWallet
     )) as KannaYield__factory;
 
+    const treasurerFactory = (await ethers.getContractFactory(
+      treasurerContractName,
+      deployerWallet
+    )) as KannaTreasurer__factory;
+
+    knnToken = (await tokenFactory.deploy(
+      deployerWallet.address
+    )) as ERC20KannaToken;
+    await knnToken.deployed();
+
+    knnTreasurer = (await treasurerFactory.deploy(
+      knnToken.address
+    )) as KannaTreasurer;
+
     knnYield = (await yieldFactory.deploy(
       knnToken.address,
       deployerWallet.address
     )) as KannaYield;
 
     await knnYield.deployed();
-    await knnToken.addRewardContract(knnYield.address);
+    await knnToken.initializeTreasury(knnTreasurer.address);
+    await knnToken.noTransferFee(knnYield.address);
 
-    const tx400k = await knnToken.transfer(
-      knnYield.address,
-      yieldDefaultReward
-    );
-
-    await tx400k.wait();
+    await knnTreasurer.release(knnYield.address, yieldDefaultReward);
   });
 
   describe("KANNA Yield Tests", () => {
@@ -76,7 +90,7 @@ describe("KNN Yield⬆", async () => {
 
     it.only("should allow user to subscribe for 200.0 KNN", async () => {
       const subscriptionAmount = "200000000000000000000000";
-      const txTransfer = await knnToken.transfer(
+      const txTransfer = await knnTreasurer.release(
         anyHolder.address,
         subscriptionAmount
       );
@@ -132,10 +146,10 @@ describe("KNN Yield⬆", async () => {
       const rewardAmount = "400000000000000000000000";
 
       // await knnToken.mint("9000000000000000000000000");
-      await knnToken.transfer(knnYield.address, rewardAmount);
-      await knnToken.transfer(firstHolder.address, amount);
-      await knnToken.transfer(secondHolder.address, amount);
-      await knnToken.transfer(thirdHolder.address, amount);
+      await knnTreasurer.release(knnYield.address, rewardAmount);
+      await knnTreasurer.release(firstHolder.address, amount);
+      await knnTreasurer.release(secondHolder.address, amount);
+      await knnTreasurer.release(thirdHolder.address, amount);
 
       const firstHolderTokenSession = await ethers.getContractAt(
         tokenContractName,
@@ -237,7 +251,7 @@ describe("KNN Yield⬆", async () => {
       const [firstAmount] = ["800000000000000000000000"];
       const rewardAmount = "400000000000000000000000";
 
-      const txTransfer = await knnToken.transfer(
+      const txTransfer = await knnTreasurer.release(
         firstHolder.address,
         firstAmount
       );
@@ -292,16 +306,16 @@ describe("KNN Yield⬆", async () => {
       const rewardAmount = "400000000000000000000000";
 
       // await knnToken.mint("9000000000000000000000000");
-      await knnToken.transfer(knnYield.address, rewardAmount);
+      await knnTreasurer.release(knnYield.address, rewardAmount);
 
-      const firstTxTransfer = await knnToken.transfer(
+      const firstTxTransfer = await knnTreasurer.release(
         firstHolder.address,
         firstAmount
       );
 
       await firstTxTransfer.wait();
 
-      const secondTxTransfer = await knnToken.transfer(
+      const secondTxTransfer = await knnTreasurer.release(
         secondHolder.address,
         secondAmount
       );
@@ -404,16 +418,16 @@ describe("KNN Yield⬆", async () => {
       const rewardAmount = "400000000000000000000000";
 
       // await knnToken.mint("9000000000000000000000000");
-      await knnToken.transfer(knnYield.address, rewardAmount);
+      await knnTreasurer.release(knnYield.address, rewardAmount);
 
-      const firstTxTransfer = await knnToken.transfer(
+      const firstTxTransfer = await knnTreasurer.release(
         firstHolder.address,
         firstAmount
       );
 
       await firstTxTransfer.wait();
 
-      const secondTxTransfer = await knnToken.transfer(
+      const secondTxTransfer = await knnTreasurer.release(
         secondHolder.address,
         secondAmount
       );
@@ -513,23 +527,23 @@ describe("KNN Yield⬆", async () => {
       const rewardAmount = "400000000000000000000000";
 
       // await knnToken.mint("9000000000000000000000000");
-      await knnToken.transfer(knnYield.address, rewardAmount);
+      await knnTreasurer.release(knnYield.address, rewardAmount);
 
-      const firstTxTransfer = await knnToken.transfer(
+      const firstTxTransfer = await knnTreasurer.release(
         firstHolder.address,
         amount
       );
 
       await firstTxTransfer.wait();
 
-      const secondTxTransfer = await knnToken.transfer(
+      const secondTxTransfer = await knnTreasurer.release(
         secondHolder.address,
         amount
       );
 
       await secondTxTransfer.wait();
 
-      const thirdTxTransfer = await knnToken.transfer(
+      const thirdTxTransfer = await knnTreasurer.release(
         thirdHolder.address,
         amount
       );
@@ -645,16 +659,16 @@ describe("KNN Yield⬆", async () => {
       const rewardAmount = "400000000000000000000000";
 
       // await knnToken.mint("9000000000000000000000000");
-      await knnToken.transfer(knnYield.address, rewardAmount);
+      await knnTreasurer.release(knnYield.address, rewardAmount);
 
-      const firstTxTransfer = await knnToken.transfer(
+      const firstTxTransfer = await knnTreasurer.release(
         firstHolder.address,
         firstAmount
       );
 
       await firstTxTransfer.wait();
 
-      const secondTxTransfer = await knnToken.transfer(
+      const secondTxTransfer = await knnTreasurer.release(
         secondHolder.address,
         secondAmount
       );
@@ -741,23 +755,23 @@ describe("KNN Yield⬆", async () => {
       const rewardAmount = "400000000000000000000000";
 
       // await knnToken.mint("9000000000000000000000000");
-      await knnToken.transfer(knnYield.address, rewardAmount);
+      await knnTreasurer.release(knnYield.address, rewardAmount);
 
-      const firstTxTransfer = await knnToken.transfer(
+      const firstTxTransfer = await knnTreasurer.release(
         firstHolder.address,
         amount
       );
 
       await firstTxTransfer.wait();
 
-      const secondTxTransfer = await knnToken.transfer(
+      const secondTxTransfer = await knnTreasurer.release(
         secondHolder.address,
         amount
       );
 
       await secondTxTransfer.wait();
 
-      const thirdTxTransfer = await knnToken.transfer(
+      const thirdTxTransfer = await knnTreasurer.release(
         thirdHolder.address,
         amount
       );
@@ -866,7 +880,7 @@ describe("KNN Yield⬆", async () => {
       const rewardAmount = parse1e18(600);
 
       // await knnToken.mint(rewardAmount);
-      await knnToken.transfer(knnYield.address, rewardAmount);
+      await knnTreasurer.release(knnYield.address, rewardAmount);
 
       await network.provider.send("evm_setAutomine", [false]);
 
@@ -887,7 +901,7 @@ describe("KNN Yield⬆", async () => {
         givenTokens[holder.address] += amount;
 
         const amount1e18 = parse1e18(amount);
-        await knnToken.transfer(holder.address, amount1e18);
+        await knnTreasurer.release(holder.address, amount1e18);
 
         const scopedToken = await ethers.getContractAt(
           tokenContractName,
