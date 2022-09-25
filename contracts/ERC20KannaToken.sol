@@ -101,10 +101,9 @@ contract ERC20KannaToken is IKannaToken, ERC20, Ownable, AccessControl {
      *
      * Requirements:
      *
-     * - must be a voting contract (requires VOTER_ROLE)
+     * - must be a  multisig wallet or owner (requires owner)
      */
     function updateTransactionFee(uint fee) external onlyOwner {
-        require(address(msg.sender).isContract());
         require(fee >= 0, "Invalid fee");
 
         emit ChangeOfFee(address(msg.sender), block.timestamp, fee);
@@ -234,7 +233,6 @@ contract ERC20KannaToken is IKannaToken, ERC20, Ownable, AccessControl {
      * - must be a contract owner (same of deployer address initially)
      */
     function noTransferFee(address contractAddress) external onlyOwner {
-        require(contractAddress.isContract());
         _grantRole(NO_TRANSFER_FEE, contractAddress);
     }
 
