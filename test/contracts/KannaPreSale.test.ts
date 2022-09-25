@@ -64,5 +64,45 @@ describe("KNN PreSale", () => {
 
       expect(balance).to.lessThan(5e22);
     });
+
+    it("should validate ETH amount", async () => {
+      const [deployerWallet] = signers;
+
+      const options = { value: ethers.utils.parseEther("0.005") };
+      const error = await knnPreSale
+        .buyTokens(ethers.utils.parseEther("5.001001999238"), options)
+        .then(() => null)
+        .catch((e) => e);
+
+      expect(error).to.not.null;
+    });
+
+    it("should retrieve sold tokens", async () => {
+      const [deployerWallet] = signers;
+
+      await network.provider.send("hardhat_setBalance", [
+        deployerWallet.address,
+        "0xFFFFFFFFFFFFFFFF",
+      ]);
+      await network.provider.send("evm_mine");
+
+      const options = { value: ethers.utils.parseEther("1.0") };
+      await knnPreSale.buyTokens(ethers.utils.parseEther("1.0"), options);
+      const soldHex = await knnPreSale.sold();
+      const sold = parseInt(soldHex._hex, 16);
+
+      expect(sold).to.eq(1e18);
+    });
+
+    it("should update quotation", async () => {
+      const currentPriceHex = await knnPreSale.price();
+      await knnPreSale.updateQuotation("5");
+      const newPriceHex = await knnPreSale.price();
+
+      const currentPrice = parseInt(currentPriceHex._hex, 16);
+      const newPrice = parseInt(newPriceHex._hex, 16);
+
+      expect(currentPrice).to.lessThan(newPrice);
+    });
   });
 });
