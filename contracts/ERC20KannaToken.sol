@@ -9,8 +9,6 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 import {IKannaToken} from "./interfaces/IKannaToken.sol";
 
-import "hardhat/console.sol";
-
 /** @title KNN Token
     @author KANNA
     @notice This is a OpenZeppelin {IERC20} token contract implementation of KNN Token.
@@ -25,7 +23,6 @@ contract ERC20KannaToken is IKannaToken, ERC20, Ownable, AccessControl {
     using Address for address;
 
     bytes32 private constant NO_TRANSFER_FEE = keccak256("NO_TRANSFER_FEE");
-    bytes32 private constant VOTER_ROLE = keccak256("VOTER_ROLE");
     bytes32 private constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
     uint256 private immutable initialSupply = 10000000 * 10**decimals();
@@ -36,6 +33,7 @@ contract ERC20KannaToken is IKannaToken, ERC20, Ownable, AccessControl {
     uint256 private transactionFee = 1000;
 
     address private kannaDeployerAddress;
+    address private treasuryAddress = address(0);
 
     event TransactionFee(
         address from,
@@ -51,7 +49,7 @@ contract ERC20KannaToken is IKannaToken, ERC20, Ownable, AccessControl {
         uint newFee
     );
 
-    event Minted(address to, uint256 amount, uint indexed date);
+    event Minted(address signer, address to, uint256 amount, uint indexed date);
 
     /**
      * @dev Initializes KNN Token (KNN) with {initialSupply} to
@@ -61,9 +59,37 @@ contract ERC20KannaToken is IKannaToken, ERC20, Ownable, AccessControl {
      */
     constructor(address deployerAddress) ERC20("KNN Token", "KNN") {
         _grantRole(NO_TRANSFER_FEE, deployerAddress);
-        _mint(deployerAddress, initialSupply);
 
         kannaDeployerAddress = deployerAddress;
+    }
+
+    /**
+     * @dev addresses the current treasury smart contract
+     *
+     * Emits {RoleGranted} and {Transfer} events.
+     * May revoke roles from provious contract
+     */
+    function initializeTreasury(address treasuryContractAddress)
+        external
+        onlyOwner
+    {
+        if (treasuryAddress != address(0)) {
+            _revokeRole(NO_TRANSFER_FEE, treasuryAddress);
+        }
+
+        _grantRole(NO_TRANSFER_FEE, treasuryContractAddress);
+        treasuryAddress = treasuryContractAddress;
+
+        if (totalSupply() > 0) return;
+
+        _mint(treasuryAddress, initialSupply);
+
+        emit Minted(
+            address(msg.sender),
+            treasuryAddress,
+            initialSupply,
+            block.timestamp
+        );
     }
 
     /**
@@ -75,10 +101,9 @@ contract ERC20KannaToken is IKannaToken, ERC20, Ownable, AccessControl {
      *
      * Requirements:
      *
-     * - must be a voting contract (requires VOTER_ROLE)
+     * - must be a  multisig wallet or owner (requires owner)
      */
-    function updateTransactionFee(uint fee) external onlyRole(VOTER_ROLE) {
-        require(address(msg.sender).isContract());
+    function updateTransactionFee(uint fee) external onlyOwner {
         require(fee >= 0, "Invalid fee");
 
         emit ChangeOfFee(address(msg.sender), block.timestamp, fee);
@@ -124,7 +149,6 @@ contract ERC20KannaToken is IKannaToken, ERC20, Ownable, AccessControl {
             hasRole(NO_TRANSFER_FEE, from) ||
             hasRole(NO_TRANSFER_FEE, to)
         ) {
-            console.log("noFee", amount / 1e18, address(from), address(to));
             return amount;
         }
 
@@ -184,16 +208,21 @@ contract ERC20KannaToken is IKannaToken, ERC20, Ownable, AccessControl {
         override(IKannaToken)
         onlyRole(MINTER_ROLE)
     {
+        require(treasuryAddress != address(0), "No treasury");
         require(amount > 0, "Invalid Amount");
-        require(address(msg.sender).isContract());
         require(
             amount.add(super.totalSupply()) <= maxSupply,
             "Maximum Supply reached!"
         );
 
-        emit Minted(address(msg.sender), amount, block.timestamp);
+        _mint(treasuryAddress, amount);
 
-        _mint(address(msg.sender), amount);
+        emit Minted(
+            address(msg.sender),
+            treasuryAddress,
+            amount,
+            block.timestamp
+        );
     }
 
     /**
@@ -203,23 +232,8 @@ contract ERC20KannaToken is IKannaToken, ERC20, Ownable, AccessControl {
      *
      * - must be a contract owner (same of deployer address initially)
      */
-    function addRewardContract(address rewardContract) external onlyOwner {
-        require(rewardContract.isContract());
-        _grantRole(NO_TRANSFER_FEE, rewardContract);
-    }
-
-    /**
-     * @dev May emit a {RoleGranted} event.
-     *
-     * Requirements:
-     *
-     * - must be a contract owner (same of deployer address initially)
-     */
-    function addVotingContract(address votingContract) external onlyOwner {
-        require(votingContract.isContract());
-
-        _grantRole(VOTER_ROLE, votingContract);
-        _grantRole(NO_TRANSFER_FEE, votingContract);
+    function noTransferFee(address contractAddress) external onlyOwner {
+        _grantRole(NO_TRANSFER_FEE, contractAddress);
     }
 
     /**
@@ -229,15 +243,13 @@ contract ERC20KannaToken is IKannaToken, ERC20, Ownable, AccessControl {
      *
      * Requirements:
      *
-     * - must be a voting contract (requires VOTER_ROLE)
+     * - must be a multisig or owner (requires onlyOwner)
      */
-    function addMinterContract(address minterAddress)
-        external
-        onlyRole(VOTER_ROLE)
-    {
-        require(minterAddress.isContract());
-
+    function addMinter(address minterAddress) external onlyOwner {
         _grantRole(MINTER_ROLE, minterAddress);
+
+        if (hasRole(NO_TRANSFER_FEE, msg.sender)) return;
+
         _grantRole(NO_TRANSFER_FEE, minterAddress);
     }
 }

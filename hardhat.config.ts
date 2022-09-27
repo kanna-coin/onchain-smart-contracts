@@ -36,9 +36,9 @@ const config: HardhatUserEtherscanConfig = {
     //   url: API_URL,
     //   accounts: [PRIVATE_KEY],
     // },
-    // coverage: {
-    //   url: "http://127.0.0.1:8555", // Coverage launches its own ganache-cli client
-    // },
+    coverage: {
+      url: "http://127.0.0.1:8555", // Coverage launches its own ganache-cli client
+    },
   },
   etherscan: {
     apiKey: ETHERSCAN_API_KEY,
