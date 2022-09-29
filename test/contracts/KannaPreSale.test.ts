@@ -1,7 +1,7 @@
 import { ethers, network } from "hardhat";
 import chai from "chai";
 import chaiAsPromised from "chai-as-promised";
-import { KannaTreasurer, ERC20KannaToken, KannaPreSale } from "../../typechain";
+import { KannaTreasurer, KannaToken, KannaPreSale } from "../../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import getKnnToken from "../../src/infrastructure/factories/KannaTokenFactory";
 import getKnnTreasurer from "../../src/infrastructure/factories/KannaTreasurerFactory";
@@ -17,7 +17,7 @@ const parse1e18 = (integer: number): string => `${integer}000000000000000000`;
 
 describe("KNN PreSale", () => {
   let signers: SignerWithAddress[];
-  let knnToken: ERC20KannaToken;
+  let knnToken: KannaToken;
   let knnTreasurer: KannaTreasurer;
   let knnPreSale: KannaPreSale;
 

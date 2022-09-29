@@ -1,7 +1,7 @@
 import { ethers } from "hardhat";
 import chai from "chai";
 import chaiAsPromised from "chai-as-promised";
-import { KannaTreasurer, ERC20KannaToken } from "../../typechain";
+import { KannaTreasurer, KannaToken } from "../../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import getKnnToken from "../../src/infrastructure/factories/KannaTokenFactory";
 import getKnnTreasurer from "../../src/infrastructure/factories/KannaTreasurerFactory";
@@ -18,37 +18,45 @@ const parseKNN = (bigNumberish: any): number => {
   );
 };
 
-let knnToken: ERC20KannaToken;
-let signers: SignerWithAddress[];
-
-const deployContracts = async () => {
-  signers = await ethers.getSigners();
-
-  const [deployerAddress] = signers;
-
-  knnToken = await getKnnToken(deployerAddress);
-};
-
 describe("KNN Token", () => {
+  let knnToken: KannaToken;
+  let signers: SignerWithAddress[];
+
+  const deployContracts = async () => {
+    signers = await ethers.getSigners();
+
+    const [deployerAddress] = signers;
+
+    knnToken = await getKnnToken(deployerAddress);
+  };
+
   describe(".initializeTreasury", async () => {
     beforeEach(async () => {
       await deployContracts();
     });
 
-    it("should be idempotent", async () => {
+    it("should initialize set and initialize amount to treasury", async () => {
       const [deployerWallet] = signers;
       const knnTreasurer = await getKnnTreasurer(deployerWallet, knnToken);
 
-      // Idempotency assertion for further DAO treasury replacement
-      await knnToken.initializeTreasury(knnTreasurer.address);
-      await knnToken.initializeTreasury(knnTreasurer.address);
-      await knnToken.initializeTreasury(knnTreasurer.address);
+      const error = await knnToken
+        .updateTreasury(knnTreasurer.address)
+        .then(() => null)
+        .catch((e) => e);
 
-      const treasuryBalanceHex = await knnToken.balanceOf(knnTreasurer.address);
+      expect(error).to.null;
+    });
 
-      const balance = parseInt(treasuryBalanceHex._hex, 16);
+    it("should NOT allow initialization when treasury are no set", async () => {
+      const [deployerWallet] = signers;
+      const knnTreasurer = await getKnnTreasurer(deployerWallet, knnToken);
 
-      expect(balance).to.greaterThanOrEqual(1e18);
+      const error = await knnToken
+        .initializeTreasury()
+        .then(() => null)
+        .catch((e) => e);
+
+      expect(error).to.not.null;
     });
   });
 
@@ -57,8 +65,8 @@ describe("KNN Token", () => {
       await deployContracts();
     });
 
-    it("should update a transaction to 20% and validate transfer value", async () => {
-      await knnToken.updateTransactionFee("20000");
+    it("should update a transfer to 20% and validate transfer value", async () => {
+      await knnToken.updateTransferFee("200");
 
       const [deployerWallet, wallet1, wallet2] = signers;
 
@@ -69,11 +77,11 @@ describe("KNN Token", () => {
 
       await knnTreasurer.release(wallet1.address, parse1e18(20000));
 
-      const scopedToken: ERC20KannaToken = (await ethers.getContractAt(
-        "ERC20KannaToken",
+      const scopedToken: KannaToken = (await ethers.getContractAt(
+        "KannaToken",
         knnToken.address,
         wallet1
-      )) as ERC20KannaToken;
+      )) as KannaToken;
 
       await scopedToken.transfer(wallet2.address, parse1e18(20000));
 
@@ -81,7 +89,7 @@ describe("KNN Token", () => {
 
       const balance = parseInt(wallet2BalanceHex._hex, 16);
 
-      expect(balance).to.eq(1.6e22);
+      expect(balance).to.eq(1.96e22);
     });
   });
 
@@ -90,8 +98,8 @@ describe("KNN Token", () => {
       await deployContracts();
     });
 
-    it("should apply a transactionFee for Approved transfers (transferFrom) outside KNN contracts", async () => {
-      await knnToken.updateTransactionFee("20000");
+    it("should apply a transferFee for Approved transfers (transferFrom) outside KNN contracts", async () => {
+      await knnToken.updateTransferFee("1");
 
       const [deployerWallet, wallet1, wallet2] = signers;
 
@@ -102,19 +110,19 @@ describe("KNN Token", () => {
 
       await knnTreasurer.release(wallet1.address, parse1e18(20000));
 
-      const scopedWallet1Token: ERC20KannaToken = (await ethers.getContractAt(
-        "ERC20KannaToken",
+      const scopedWallet1Token: KannaToken = (await ethers.getContractAt(
+        "KannaToken",
         knnToken.address,
         wallet1
-      )) as ERC20KannaToken;
+      )) as KannaToken;
 
       await scopedWallet1Token.approve(wallet2.address, parse1e18(20000));
 
-      const scopedWallet2Token: ERC20KannaToken = (await ethers.getContractAt(
-        "ERC20KannaToken",
+      const scopedWallet2Token: KannaToken = (await ethers.getContractAt(
+        "KannaToken",
         knnToken.address,
         wallet2
-      )) as ERC20KannaToken;
+      )) as KannaToken;
 
       await scopedWallet2Token.transferFrom(
         wallet1.address,
@@ -126,7 +134,7 @@ describe("KNN Token", () => {
 
       const balance = parseInt(wallet2BalanceHex._hex, 16);
 
-      expect(balance).to.eq(1.6e22);
+      expect(balance).to.eq(1.9998e22);
     });
   });
 
@@ -135,8 +143,8 @@ describe("KNN Token", () => {
       await deployContracts();
     });
 
-    it("should apply a transaction fee for transfers outside knn", async () => {
-      await knnToken.updateTransactionFee("20000");
+    it("should apply a transfer fee for transfers outside knn", async () => {
+      await knnToken.updateTransferFee("200");
 
       const [deployerWallet, wallet1, wallet2] = signers;
 
@@ -147,11 +155,11 @@ describe("KNN Token", () => {
 
       await knnTreasurer.release(wallet1.address, parse1e18(20000));
 
-      const scopedToken: ERC20KannaToken = (await ethers.getContractAt(
-        "ERC20KannaToken",
+      const scopedToken: KannaToken = (await ethers.getContractAt(
+        "KannaToken",
         knnToken.address,
         wallet1
-      )) as ERC20KannaToken;
+      )) as KannaToken;
 
       await scopedToken.transfer(wallet2.address, parse1e18(20000));
 
@@ -159,7 +167,7 @@ describe("KNN Token", () => {
 
       const balance = parseInt(wallet2BalanceHex._hex, 16);
 
-      expect(balance).to.eq(1.6e22);
+      expect(balance).to.eq(1.96e22);
     });
   });
 
@@ -223,8 +231,8 @@ describe("KNN Token", () => {
       await deployContracts();
     });
 
-    it("should apply NO FEE for a transaction within a NO_TRANSFER_FEE granted wallet", async () => {
-      await knnToken.updateTransactionFee("50000");
+    it("should apply NO FEE for a transfer within a NO_TRANSFER_FEE granted wallet", async () => {
+      await knnToken.updateTransferFee("500");
 
       const [deployerWallet, wallet1, wallet2] = signers;
 
@@ -235,11 +243,11 @@ describe("KNN Token", () => {
 
       await knnTreasurer.release(wallet1.address, parse1e18(20000));
 
-      const scopedToken: ERC20KannaToken = (await ethers.getContractAt(
-        "ERC20KannaToken",
+      const scopedToken: KannaToken = (await ethers.getContractAt(
+        "KannaToken",
         knnToken.address,
         wallet1
-      )) as ERC20KannaToken;
+      )) as KannaToken;
 
       await knnToken.noTransferFee(wallet2.address);
       await scopedToken.transfer(wallet2.address, parse1e18(20000));

@@ -18,7 +18,7 @@ import {ITreasurer} from "./interfaces/ITreasurer.sol";
 contract KannaTreasurer is ITreasurer, Ownable {
     using Address for address;
     IKannaToken private immutable knnToken;
-    address private erc20kannaTokenAddress;
+    address private KannaTokenAddress;
 
     event Release(
         address signer,

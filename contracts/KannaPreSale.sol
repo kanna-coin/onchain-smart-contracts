@@ -19,7 +19,7 @@ contract KannaPreSale is ReentrancyGuard, Ownable {
     using SafeMath for uint256;
     using Address for address;
     IKannaToken private immutable knnToken;
-    address private erc20kannaTokenAddress;
+    address private KannaTokenAddress;
     uint256 private tokensSold;
 
     uint256 private tokenQuotation;

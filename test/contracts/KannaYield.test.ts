@@ -6,7 +6,7 @@ import {
   KannaYield,
   KannaTreasurer__factory,
   KannaTreasurer,
-  ERC20KannaToken,
+  KannaToken,
 } from "../../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import getKnnToken from "../../src/infrastructure/factories/KannaTokenFactory";
@@ -16,7 +16,7 @@ import getKnnYield from "../../src/infrastructure/factories/KannaYieldFactory";
 chai.use(chaiAsPromised);
 const { expect } = chai;
 
-const tokenContractName = "ERC20KannaToken";
+const tokenContractName = "KannaToken";
 const yieldContractName = "KannaYield";
 const treasurerContractName = "KannaTreasurer";
 const yieldDefaultReward = "400000000000000000000000";
@@ -27,7 +27,7 @@ const parseKNN = (bigNumberish: any): number =>
 const parse1e18 = (integer: number): string => `${integer}000000000000000000`;
 
 describe("KNN Yield⬆", async () => {
-  let knnToken: ERC20KannaToken;
+  let knnToken: KannaToken;
   let knnTreasurer: KannaTreasurer;
   let knnYield: KannaYield;
 

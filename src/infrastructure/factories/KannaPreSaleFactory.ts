@@ -4,7 +4,7 @@ import {
   KannaPreSale__factory,
   KannaPreSale,
   KannaTreasurer,
-  ERC20KannaToken,
+  KannaToken,
 } from "../../../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
@@ -12,7 +12,7 @@ const parse1e18 = (integer: number): string => `${integer}000000000000000000`;
 
 const instance = async (
   knnDeployerAddress: SignerWithAddress,
-  knnToken: ERC20KannaToken,
+  knnToken: KannaToken,
   knnTreasurer: KannaTreasurer
 ): Promise<KannaPreSale> => {
   let knnPreSale: KannaPreSale;

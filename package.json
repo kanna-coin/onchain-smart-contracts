@@ -10,7 +10,7 @@
     "test": "npx hardhat test",
     "node": "npx hardhat node",
     "coverage": "npm run build && npx hardhat coverage --temp artifacts --network localhost",
-    "deploy:token": "npx hardhat run --network localhost deploy/1_ERC20KannaToken_deploy.ts",
+    "deploy:token": "npx hardhat run --network localhost deploy/1_KannaToken_deploy.ts",
     "deploy:treasurer": "npx hardhat run --network localhost deploy/2_KannaTreasurer_deploy.ts",
     "deploy:yield": "npx hardhat run --network localhost deploy/3_KannaYield_deploy.ts",
     "deploy:presale": "npx hardhat run --network localhost deploy/4_KannaPreSale_deploy.ts",
