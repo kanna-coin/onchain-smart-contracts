@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/access/AccessControl.sol";
+import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 import {IKannaToken} from "./interfaces/IKannaToken.sol";
 
@@ -18,38 +17,33 @@ import {IKannaToken} from "./interfaces/IKannaToken.sol";
     @custom:github  https://github.com/kanna-coin
     @custom:site https://kannacoin.io
     */
-contract ERC20KannaToken is IKannaToken, ERC20, Ownable, AccessControl {
-    using SafeMath for uint256;
-    using Address for address;
+contract KannaToken is IKannaToken, ERC20, Ownable, AccessControl {
 
     bytes32 private constant NO_TRANSFER_FEE = keccak256("NO_TRANSFER_FEE");
     bytes32 private constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
-    uint256 private immutable initialSupply = 10000000 * 10**decimals();
+    uint256 private immutable initialSupply = 10_000_000 * 10**decimals();
 
-    uint256 private immutable maxSupply = 19000000 * 10**decimals();
+    uint256 private immutable maxSupply = 19_000_000 * 10**decimals();
 
-    uint256 private constant transactionFeeDecimalAdjust = 1000 * 100;
-    uint256 private transactionFee = 1000;
+    uint256 private constant TRANSFER_FEE_DIVISOR = 100_00;
+    uint256 private transferFee = 1_00;
 
-    address private kannaDeployerAddress;
-    address private treasuryAddress = address(0);
+    address private transferFeeRecipient;
+    address private treasury = address(0);
 
-    event TransactionFee(
+    event TransferFee(
         address from,
         address to,
         uint256 amount,
-        uint indexed date,
         uint fee
     );
 
-    event ChangeOfFee(
+    event TransferFeeUpdate(
         address indexed votingContractAddress,
-        uint date,
         uint newFee
     );
 
-    event Minted(address signer, address to, uint256 amount, uint indexed date);
 
     /**
      * @dev Initializes KNN Token (KNN) with {initialSupply} to
@@ -57,10 +51,17 @@ contract ERC20KannaToken is IKannaToken, ERC20, Ownable, AccessControl {
      *
      * Emits {Minted} and {Transfer} events.
      */
-    constructor(address deployerAddress) ERC20("KNN Token", "KNN") {
-        _grantRole(NO_TRANSFER_FEE, deployerAddress);
+    constructor(address _transferFeeRecipient) ERC20("KNN Token", "KNN") {
+        _grantRole(NO_TRANSFER_FEE, _transferFeeRecipient);
 
-        kannaDeployerAddress = deployerAddress;
+        transferFeeRecipient = _transferFeeRecipient;
+    }
+    
+    function updateTransferFeeRecipient(address newRecipient) external onlyOwner {
+        _revokeRole(NO_TRANSFER_FEE, transferFeeRecipient);
+        _grantRole(NO_TRANSFER_FEE, newRecipient);
+
+        transferFeeRecipient = newRecipient;
     }
 
     /**
@@ -69,27 +70,20 @@ contract ERC20KannaToken is IKannaToken, ERC20, Ownable, AccessControl {
      * Emits {RoleGranted} and {Transfer} events.
      * May revoke roles from provious contract
      */
-    function initializeTreasury(address treasuryContractAddress)
-        external
-        onlyOwner
-    {
-        if (treasuryAddress != address(0)) {
-            _revokeRole(NO_TRANSFER_FEE, treasuryAddress);
+    function initializeTreasury() external onlyOwner {
+        require(treasury != address(0), "Treasury not set");
+        require(totalSupply() == 0, "Treasury already initialized");
+        _mint(treasury, initialSupply);
+        // ℹ️ Removed the `Minted` address, see note above.
+    }
+    
+    function updateTreasury(address newTreasury) external onlyOwner {
+        if (treasury != address(0)) {
+            _revokeRole(NO_TRANSFER_FEE, treasury);
         }
 
-        _grantRole(NO_TRANSFER_FEE, treasuryContractAddress);
-        treasuryAddress = treasuryContractAddress;
-
-        if (totalSupply() > 0) return;
-
-        _mint(treasuryAddress, initialSupply);
-
-        emit Minted(
-            address(msg.sender),
-            treasuryAddress,
-            initialSupply,
-            block.timestamp
-        );
+        _grantRole(NO_TRANSFER_FEE, newTreasury);
+        treasury = newTreasury;
     }
 
     /**
@@ -103,92 +97,34 @@ contract ERC20KannaToken is IKannaToken, ERC20, Ownable, AccessControl {
      *
      * - must be a  multisig wallet or owner (requires owner)
      */
-    function updateTransactionFee(uint fee) external onlyOwner {
-        require(fee >= 0, "Invalid fee");
-
-        emit ChangeOfFee(address(msg.sender), block.timestamp, fee);
-        transactionFee = fee;
+    function updateTransferFee(uint256 newFee) external onlyOwner {
+        require(fee >= 0 && newFee <= TRANSFER_FEE_DIVISOR, "Invalid fee");
+        transferFee = newFee;
+        
+        emit TransferFeeUpdate(address(msg.sender), newFee);
     }
 
-    /**
-     * @dev See {IERC20-transferFrom}.
-     *
-     *  May emit {TransactionFee} event.
-     * Requirements:
-     *
-     * - `to` cannot be the zero address.
-     * - the caller must have a balance of at least `amount`.
-     */
-    function transferFrom(
-        address from,
-        address to,
-        uint256 amount
-    ) public override(ERC20, IKannaToken) returns (bool) {
-        require(amount > 0, "Invalid amount");
+    function _transfer(address from, address to, uint256 amount) internal override {
+        uint256 fee = calculateTransferFee(from, to, amount);
 
-        uint256 finalAmount = applyTransactionFee(from, to, amount);
-
-        return super.transferFrom(from, to, finalAmount);
+        // ℹ️ The line below can be wrapped in an `unchecked { }` block if `updateTransferFee` can ensure that the fee is never higher than 100%.
+        super._transfer(from, to, amount - fee);
+        // Saves up some gas if fee is zero
+        if (fee > 0) {
+            super._transfer(from, kannaDeployerAddress, fee);
+        }
+        // ℹ️ No need for an extra event. If you want to calculate the total of fees paid, you can get all token transfers made to the deployer address.
     }
-
-    /**
-     * @notice Apply transaction fee (when applicable)
-     *
-     * @dev requires {transactionFee} to be set above 0
-     * otherwise, fees are ignored.
-     *
-     * see {updateTransactionFee}
-     */
-    function applyTransactionFee(
-        address from,
-        address to,
-        uint256 amount
-    ) private returns (uint256) {
-        if (
-            transactionFee == 0 ||
-            hasRole(NO_TRANSFER_FEE, from) ||
-            hasRole(NO_TRANSFER_FEE, to)
-        ) {
-            return amount;
+    
+    function calculateTransferFee(address from, address to, uint256 amount) internal view returns (uint256) {
+        if (transferFee == 0 || hasRole(NO_TRANSFER_FEE, from) || hasRole(NO_TRANSFER_FEE, to)) {
+            return 0;
         }
 
-        uint256 feeAmount = amount.mul(transactionFee).div(
-            transactionFeeDecimalAdjust
-        );
-        require(feeAmount > 0, "Invalid fee amount");
+        uint256 fee = amount.mul(transferFee).div(TRANSFER_FEE_DIVISOR);
+        require(fee > 0, "Transfer amount too low");
 
-        uint256 finalAmount = amount.sub(feeAmount);
-        super._transfer(from, kannaDeployerAddress, feeAmount);
-
-        emit TransactionFee(from, to, amount, block.timestamp, feeAmount);
-
-        return finalAmount;
-    }
-
-    /**
-     * @dev See {IERC20-transfer}.
-     *
-     *  May emit {TransactionFee} event.
-     * Requirements:
-     *
-     * - `to` cannot be the zero address.
-     * - the caller must have a balance of at least `amount`.
-     */
-    function transfer(address to, uint256 amount)
-        public
-        virtual
-        override(ERC20, IERC20)
-        returns (bool)
-    {
-        require(amount > 0, "Invalid amount");
-
-        address owner = address(msg.sender);
-
-        uint256 finalAmount = applyTransactionFee(owner, to, amount);
-
-        super._transfer(owner, to, finalAmount);
-
-        return true;
+        return fee;
     }
 
     /** @dev Creates `amount` tokens and assigns them to `address(msg.sender)`, increasing
@@ -203,26 +139,12 @@ contract ERC20KannaToken is IKannaToken, ERC20, Ownable, AccessControl {
      * - must be a `MINTER_ROLE` contract
      * - totalSupply should not exceed {maxSupply}
      */
-    function mint(uint256 amount)
-        external
-        override(IKannaToken)
-        onlyRole(MINTER_ROLE)
-    {
+    function mint(uint256 amount) external override onlyRole(MINTER_ROLE) {
         require(treasuryAddress != address(0), "No treasury");
         require(amount > 0, "Invalid Amount");
-        require(
-            amount.add(super.totalSupply()) <= maxSupply,
-            "Maximum Supply reached!"
-        );
+        require(totalSupply() + amount <= maxSupply, "Maximum Supply reached!");
 
         _mint(treasuryAddress, amount);
-
-        emit Minted(
-            address(msg.sender),
-            treasuryAddress,
-            amount,
-            block.timestamp
-        );
     }
 
     /**
@@ -232,8 +154,8 @@ contract ERC20KannaToken is IKannaToken, ERC20, Ownable, AccessControl {
      *
      * - must be a contract owner (same of deployer address initially)
      */
-    function noTransferFee(address contractAddress) external onlyOwner {
-        _grantRole(NO_TRANSFER_FEE, contractAddress);
+    function noTransferFee(address user) external onlyOwner {
+        _grantRole(NO_TRANSFER_FEE, user);
     }
 
     /**
@@ -245,11 +167,14 @@ contract ERC20KannaToken is IKannaToken, ERC20, Ownable, AccessControl {
      *
      * - must be a multisig or owner (requires onlyOwner)
      */
-    function addMinter(address minterAddress) external onlyOwner {
-        _grantRole(MINTER_ROLE, minterAddress);
+    function addMinter(address newMinter) external onlyOwner {
+        _grantRole(MINTER_ROLE, newMinter);
 
         if (hasRole(NO_TRANSFER_FEE, msg.sender)) return;
 
-        _grantRole(NO_TRANSFER_FEE, minterAddress);
+        _grantRole(NO_TRANSFER_FEE, newMinter);
+    }
+    function removeMinter(address minter) external onlyOwner {
+        _revokeRole(MINTER_ROLE, minter);
     }
 }
