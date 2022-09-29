@@ -95,7 +95,7 @@ contract KannaYield is Ownable {
             return rewardPerTokenStored;
         }
 
-        return rewardPerTokenStored + (((lastPaymentEvent() - lastUpdateTime) * rewardRate * 1e18) / (knnYieldPool));
+        return rewardPerTokenStored + (((lastPaymentEvent() - lastUpdateTime) * rewardRate * 1e18) / knnYieldPool);
     }
 
     function calculateReward(address holder) public view returns (uint256) {
@@ -228,7 +228,9 @@ contract KannaYield is Ownable {
         if (holder != address(0)) {
             uint256 init = started[msg.sender];
 
-            if (init < poolStartDate && rawBalances[msg.sender] > 0) started[msg.sender] = poolStartDate;
+            if (init < poolStartDate && rawBalances[msg.sender] > 0) {
+                started[msg.sender] = poolStartDate;
+            }
 
             earned[holder] = calculateReward(holder);
             holderRewardPerTokenPaid[holder] = rewardPerTokenStored;
