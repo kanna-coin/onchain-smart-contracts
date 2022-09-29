@@ -87,18 +87,9 @@ contract KannaPreSale is Ownable {
     function buyTokens(uint256 amountOfTokens) external payable {
         require(available, "PreSale unavailable");
         require(tokenQuotation > 0, "Quotation unavailable");
-        require(
-            msg.value == amountOfTokens * tokenQuotation,
-            "Incorrect amount in ETH"
-        );
-        require(
-            knnToken.balanceOf(address(this)) >= amountOfTokens,
-            "Insufficient supply!"
-        );
-        require(
-            knnToken.transfer(msg.sender, amountOfTokens),
-            "Transaction reverted!"
-        );
+        require(msg.value == amountOfTokens * tokenQuotation, "Incorrect amount in ETH");
+        require(knnToken.balanceOf(address(this)) >= amountOfTokens, "Insufficient supply!");
+        require(knnToken.transfer(msg.sender, amountOfTokens), "Transaction reverted!");
 
         tokensSold += amountOfTokens;
 

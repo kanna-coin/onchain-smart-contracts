@@ -15,8 +15,7 @@ import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
     @custom:site https://kannacoin.io
     */
 contract KannaToken is ERC20, Ownable, AccessControl {
-    bytes32 public constant NO_TRANSFER_FEE_ROLE =
-        keccak256("NO_TRANSFER_FEE_ROLE");
+    bytes32 public constant NO_TRANSFER_FEE_ROLE = keccak256("NO_TRANSFER_FEE_ROLE");
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
     uint256 public immutable INITIAL_SUPPLY = 10_000_000 * 10**decimals();
@@ -43,10 +42,7 @@ contract KannaToken is ERC20, Ownable, AccessControl {
         transferFeeRecipient = _transferFeeRecipient;
     }
 
-    function updateTransferFeeRecipient(address newRecipient)
-        external
-        onlyOwner
-    {
+    function updateTransferFeeRecipient(address newRecipient) external onlyOwner {
         _revokeRole(NO_TRANSFER_FEE_ROLE, transferFeeRecipient);
         _grantRole(NO_TRANSFER_FEE_ROLE, newRecipient);
 
@@ -114,11 +110,7 @@ contract KannaToken is ERC20, Ownable, AccessControl {
         address to,
         uint256 amount
     ) internal view returns (uint256) {
-        if (
-            transferFee == 0 ||
-            hasRole(NO_TRANSFER_FEE_ROLE, from) ||
-            hasRole(NO_TRANSFER_FEE_ROLE, to)
-        ) {
+        if (transferFee == 0 || hasRole(NO_TRANSFER_FEE_ROLE, from) || hasRole(NO_TRANSFER_FEE_ROLE, to)) {
             return 0;
         }
 
@@ -143,10 +135,7 @@ contract KannaToken is ERC20, Ownable, AccessControl {
     function mint(uint256 amount) external onlyRole(MINTER_ROLE) {
         require(treasury != address(0), "No treasury");
         require(amount > 0, "Invalid Amount");
-        require(
-            totalSupply() + amount <= MAX_SUPPLY,
-            "Maximum Supply reached!"
-        );
+        require(totalSupply() + amount <= MAX_SUPPLY, "Maximum Supply reached!");
 
         _mint(treasury, amount);
     }

@@ -17,12 +17,7 @@ contract KannaTreasurer is ITreasurer, Ownable {
     IKannaToken private immutable knnToken;
     address private KannaTokenAddress;
 
-    event Release(
-        address signer,
-        address to,
-        uint256 amount,
-        uint256 indexed date
-    );
+    event Release(address signer, address to, uint256 amount, uint256 indexed date);
 
     constructor(address kannaTokenAddress) {
         knnToken = IKannaToken(kannaTokenAddress);
@@ -39,10 +34,7 @@ contract KannaTreasurer is ITreasurer, Ownable {
      *
      * - contractAddress must be a smart contract
      */
-    function release(address contractAddress, uint256 amount)
-        external
-        onlyOwner
-    {
+    function release(address contractAddress, uint256 amount) external onlyOwner {
         knnToken.transfer(contractAddress, amount);
 
         emit Release(msg.sender, contractAddress, amount, block.timestamp);
