@@ -1,7 +1,6 @@
 import "@nomiclabs/hardhat-waffle";
 import { ethers } from "hardhat";
 import {
-  KannaTreasurer__factory,
   KannaTreasurer,
   KannaToken,
   KannaYield__factory,
@@ -31,7 +30,7 @@ const instance = async (
 
   const rewards = parse1e18(400000);
 
-  await knnToken.noTransferFee(knnYield.address);
+  await knnToken.addNoTransferFee(knnYield.address);
   await knnTreasurer.release(knnYield.address, rewards);
 
   return knnYield;

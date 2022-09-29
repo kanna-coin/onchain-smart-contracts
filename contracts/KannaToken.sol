@@ -4,7 +4,6 @@ pragma solidity ^0.8.4;
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 /** @title KNN Token
     @author KANNA
@@ -16,7 +15,8 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
     @custom:site https://kannacoin.io
     */
 contract KannaToken is ERC20, Ownable, AccessControl {
-    bytes32 public constant NO_TRANSFER_FEE = keccak256("NO_TRANSFER_FEE");
+    bytes32 public constant NO_TRANSFER_FEE_ROLE =
+        keccak256("NO_TRANSFER_FEE_ROLE");
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
     uint256 public immutable INITIAL_SUPPLY = 10_000_000 * 10**decimals();
@@ -27,9 +27,10 @@ contract KannaToken is ERC20, Ownable, AccessControl {
 
     uint256 public transferFee = 1_00;
     address public transferFeeRecipient;
-    address public treasury = address(0);
+    address public treasury;
 
-    event TransferFeeUpdate(address indexed sender, uint newFee);
+    event TransferFeeUpdate(address indexed sender, uint256 newFee);
+    event TreasuryUpdate(address indexed sender, address treasury);
 
     /**
      * @dev Initializes KNN Token (KNN)
@@ -37,7 +38,7 @@ contract KannaToken is ERC20, Ownable, AccessControl {
      * Emits {Minted} and {Transfer} events.
      */
     constructor(address _transferFeeRecipient) ERC20("KNN Token", "KNN") {
-        _grantRole(NO_TRANSFER_FEE, _transferFeeRecipient);
+        _grantRole(NO_TRANSFER_FEE_ROLE, _transferFeeRecipient);
 
         transferFeeRecipient = _transferFeeRecipient;
     }
@@ -46,8 +47,8 @@ contract KannaToken is ERC20, Ownable, AccessControl {
         external
         onlyOwner
     {
-        _revokeRole(NO_TRANSFER_FEE, transferFeeRecipient);
-        _grantRole(NO_TRANSFER_FEE, newRecipient);
+        _revokeRole(NO_TRANSFER_FEE_ROLE, transferFeeRecipient);
+        _grantRole(NO_TRANSFER_FEE_ROLE, newRecipient);
 
         transferFeeRecipient = newRecipient;
     }
@@ -66,11 +67,13 @@ contract KannaToken is ERC20, Ownable, AccessControl {
 
     function updateTreasury(address newTreasury) external onlyOwner {
         if (treasury != address(0)) {
-            _revokeRole(NO_TRANSFER_FEE, treasury);
+            _revokeRole(NO_TRANSFER_FEE_ROLE, treasury);
         }
 
-        _grantRole(NO_TRANSFER_FEE, newTreasury);
+        _grantRole(NO_TRANSFER_FEE_ROLE, newTreasury);
         treasury = newTreasury;
+
+        emit TreasuryUpdate(msg.sender, treasury);
     }
 
     /**
@@ -85,7 +88,7 @@ contract KannaToken is ERC20, Ownable, AccessControl {
      * - must be a  multisig wallet or owner (requires owner)
      */
     function updateTransferFee(uint256 newFee) external onlyOwner {
-        // require(newFee >= 0 && newFee <= TRANSFER_FEE_DIVISOR, "Invalid fee");
+        require(newFee >= 0 && newFee <= TRANSFER_FEE_DIVISOR, "Invalid fee");
         transferFee = newFee;
 
         emit TransferFeeUpdate(address(msg.sender), newFee);
@@ -98,13 +101,12 @@ contract KannaToken is ERC20, Ownable, AccessControl {
     ) internal override {
         uint256 fee = calculateTransferFee(from, to, amount);
 
-        // The line below can be wrapped in an `unchecked { }` block if `updateTransferFee` can ensure that the fee is never higher than 100%.
         super._transfer(from, to, amount - fee);
+
         // Saves up some gas if fee is zero
         if (fee > 0) {
             super._transfer(from, transferFeeRecipient, fee);
         }
-        // No need for an extra event. If you want to calculate the total of fees paid, you can get all token transfers made to the deployer address.
     }
 
     function calculateTransferFee(
@@ -114,8 +116,8 @@ contract KannaToken is ERC20, Ownable, AccessControl {
     ) internal view returns (uint256) {
         if (
             transferFee == 0 ||
-            hasRole(NO_TRANSFER_FEE, from) ||
-            hasRole(NO_TRANSFER_FEE, to)
+            hasRole(NO_TRANSFER_FEE_ROLE, from) ||
+            hasRole(NO_TRANSFER_FEE_ROLE, to)
         ) {
             return 0;
         }
@@ -156,8 +158,19 @@ contract KannaToken is ERC20, Ownable, AccessControl {
      *
      * - must be a contract owner
      */
-    function noTransferFee(address user) external onlyOwner {
-        _grantRole(NO_TRANSFER_FEE, user);
+    function addNoTransferFee(address user) external onlyOwner {
+        _grantRole(NO_TRANSFER_FEE_ROLE, user);
+    }
+
+    /**
+     * @dev May emit a {RoleGranted} event.
+     *
+     * Requirements:
+     *
+     * - must be a contract owner
+     */
+    function removeNoTransferFee(address user) external onlyOwner {
+        _revokeRole(NO_TRANSFER_FEE_ROLE, user);
     }
 
     /**

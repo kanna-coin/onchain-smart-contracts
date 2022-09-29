@@ -25,13 +25,14 @@ const instance = async (
 
   await knnPreSale.deployed();
 
-  const preSaleAmount = parse1e18(50000);
+  const preSaleAmount = parse1e18(350000);
 
-  await knnToken.noTransferFee(knnPreSale.address);
+  await knnToken.addNoTransferFee(knnPreSale.address);
 
   await knnTreasurer.release(knnPreSale.address, preSaleAmount);
 
   await knnPreSale.updateQuotation("1");
+  await knnPreSale.updateAvailablity(true);
 
   return knnPreSale;
 };

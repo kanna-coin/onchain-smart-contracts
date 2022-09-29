@@ -10,11 +10,6 @@ import getKnnPreSale from "../../src/infrastructure/factories/KannaPreSaleFactor
 chai.use(chaiAsPromised);
 const { expect } = chai;
 
-const parseKNN = (bigNumberish: any): number =>
-  parseInt(ethers.utils.formatEther(bigNumberish).split(".")[0], 10);
-
-const parse1e18 = (integer: number): string => `${integer}000000000000000000`;
-
 describe("KNN PreSale", () => {
   let signers: SignerWithAddress[];
   let knnToken: KannaToken;
@@ -62,12 +57,31 @@ describe("KNN PreSale", () => {
       const tokensToSell = await knnToken.balanceOf(knnPreSale.address);
       const balance = parseInt(tokensToSell._hex, 16);
 
-      expect(balance).to.lessThan(5e22);
+      expect(balance).to.lessThan(3.5e23);
+    });
+
+    it("should not buy KNN tokens when presale is unavailable", async () => {
+      const [deployerWallet] = signers;
+
+      await network.provider.send("hardhat_setBalance", [
+        deployerWallet.address,
+        "0xFFFFFFFFFFFFFFFF",
+      ]);
+      await network.provider.send("evm_mine");
+
+      await knnPreSale.updateAvailablity(false);
+
+      const options = { value: ethers.utils.parseEther("5.001001999238") };
+
+      const error = await knnPreSale
+        .buyTokens(ethers.utils.parseEther("5.001001999238"), options)
+        .then(() => null)
+        .catch((e) => e);
+
+      expect(error).to.not.null;
     });
 
     it("should validate ETH amount", async () => {
-      const [deployerWallet] = signers;
-
       const options = { value: ethers.utils.parseEther("0.005") };
       const error = await knnPreSale
         .buyTokens(ethers.utils.parseEther("5.001001999238"), options)

@@ -1,12 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/utils/Address.sol";
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "hardhat/console.sol";
-
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {IKannaToken} from "./interfaces/IKannaToken.sol";
 
 /** @title KNN PreSale
@@ -15,31 +10,35 @@ import {IKannaToken} from "./interfaces/IKannaToken.sol";
     @custom:github  https://github.com/kanna-coin
     @custom:site https://kannacoin.io
 */
-contract KannaPreSale is ReentrancyGuard, Ownable {
-    using SafeMath for uint256;
-    using Address for address;
-    IKannaToken private immutable knnToken;
-    address private KannaTokenAddress;
-    uint256 private tokensSold;
+contract KannaPreSale is Ownable {
+    IKannaToken public immutable knnToken;
+    uint256 public tokensSold;
+    uint256 public tokenQuotation;
+    bool public available;
 
-    uint256 private tokenQuotation;
+    event Purchase(address indexed holder, uint256 amount, uint256 unitPrice);
+    event QuotationUpdate(address indexed sender, uint256 from, uint256 to);
+    event Withdraw(address indexed recipient, uint256 amt);
 
-    event Purchase(
-        address holder,
-        uint256 amount,
-        uint256 unitPrice,
-        uint256 indexed date
-    );
+    constructor(address _knnToken) {
+        knnToken = IKannaToken(_knnToken);
+    }
 
-    event ChangeOfQuotation(
-        address signer,
-        uint256 from,
-        uint256 to,
-        uint256 indexed date
-    );
+    /**
+     * @dev Retrieves ETH from sold tokens to DAO initiatives
+     */
+    function withdraw(address payable recipient) external onlyOwner {
+        uint256 amount = address(this).balance;
+        recipient.transfer(amount);
 
-    constructor(address kannaTokenAddress) {
-        knnToken = IKannaToken(kannaTokenAddress);
+        emit Withdraw(recipient, amount);
+    }
+
+    /**
+     * @dev Retrieves ETH from sold tokens to DAO initiatives
+     */
+    function updateAvailablity(bool _available) external onlyOwner {
+        available = _available;
     }
 
     /**
@@ -60,19 +59,14 @@ contract KannaPreSale is ReentrancyGuard, Ownable {
     /**
      * @dev Update tokenQuotation to a new value in ETH
      *
-     * Emits a {ChangeOfQuotation} event.
+     * Emits a {QuotationUpdate} event.
      *
      * @param targetQuotation unit price in ETH
      *
      */
     function updateQuotation(uint256 targetQuotation) external onlyOwner {
         require(targetQuotation > 0, "Invalid quotation");
-        emit ChangeOfQuotation(
-            msg.sender,
-            tokenQuotation,
-            targetQuotation,
-            block.timestamp
-        );
+        emit QuotationUpdate(msg.sender, tokenQuotation, targetQuotation);
 
         tokenQuotation = targetQuotation;
     }
@@ -90,11 +84,12 @@ contract KannaPreSale is ReentrancyGuard, Ownable {
      * - must transfer the correct amount of ether according to
      *   given token amount.
      */
-    function buyTokens(uint256 amountOfTokens) external payable nonReentrant {
+    function buyTokens(uint256 amountOfTokens) external payable {
+        require(available, "PreSale unavailable");
         require(tokenQuotation > 0, "Quotation unavailable");
         require(
-            msg.value == amountOfTokens.mul(tokenQuotation),
-            "Incorrect amount in eth"
+            msg.value == amountOfTokens * tokenQuotation,
+            "Incorrect amount in ETH"
         );
         require(
             knnToken.balanceOf(address(this)) >= amountOfTokens,
@@ -107,11 +102,6 @@ contract KannaPreSale is ReentrancyGuard, Ownable {
 
         tokensSold += amountOfTokens;
 
-        emit Purchase(
-            msg.sender,
-            amountOfTokens,
-            tokenQuotation,
-            block.timestamp
-        );
+        emit Purchase(msg.sender, amountOfTokens, tokenQuotation);
     }
 }

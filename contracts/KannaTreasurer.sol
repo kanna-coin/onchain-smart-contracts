@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/utils/Address.sol";
-import "hardhat/console.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 import {IKannaToken} from "./interfaces/IKannaToken.sol";
 import {ITreasurer} from "./interfaces/ITreasurer.sol";
@@ -16,7 +14,6 @@ import {ITreasurer} from "./interfaces/ITreasurer.sol";
     @custom:site https://kannacoin.io
     */
 contract KannaTreasurer is ITreasurer, Ownable {
-    using Address for address;
     IKannaToken private immutable knnToken;
     address private KannaTokenAddress;
 
