@@ -35,7 +35,9 @@ contract KannaPreSale is Ownable {
     }
 
     /**
-     * @dev Retrieves ETH from sold tokens to DAO initiatives
+     * @dev Update Pre-Sale availability
+     *
+     * @param _available (true: available | false: unavailable)
      */
     function updateAvailablity(bool _available) external onlyOwner {
         available = _available;
