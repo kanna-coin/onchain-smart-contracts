@@ -25,7 +25,7 @@ contract KannaYield is Ownable {
     address public immutable feeRecipient;
 
     uint256 public constant feeDecimalAdjust = 100_00;
-    uint256 public constant reducedFee = 1_0;
+    uint256 public constant reducedFee = 10;
 
     uint256 public knnYieldPool;
     uint256 public knnYieldTotalFee;
@@ -35,7 +35,7 @@ contract KannaYield is Ownable {
     uint256 public lastUpdateTime;
     uint256 public rewardPerTokenStored;
 
-    uint256[5] public tier = [0, 7 days, 30 days, 60 days, 90 days];
+    uint256[5] public tier = [1 days, 7 days, 30 days, 60 days, 90 days];
 
     mapping(address => uint256) public holderRewardPerTokenPaid;
     mapping(address => uint256) public earned;
@@ -52,15 +52,15 @@ contract KannaYield is Ownable {
         fees[tier[1]] = 500;
         fees[tier[2]] = 250;
         fees[tier[3]] = 150;
-        fees[tier[4]] = reducedFee;
+        fees[tier[4]] = 100;
     }
 
     function feeOf(uint256 subscriptionDuration) private view returns (uint256) {
         if (block.timestamp >= endDate) return reducedFee;
 
-        for (uint256 i = 1; i < tier.length; i++) {
+        for (uint256 i = 0; i < tier.length; i++) {
             if (subscriptionDuration < tier[i]) {
-                return fees[tier[i - 1]];
+                return fees[tier[i]];
             }
         }
 

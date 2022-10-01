@@ -9,11 +9,6 @@ import getKnnTreasurer from "../../src/infrastructure/factories/KannaTreasurerFa
 chai.use(chaiAsPromised);
 const { expect } = chai;
 
-const parseKNN = (bigNumberish: any): number =>
-  parseInt(ethers.utils.formatEther(bigNumberish).split(".")[0], 10);
-
-const parse1e18 = (integer: number): string => `${integer}000000000000000000`;
-
 describe("KNN Treasurer", () => {
   let knnTreasurer: KannaTreasurer;
   let signers: SignerWithAddress[];
