@@ -977,7 +977,7 @@ describe("KNN Yield⬆", async () => {
       expect(balanceAmount).to.eq(maxValueAfterFees);
     });
 
-    it("should validate Tier REDUCED FEE (plus Subscription FEE) 0.1% + 0.2% when after the finished", async () => {
+    it("should validate Tier REDUCED FEE (plus Subscription FEE) 0.1% + 0.2% when after finished", async () => {
       const rewardsDuration = 180 * 24 * 60 ** 2;
 
       const amount = 1000000;
