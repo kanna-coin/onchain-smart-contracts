@@ -11,12 +11,8 @@ const { expect } = chai;
 
 const parse1e18 = (integer: number): string => `${integer}000000000000000000`;
 
-const parseKNN = (bigNumberish: any): number => {
-  const parts = ethers.utils.formatEther(bigNumberish).split(".");
-  return parseFloat(
-    `${parseFloat(parts[0])}.${parseFloat(parts[1]).toFixed(2)}`
-  );
-};
+const parseKNN = (bigNumberish: any): number =>
+  parseInt(ethers.utils.formatEther(bigNumberish).split(".")[0], 10);
 
 describe("KNN Token", () => {
   let knnToken: KannaToken;
@@ -231,7 +227,7 @@ describe("KNN Token", () => {
       await deployContracts();
     });
 
-    it("should apply NO FEE for a transfer within a NO_TRANSFER_FEE_ROLE granted wallet", async () => {
+    it("should NOT-apply-FEE for a transfer within a NO_TRANSFER_FEE_ROLE granted wallet", async () => {
       await knnToken.updateTransferFee("500");
 
       const [deployerWallet, wallet1, wallet2] = signers;
@@ -277,14 +273,15 @@ describe("KNN Token", () => {
         wallet1
       )) as KannaToken;
 
-      await knnToken.addNoTransferFee(wallet2.address);
+      await knnToken.removeNoTransferFee(wallet2.address);
+      await knnToken.removeNoTransferFee(wallet1.address);
       await scopedToken.transfer(wallet2.address, parse1e18(20000));
 
       const wallet2BalanceHex = await knnToken.balanceOf(wallet2.address);
 
       const balance = parseInt(wallet2BalanceHex._hex, 16);
 
-      expect(balance).to.eq(2e22);
+      expect(balance).to.eq(1.9e22);
     });
   });
 
@@ -311,6 +308,39 @@ describe("KNN Token", () => {
         .catch((e) => e);
 
       expect(result?.message).to.not.null;
+    });
+  });
+
+  describe(".updateTransferFeeRecipient", async () => {
+    beforeEach(async () => {
+      await deployContracts();
+    });
+
+    it("should update the transferFee recipient", async () => {
+      const amount = 1500;
+      const [deployerWallet, walletFrom, walletTo, newFeeReicipientWallet] =
+        signers;
+      await knnToken.updateTransferFeeRecipient(newFeeReicipientWallet.address);
+      const knnTreasurer = await getKnnTreasurer(deployerWallet, knnToken);
+      await knnTreasurer.release(walletFrom.address, parse1e18(amount));
+
+      const scopedToken: KannaToken = (await ethers.getContractAt(
+        "KannaToken",
+        knnToken.address,
+        walletFrom
+      )) as KannaToken;
+
+      await scopedToken.transfer(walletTo.address, parse1e18(amount));
+
+      const toBalance = await knnToken.balanceOf(walletTo.address);
+      const feeRecipientBalance = await knnToken.balanceOf(
+        newFeeReicipientWallet.address
+      );
+      const receivedAmount = parseKNN(toBalance);
+      const feeBalance = parseKNN(feeRecipientBalance);
+
+      expect(amount * 0.99).to.eq(receivedAmount);
+      expect(amount * 0.01).to.eq(feeBalance);
     });
   });
 });

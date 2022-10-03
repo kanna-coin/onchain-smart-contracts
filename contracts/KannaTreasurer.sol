@@ -15,7 +15,6 @@ import {ITreasurer} from "./interfaces/ITreasurer.sol";
     */
 contract KannaTreasurer is ITreasurer, Ownable {
     IKannaToken private immutable knnToken;
-    address private KannaTokenAddress;
 
     event Release(address signer, address to, uint256 amount, uint256 indexed date);
 
@@ -28,15 +27,12 @@ contract KannaTreasurer is ITreasurer, Ownable {
      *
      * Addressed to be used by DAO initiatives
      *
-     * @param contractAddress contract to transfer tokens from treasury
+     * @param to contract to transfer tokens from treasury
      *
-     * Requirements:
-     *
-     * - contractAddress must be a smart contract
      */
-    function release(address contractAddress, uint256 amount) external onlyOwner {
-        knnToken.transfer(contractAddress, amount);
+    function release(address to, uint256 amount) external onlyOwner {
+        knnToken.transfer(to, amount);
 
-        emit Release(msg.sender, contractAddress, amount, block.timestamp);
+        emit Release(msg.sender, to, amount, block.timestamp);
     }
 }
