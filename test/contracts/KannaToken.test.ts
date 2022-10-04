@@ -222,12 +222,12 @@ describe("KNN Token", () => {
     });
   });
 
-  describe(".(add)/(remove) NoTransferFee", async () => {
+  describe(".(add)/(remove) TransferFeeExempt", async () => {
     beforeEach(async () => {
       await deployContracts();
     });
 
-    it("should NOT-apply-FEE for a transfer within a NO_TRANSFER_FEE_ROLE granted wallet", async () => {
+    it("should NOT-apply-FEE for a transfer within a TRANSFER_FEE_EXEMPT granted wallet", async () => {
       await knnToken.updateTransferFee("500");
 
       const [deployerWallet, wallet1, wallet2] = signers;
@@ -245,7 +245,7 @@ describe("KNN Token", () => {
         wallet1
       )) as KannaToken;
 
-      await knnToken.addNoTransferFee(wallet2.address);
+      await knnToken.addTransferFeeExempt(wallet2.address);
       await scopedToken.transfer(wallet2.address, parse1e18(20000));
 
       const wallet2BalanceHex = await knnToken.balanceOf(wallet2.address);
@@ -255,7 +255,7 @@ describe("KNN Token", () => {
       expect(balance).to.eq(2e22);
     });
 
-    it("should apply FEE for a transfer with a NO_TRANSFER_FEE_ROLE granted wallet", async () => {
+    it("should apply FEE for a transfer with a TRANSFER_FEE_EXEMPT granted wallet", async () => {
       await knnToken.updateTransferFee("500");
 
       const [deployerWallet, wallet1, wallet2] = signers;
@@ -273,8 +273,8 @@ describe("KNN Token", () => {
         wallet1
       )) as KannaToken;
 
-      await knnToken.removeNoTransferFee(wallet2.address);
-      await knnToken.removeNoTransferFee(wallet1.address);
+      await knnToken.removeTransferFeeExempt(wallet2.address);
+      await knnToken.removeTransferFeeExempt(wallet1.address);
       await scopedToken.transfer(wallet2.address, parse1e18(20000));
 
       const wallet2BalanceHex = await knnToken.balanceOf(wallet2.address);

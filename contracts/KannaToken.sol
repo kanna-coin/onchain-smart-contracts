@@ -15,14 +15,15 @@ import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
     @custom:site https://kannacoin.io
     */
 contract KannaToken is ERC20, Ownable, AccessControl {
-    bytes32 public constant NO_TRANSFER_FEE_ROLE = keccak256("NO_TRANSFER_FEE_ROLE");
+    bytes32 public constant TRANSFER_FEE_EXEMPT_ROLE = keccak256("TRANSFER_FEE_EXEMPT_ROLE");
+
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
     uint256 public immutable INITIAL_SUPPLY = 10_000_000 * 10**decimals();
 
     uint256 public immutable MAX_SUPPLY = 19_000_000 * 10**decimals();
 
-    uint256 public constant TRANSFER_FEE_DIVISOR = 100_00;
+    uint256 public constant TRANSFER_FEE_DIVISOR = 10_000;
 
     uint256 public transferFee = 1_00;
     address public transferFeeRecipient;
@@ -37,14 +38,14 @@ contract KannaToken is ERC20, Ownable, AccessControl {
      * Emits {Minted} and {Transfer} events.
      */
     constructor(address _transferFeeRecipient) ERC20("KNN Token", "KNN") {
-        _grantRole(NO_TRANSFER_FEE_ROLE, _transferFeeRecipient);
+        _grantRole(TRANSFER_FEE_EXEMPT_ROLE, _transferFeeRecipient);
 
         transferFeeRecipient = _transferFeeRecipient;
     }
 
     function updateTransferFeeRecipient(address newRecipient) external onlyOwner {
-        _revokeRole(NO_TRANSFER_FEE_ROLE, transferFeeRecipient);
-        _grantRole(NO_TRANSFER_FEE_ROLE, newRecipient);
+        _revokeRole(TRANSFER_FEE_EXEMPT_ROLE, transferFeeRecipient);
+        _grantRole(TRANSFER_FEE_EXEMPT_ROLE, newRecipient);
 
         transferFeeRecipient = newRecipient;
     }
@@ -63,10 +64,10 @@ contract KannaToken is ERC20, Ownable, AccessControl {
 
     function updateTreasury(address newTreasury) external onlyOwner {
         if (treasury != address(0)) {
-            _revokeRole(NO_TRANSFER_FEE_ROLE, treasury);
+            _revokeRole(TRANSFER_FEE_EXEMPT_ROLE, treasury);
         }
 
-        _grantRole(NO_TRANSFER_FEE_ROLE, newTreasury);
+        _grantRole(TRANSFER_FEE_EXEMPT_ROLE, newTreasury);
         treasury = newTreasury;
 
         emit TreasuryUpdate(msg.sender, treasury);
@@ -110,7 +111,7 @@ contract KannaToken is ERC20, Ownable, AccessControl {
         address to,
         uint256 amount
     ) internal view returns (uint256) {
-        if (transferFee == 0 || hasRole(NO_TRANSFER_FEE_ROLE, from) || hasRole(NO_TRANSFER_FEE_ROLE, to)) {
+        if (transferFee == 0 || hasRole(TRANSFER_FEE_EXEMPT_ROLE, from) || hasRole(TRANSFER_FEE_EXEMPT_ROLE, to)) {
             return 0;
         }
 
@@ -147,8 +148,8 @@ contract KannaToken is ERC20, Ownable, AccessControl {
      *
      * - must be a contract owner
      */
-    function addNoTransferFee(address user) external onlyOwner {
-        _grantRole(NO_TRANSFER_FEE_ROLE, user);
+    function addTransferFeeExempt(address user) external onlyOwner {
+        _grantRole(TRANSFER_FEE_EXEMPT_ROLE, user);
     }
 
     /**
@@ -158,8 +159,8 @@ contract KannaToken is ERC20, Ownable, AccessControl {
      *
      * - must be a contract owner
      */
-    function removeNoTransferFee(address user) external onlyOwner {
-        _revokeRole(NO_TRANSFER_FEE_ROLE, user);
+    function removeTransferFeeExempt(address user) external onlyOwner {
+        _revokeRole(TRANSFER_FEE_EXEMPT_ROLE, user);
     }
 
     /**

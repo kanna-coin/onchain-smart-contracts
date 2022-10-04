@@ -27,7 +27,7 @@ const instance = async (
 
   const preSaleAmount = parse1e18(350000);
 
-  await knnToken.addNoTransferFee(knnPreSale.address);
+  await knnToken.addTransferFeeExempt(knnPreSale.address);
 
   await knnTreasurer.release(knnPreSale.address, preSaleAmount);
 
