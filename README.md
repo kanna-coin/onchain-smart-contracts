@@ -38,7 +38,7 @@ Terminal 2 `npm run test -- --network localhost`
 
 `npm run coverage`
 
-[ ] TODO: Coverage Report for methods without `evm_automine`
+- [ ] TODO: Coverage Report for methods without `evm_automine`
 
 ---
 

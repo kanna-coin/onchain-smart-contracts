@@ -108,9 +108,10 @@ contract KannaYield is Ownable {
 
         knnToken.transferFrom(msg.sender, address(this), subscriptionAmount);
 
-        uint256 finalAmount = subscriptionAmount - ((subscriptionAmount * subscriptionFee) / feeDecimalAdjust);
+        uint256 finalAmount;
 
         unchecked {
+            finalAmount = subscriptionAmount - ((subscriptionAmount * subscriptionFee) / feeDecimalAdjust);
             knnYieldTotalFee += subscriptionAmount - finalAmount;
             knnYieldPool += finalAmount;
         }
