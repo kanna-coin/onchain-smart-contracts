@@ -51,7 +51,7 @@ describe("KNN Yield⬆", async () => {
       expect(balance).to.eq(4e23);
     });
 
-    it.only("should allow user to subscribe for 200.0 KNN", async () => {
+    it("should allow user to subscribe for 200.0 KNN", async () => {
       const subscriptionAmount = "200000000000000000000000";
       const txTransfer = await knnTreasurer.release(
         anyHolder.address,
@@ -540,7 +540,7 @@ describe("KNN Yield⬆", async () => {
       );
     });
 
-    it.only("[2]should distribute a 400K rewards over a yearly duration for two holders accordingly", async () => {
+    it("[2]should distribute a 400K rewards over a yearly duration for two holders accordingly", async () => {
       const rewardsDuration = 365 * 24 * 60 ** 2;
 
       const [firstAmount, secondAmount] = [
