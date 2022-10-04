@@ -24,7 +24,7 @@ contract KannaYield is Ownable {
     IKannaToken public immutable knnToken;
     address public immutable feeRecipient;
 
-    uint256 public constant feeDecimalAdjust = 100_00;
+    uint256 public constant FEE_BASIS_POINT = 10_000;
     uint256 public constant reducedFee = 10;
 
     uint256 public knnYieldPool;
@@ -111,7 +111,7 @@ contract KannaYield is Ownable {
         uint256 finalAmount;
 
         unchecked {
-            finalAmount = subscriptionAmount - ((subscriptionAmount * subscriptionFee) / feeDecimalAdjust);
+            finalAmount = subscriptionAmount - ((subscriptionAmount * subscriptionFee) / FEE_BASIS_POINT);
             knnYieldTotalFee += subscriptionAmount - finalAmount;
             knnYieldPool += finalAmount;
         }
@@ -204,7 +204,7 @@ contract KannaYield is Ownable {
         uint256 finalAmount;
 
         unchecked {
-            finalAmount = amount - ((amount * userFee) / feeDecimalAdjust);
+            finalAmount = amount - ((amount * userFee) / FEE_BASIS_POINT);
 
             knnYieldTotalFee += amount - finalAmount;
         }

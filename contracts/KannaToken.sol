@@ -23,7 +23,7 @@ contract KannaToken is ERC20, Ownable, AccessControl {
 
     uint256 public immutable MAX_SUPPLY = 19_000_000 * 10**decimals();
 
-    uint256 public constant TRANSFER_FEE_DIVISOR = 10_000;
+    uint256 public constant FEE_BASIS_POINT = 10_000;
 
     uint256 public transferFee = 1_00;
     address public transferFeeRecipient;
@@ -85,7 +85,7 @@ contract KannaToken is ERC20, Ownable, AccessControl {
      * - must be a  multisig wallet or owner (requires owner)
      */
     function updateTransferFee(uint256 newFee) external onlyOwner {
-        require(newFee >= 0 && newFee <= TRANSFER_FEE_DIVISOR, "Invalid fee");
+        require(newFee >= 0 && newFee <= FEE_BASIS_POINT, "Invalid fee");
         transferFee = newFee;
 
         emit TransferFeeUpdate(address(msg.sender), newFee);
@@ -115,7 +115,7 @@ contract KannaToken is ERC20, Ownable, AccessControl {
             return 0;
         }
 
-        uint256 fee = (amount * transferFee) / (TRANSFER_FEE_DIVISOR);
+        uint256 fee = (amount * transferFee) / FEE_BASIS_POINT;
         require(fee > 0, "Transfer amount too low");
 
         return fee;
