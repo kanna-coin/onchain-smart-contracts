@@ -91,6 +91,13 @@ describe("KNN PreSale", () => {
       expect(error).to.not.null;
     });
 
+    it("should start with 0 sold tokens", async () => {
+      const soldHex = await knnPreSale.sold();
+      const sold = parseInt(soldHex._hex, 16);
+
+      expect(sold).to.eq(0);
+    });
+
     it("should retrieve sold tokens", async () => {
       const [deployerWallet] = signers;
 

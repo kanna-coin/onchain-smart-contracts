@@ -12,7 +12,6 @@ const { expect } = chai;
 
 const tokenContractName = "KannaToken";
 const yieldContractName = "KannaYield";
-const treasurerContractName = "KannaTreasurer";
 const yieldDefaultReward = "400000000000000000000000";
 
 const parseKNN = (bigNumberish: any): number =>
@@ -48,7 +47,30 @@ describe("KNN Yield⬆", async () => {
       const yieldBalance = await knnToken.balanceOf(knnYield.address);
       const balance = parseInt(yieldBalance._hex, 16);
 
+      const poolBalance = await knnYield.poolSize();
+      const poolSize = parseInt(poolBalance._hex, 16);
+
       expect(balance).to.eq(4e23);
+      expect(poolSize).to.eq(0);
+    });
+
+    it("should allow to re-add/extend reward", async () => {
+      const rewardsDuration = 365 * 24 * 60 ** 2;
+      const rewardAmount = "100000000000000000000000";
+
+      const [err1, err2] = await Promise.all([
+        knnYield
+          .addReward(rewardAmount, rewardsDuration)
+          .then(() => null)
+          .catch((e) => e),
+        knnYield
+          .addReward(rewardAmount, rewardsDuration)
+          .then(() => null)
+          .catch((e) => e),
+      ]);
+
+      expect(err1).to.null;
+      expect(err2).to.null;
     });
 
     it("should allow user to subscribe for 200.0 KNN", async () => {
@@ -108,7 +130,6 @@ describe("KNN Yield⬆", async () => {
       const amount = "800000000000000000000000";
       const rewardAmount = "400000000000000000000000";
 
-      // await knnToken.mint("9000000000000000000000000");
       await knnTreasurer.release(knnYield.address, rewardAmount);
       await knnTreasurer.release(firstHolder.address, amount);
       await knnTreasurer.release(secondHolder.address, amount);
