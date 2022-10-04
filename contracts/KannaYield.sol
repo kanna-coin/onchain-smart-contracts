@@ -160,10 +160,9 @@ contract KannaYield is Ownable {
 
         unchecked {
             if (balance > 0) {
+                rawBalances[msg.sender] = 0;
                 knnYieldPool -= balance;
             }
-
-            rawBalances[msg.sender] = 0;
 
             reward = earned[msg.sender];
 
