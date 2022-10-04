@@ -110,8 +110,10 @@ contract KannaYield is Ownable {
 
         uint256 finalAmount = subscriptionAmount - ((subscriptionAmount * subscriptionFee) / feeDecimalAdjust);
 
-        knnYieldTotalFee += subscriptionAmount - finalAmount;
-        knnYieldPool += finalAmount;
+        unchecked {
+            knnYieldTotalFee += subscriptionAmount - finalAmount;
+            knnYieldPool += finalAmount;
+        }
 
         uint256 subscriptionDate = started[msg.sender];
 
@@ -128,8 +130,10 @@ contract KannaYield is Ownable {
         require(amount > 0, "Invalid amount");
         require(rawBalances[msg.sender] >= amount, "Insufficient balance");
 
-        knnYieldPool -= amount;
-        rawBalances[msg.sender] -= amount;
+        unchecked {
+            knnYieldPool -= amount;
+            rawBalances[msg.sender] -= amount;
+        }
 
         transferFee(msg.sender, rawBalances[msg.sender]);
 
@@ -151,18 +155,21 @@ contract KannaYield is Ownable {
 
     function exit() external updateReward(msg.sender) {
         uint256 balance = rawBalances[msg.sender];
+        uint256 reward;
 
-        if (balance > 0) {
-            knnYieldPool -= balance;
-        }
+        unchecked {
+            if (balance > 0) {
+                knnYieldPool -= balance;
+            }
 
-        rawBalances[msg.sender] = 0;
+            rawBalances[msg.sender] = 0;
 
-        uint256 reward = earned[msg.sender];
+            reward = earned[msg.sender];
 
-        if (reward > 0) {
-            earned[msg.sender] = 0;
-            balance += reward;
+            if (reward > 0) {
+                earned[msg.sender] = 0;
+                balance += reward;
+            }
         }
 
         if (balance == 0) {
@@ -180,8 +187,10 @@ contract KannaYield is Ownable {
         uint256 balance = rawBalances[msg.sender];
         earned[msg.sender] = 0;
 
-        knnYieldPool += claimed;
-        rawBalances[msg.sender] = balance + claimed;
+        unchecked {
+            knnYieldPool += claimed;
+            rawBalances[msg.sender] = balance + claimed;
+        }
 
         emit Interest(msg.sender, claimed, balance);
     }
@@ -192,9 +201,13 @@ contract KannaYield is Ownable {
 
         uint256 userFee = feeOf(duration);
 
-        uint256 finalAmount = amount - ((amount * userFee) / feeDecimalAdjust);
+        uint256 finalAmount;
 
-        knnYieldTotalFee += amount - finalAmount;
+        unchecked {
+            finalAmount = amount - ((amount * userFee) / feeDecimalAdjust);
+
+            knnYieldTotalFee += amount - finalAmount;
+        }
 
         knnToken.transfer(to, finalAmount);
         emit Fee(to, amount, userFee, finalAmount);
@@ -206,6 +219,7 @@ contract KannaYield is Ownable {
         require(block.timestamp + rewardsDuration >= endDate, "Cannot reduce current yield contract duration");
         if (block.timestamp >= endDate) {
             rewardRate = reward / rewardsDuration;
+
             poolStartDate = block.timestamp;
         } else {
             uint256 remaining = endDate - block.timestamp;
