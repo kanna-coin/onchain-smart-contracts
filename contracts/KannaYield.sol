@@ -105,6 +105,7 @@ contract KannaYield is Ownable {
     function subscribe(uint256 subscriptionAmount) external updateReward(msg.sender) {
         require(endDate > block.timestamp, "No reward available");
         require(subscriptionAmount > 0, "Cannot subscribe 0 KNN");
+        require(knnToken.balanceOf(msg.sender) >= subscriptionAmount, "Insufficient balance");
 
         knnToken.transferFrom(msg.sender, address(this), subscriptionAmount);
 
@@ -145,13 +146,16 @@ contract KannaYield is Ownable {
 
     function claim() public updateReward(msg.sender) {
         uint256 reward = earned[msg.sender];
-        if (reward > 0) {
-            earned[msg.sender] = 0;
 
-            transferFee(msg.sender, reward);
-
-            emit Reward(msg.sender, reward);
+        if (reward == 0) {
+            return;
         }
+
+        earned[msg.sender] = 0;
+
+        transferFee(msg.sender, reward);
+
+        emit Reward(msg.sender, reward);
     }
 
     function exit() external updateReward(msg.sender) {
@@ -183,13 +187,19 @@ contract KannaYield is Ownable {
 
     /// @dev experimental feature for lazy compound
     function reApply() external updateReward(msg.sender) {
+        require(endDate > block.timestamp, "No reward available");
         uint256 claimed = earned[msg.sender];
         uint256 balance = rawBalances[msg.sender];
         earned[msg.sender] = 0;
 
         unchecked {
             knnYieldPool += claimed;
-            rawBalances[msg.sender] = balance + claimed;
+            balance += claimed;
+            rawBalances[msg.sender] = balance;
+        }
+
+        if (balance == 0) {
+            return;
         }
 
         emit Interest(msg.sender, claimed, balance);

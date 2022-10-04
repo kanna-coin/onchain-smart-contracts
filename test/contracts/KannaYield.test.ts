@@ -419,8 +419,9 @@ describe("KNN Yield⬆", async () => {
       await secondHolderYieldSession.subscribe(parse1e18(amount));
       await network.provider.send("evm_mine");
 
-      for (let i = day; i < rewardsDuration; i += day) {
+      for (let i = day; i < rewardsDuration / 10; i += day) {
         await firstHolderYieldSession.reApply();
+
         await network.provider.send("evm_mine");
         await network.provider.send("evm_increaseTime", [i]);
         await network.provider.send("evm_mine");
