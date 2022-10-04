@@ -1,6 +1,6 @@
 ![KannaCoin.io](https://kannacoin.io/wp-content/uploads/2022/02/logo-kanna.png)
 
-# Smart Contracts MONO Repository
+# SmartContracts Mono-Repository
 
 ---
 
@@ -38,6 +38,8 @@ Terminal 2 `npm run test -- --network localhost`
 
 `npm run coverage`
 
+[ ] TODO: Coverage Report for methods without `evm_automine`
+
 ---
 
 ### Deploy to Testnet:
@@ -45,13 +47,3 @@ Terminal 2 `npm run test -- --network localhost`
 Create/modify network config in `hardhat.config.ts` and add API key and private key, then run:
 
 `npx hardhat run --network rinkeby scripts/deploy.ts`
-
-### Verify on Etherscan
-
-Using the [hardhat-etherscan plugin](https://hardhat.org/plugins/nomiclabs-hardhat-etherscan.html), add Etherscan API key to `hardhat.config.ts`, then run:
-
-`npx hardhat verify --network rinkeby <DEPLOYED ADDRESS>`
-
----
-
-`// TODO: work in progress`
