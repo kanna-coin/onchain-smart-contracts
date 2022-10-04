@@ -259,6 +259,91 @@ describe("KNN Yield⬆", async () => {
       );
     });
 
+    it("should validate Claim", async () => {
+      const rewardsDuration = 100 * 24 * 60 ** 2;
+      const day = 1 * 24 * 60 ** 2;
+
+      const reward = 400000;
+
+      const amount = 1;
+      const rewardAmount = parse1e18(reward * 3);
+      const secondReward = reward / 10;
+
+      await knnTreasurer.release(knnYield.address, rewardAmount);
+      await knnTreasurer.release(firstHolder.address, parse1e18(amount));
+      await knnTreasurer.release(secondHolder.address, parse1e18(amount));
+
+      const firstHolderTokenSession = await ethers.getContractAt(
+        tokenContractName,
+        knnToken.address,
+        firstHolder
+      );
+
+      await firstHolderTokenSession.approve(
+        knnYield.address,
+        parse1e18(amount)
+      );
+
+      const secondHolderTokenSession = await ethers.getContractAt(
+        tokenContractName,
+        knnToken.address,
+        secondHolder
+      );
+
+      await secondHolderTokenSession.approve(
+        knnYield.address,
+        parse1e18(amount)
+      );
+
+      await knnYield.addReward(parse1e18(reward / 2), rewardsDuration);
+      await network.provider.send("evm_mine");
+
+      const firstHolderYieldSession = await ethers.getContractAt(
+        yieldContractName,
+        knnYield.address,
+        firstHolder
+      );
+
+      const secondHolderYieldSession = await ethers.getContractAt(
+        yieldContractName,
+        knnYield.address,
+        secondHolder
+      );
+
+      await firstHolderYieldSession.subscribe(parse1e18(amount));
+      await secondHolderYieldSession.subscribe(parse1e18(amount));
+      await network.provider.send("evm_mine");
+
+      let newRewardAdded = false;
+      for (let i = day; i < rewardsDuration; i += day * 2) {
+        await firstHolderYieldSession.claim();
+        await network.provider.send("evm_mine");
+        await network.provider.send("evm_increaseTime", [i]);
+        await network.provider.send("evm_mine");
+
+        if (i > rewardsDuration / 2 && !newRewardAdded) {
+          await knnYield.addReward(parse1e18(reward / 10), rewardsDuration / 2);
+          newRewardAdded = true;
+        }
+      }
+
+      await firstHolderYieldSession.exit();
+      await secondHolderYieldSession.exit();
+      await network.provider.send("evm_mine");
+
+      const firstHolderBalance = await knnToken.balanceOf(firstHolder.address);
+      const secondHolderBalance = await knnToken.balanceOf(
+        secondHolder.address
+      );
+      const firstBalanceAmount = parseKNN(firstHolderBalance);
+      const secondBalanceAmount = parseKNN(secondHolderBalance);
+
+      expect(firstBalanceAmount).to.lessThan(secondBalanceAmount);
+      expect(firstBalanceAmount + secondBalanceAmount).to.lessThanOrEqual(
+        reward + secondReward
+      );
+    });
+
     it("should validate ReApply", async () => {
       const rewardsDuration = 100 * 24 * 60 ** 2;
       const day = 1 * 24 * 60 ** 2;

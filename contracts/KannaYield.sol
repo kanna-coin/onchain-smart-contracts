@@ -206,6 +206,7 @@ contract KannaYield is Ownable {
         require(block.timestamp + rewardsDuration >= endDate, "Cannot reduce current yield contract duration");
         if (block.timestamp >= endDate) {
             rewardRate = reward / rewardsDuration;
+            poolStartDate = block.timestamp;
         } else {
             uint256 remaining = endDate - block.timestamp;
             uint256 leftover = remaining * rewardRate;
@@ -215,7 +216,6 @@ contract KannaYield is Ownable {
         uint256 balance = knnToken.balanceOf(address(this));
         require(rewardRate <= balance / rewardsDuration, "Insufficient balance");
 
-        poolStartDate = block.timestamp;
         lastUpdateTime = block.timestamp;
         endDate = block.timestamp + rewardsDuration;
 
