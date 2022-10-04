@@ -259,6 +259,90 @@ describe("KNN Yield⬆", async () => {
       );
     });
 
+    it("should validate ReApply", async () => {
+      const rewardsDuration = 100 * 24 * 60 ** 2;
+      const day = 1 * 24 * 60 ** 2;
+
+      const reward = 400000;
+
+      const amount = 1;
+      const rewardAmount = parse1e18(reward);
+
+      await knnTreasurer.release(knnYield.address, rewardAmount);
+      await knnTreasurer.release(firstHolder.address, parse1e18(amount));
+      await knnTreasurer.release(secondHolder.address, parse1e18(amount));
+
+      const firstHolderTokenSession = await ethers.getContractAt(
+        tokenContractName,
+        knnToken.address,
+        firstHolder
+      );
+
+      await firstHolderTokenSession.approve(
+        knnYield.address,
+        parse1e18(amount)
+      );
+
+      const secondHolderTokenSession = await ethers.getContractAt(
+        tokenContractName,
+        knnToken.address,
+        secondHolder
+      );
+
+      await secondHolderTokenSession.approve(
+        knnYield.address,
+        parse1e18(amount)
+      );
+
+      await knnYield.addReward(rewardAmount, rewardsDuration);
+      await network.provider.send("evm_mine");
+
+      const firstHolderYieldSession = await ethers.getContractAt(
+        yieldContractName,
+        knnYield.address,
+        firstHolder
+      );
+
+      const secondHolderYieldSession = await ethers.getContractAt(
+        yieldContractName,
+        knnYield.address,
+        secondHolder
+      );
+
+      await firstHolderYieldSession.subscribe(parse1e18(amount));
+      await secondHolderYieldSession.subscribe(parse1e18(amount));
+      await network.provider.send("evm_mine");
+
+      for (let i = day; i < rewardsDuration; i += day) {
+        await firstHolderYieldSession.reApply();
+        await network.provider.send("evm_mine");
+        await network.provider.send("evm_increaseTime", [i]);
+        await network.provider.send("evm_mine");
+
+        if (i >= 7 * day) {
+          continue;
+        }
+
+        await secondHolderYieldSession.reApply();
+      }
+
+      await firstHolderYieldSession.exit();
+      await secondHolderYieldSession.exit();
+      await network.provider.send("evm_mine");
+
+      const firstHolderBalance = await knnToken.balanceOf(firstHolder.address);
+      const secondHolderBalance = await knnToken.balanceOf(
+        secondHolder.address
+      );
+      const firstBalanceAmount = parseKNN(firstHolderBalance);
+      const secondBalanceAmount = parseKNN(secondHolderBalance);
+
+      expect(firstBalanceAmount).to.greaterThan(secondBalanceAmount);
+      expect(firstBalanceAmount + secondBalanceAmount).to.lessThanOrEqual(
+        reward
+      );
+    });
+
     it("should distribute a 400K rewards over a yearly duration for two holders accordingly", async () => {
       const rewardsDuration = 365 * 24 * 60 ** 2;
 
@@ -1255,10 +1339,10 @@ describe("KNN Yield⬆", async () => {
       await increaseTime(7 * interval);
 
       await exit(fifthHolder); // 27
-      await increaseTime(3 * interval);
+      await increaseTime(6 * interval);
 
       await withdraw(thirdHolder, 300); // Seg 30, partial withdraw
-      await increaseTime(11 * interval);
+      await increaseTime(10 * interval);
 
       await subscribe(firstHolder, 100); // Seg 39
       await increaseTime(10 * interval);

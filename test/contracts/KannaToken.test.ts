@@ -311,6 +311,34 @@ describe("KNN Token", () => {
     });
   });
 
+  describe(".removeMinter", async () => {
+    beforeEach(async () => {
+      await deployContracts();
+    });
+
+    it("should prevent minting when MINTER_ROLE not present", async () => {
+      const [deployerWallet] = signers;
+      const knnTreasurer = await getKnnTreasurer(deployerWallet, knnToken);
+
+      const treasuryBalanceHexBefore = await knnToken.balanceOf(
+        knnTreasurer.address
+      );
+
+      const balance1 = parseInt(treasuryBalanceHexBefore._hex, 16);
+
+      expect(balance1).to.eq(1e25);
+
+      await knnToken.removeMinter(deployerWallet.address);
+
+      const result = await knnToken
+        .mint(parse1e18(1))
+        .then(() => null)
+        .catch((e) => e);
+
+      expect(result?.message).to.not.null;
+    });
+  });
+
   describe(".updateTransferFeeRecipient", async () => {
     beforeEach(async () => {
       await deployContracts();
