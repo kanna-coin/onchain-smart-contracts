@@ -7,55 +7,21 @@ import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 
 /** @title KNN Token
     @author KANNA
-    @notice This is a OpenZeppelin {IERC20} token contract implementation of KNN Token.
-    @dev See {IERC20}
-        for more documentation regarding {ERC20},
-        reach out to https://docs.openzeppelin.com/contracts/4.x/erc20
     @custom:github  https://github.com/kanna-coin
     @custom:site https://kannacoin.io
+    @custom:discord https://discord.gg/V5KDU8DKCh
     */
 contract KannaToken is ERC20, Ownable, AccessControl {
-    bytes32 public constant TRANSFER_FEE_EXEMPT_ROLE = keccak256("TRANSFER_FEE_EXEMPT_ROLE");
-
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
-
     uint256 public immutable INITIAL_SUPPLY = 10_000_000 * 10**decimals();
-
     uint256 public immutable MAX_SUPPLY = 19_000_000 * 10**decimals();
 
-    uint256 public constant FEE_BASIS_POINT = 10_000;
-
-    uint256 public transferFee = 1_00;
-    address public transferFeeRecipient;
     address public treasury;
 
-    event TransferFeeUpdate(address indexed sender, uint256 newFee);
     event TreasuryUpdate(address indexed sender, address treasury);
 
-    /**
-     * @dev Initializes KNN Token (KNN)
-     *
-     * Emits {Minted} and {Transfer} events.
-     */
-    constructor(address _transferFeeRecipient) ERC20("KNN Token", "KNN") {
-        _grantRole(TRANSFER_FEE_EXEMPT_ROLE, _transferFeeRecipient);
+    constructor() ERC20("KNN Token", "KNN") {}
 
-        transferFeeRecipient = _transferFeeRecipient;
-    }
-
-    function updateTransferFeeRecipient(address newRecipient) external onlyOwner {
-        _revokeRole(TRANSFER_FEE_EXEMPT_ROLE, transferFeeRecipient);
-        _grantRole(TRANSFER_FEE_EXEMPT_ROLE, newRecipient);
-
-        transferFeeRecipient = newRecipient;
-    }
-
-    /**
-     * @dev addresses the current treasury smart contract
-     *
-     * Emits {RoleGranted} and {Transfer} events.
-     * May revoke roles from provious contract
-     */
     function initializeTreasury() external onlyOwner {
         require(treasury != address(0), "Treasury not set");
         require(totalSupply() == 0, "Treasury already initialized");
@@ -63,76 +29,11 @@ contract KannaToken is ERC20, Ownable, AccessControl {
     }
 
     function updateTreasury(address newTreasury) external onlyOwner {
-        if (treasury != address(0)) {
-            _revokeRole(TRANSFER_FEE_EXEMPT_ROLE, treasury);
-        }
-
-        _grantRole(TRANSFER_FEE_EXEMPT_ROLE, newTreasury);
         treasury = newTreasury;
 
         emit TreasuryUpdate(msg.sender, treasury);
     }
 
-    /**
-     * @dev May emit a {TransferFeeUpdate} event.
-     *
-     * Addressed to be used by DAO voting contract
-     *
-     * @param newFee should consider {TRANSFER_FEE_DIVISOR} to avoid overflow
-     *
-     * Requirements:
-     *
-     * - must be a  multisig wallet or owner (requires owner)
-     */
-    function updateTransferFee(uint256 newFee) external onlyOwner {
-        require(newFee >= 0 && newFee <= FEE_BASIS_POINT, "Invalid fee");
-        transferFee = newFee;
-
-        emit TransferFeeUpdate(address(msg.sender), newFee);
-    }
-
-    function _transfer(
-        address from,
-        address to,
-        uint256 amount
-    ) internal override {
-        uint256 fee = calculateTransferFee(from, to, amount);
-
-        super._transfer(from, to, amount - fee);
-
-        // Saves up some gas if fee is zero
-        if (fee > 0) {
-            super._transfer(from, transferFeeRecipient, fee);
-        }
-    }
-
-    function calculateTransferFee(
-        address from,
-        address to,
-        uint256 amount
-    ) internal view returns (uint256) {
-        if (transferFee == 0 || hasRole(TRANSFER_FEE_EXEMPT_ROLE, from) || hasRole(TRANSFER_FEE_EXEMPT_ROLE, to)) {
-            return 0;
-        }
-
-        uint256 fee = (amount * transferFee) / FEE_BASIS_POINT;
-        require(fee > 0, "Transfer amount too low");
-
-        return fee;
-    }
-
-    /** @dev Creates `amount` tokens and assigns them to `address(msg.sender)`, increasing
-     * the total supply.
-     *
-     * Limited to 19MM KNN Token Maximum Supply availability.
-     *
-     * May emit a {Transfer} event (from address(0) to {treasury})
-     *
-     * Requirements:
-     *
-     * - must be a `MINTER_ROLE` contract
-     * - totalSupply should not exceed {maxSupply}
-     */
     function mint(uint256 amount) external onlyRole(MINTER_ROLE) {
         require(treasury != address(0), "No treasury");
         require(amount > 0, "Invalid Amount");
@@ -141,50 +42,10 @@ contract KannaToken is ERC20, Ownable, AccessControl {
         _mint(treasury, amount);
     }
 
-    /**
-     * @dev May emit a {RoleGranted} event.
-     *
-     * Requirements:
-     *
-     * - must be a contract owner
-     */
-    function addTransferFeeExempt(address user) external onlyOwner {
-        _grantRole(TRANSFER_FEE_EXEMPT_ROLE, user);
-    }
-
-    /**
-     * @dev May emit a {RoleGranted} event.
-     *
-     * Requirements:
-     *
-     * - must be a contract owner
-     */
-    function removeTransferFeeExempt(address user) external onlyOwner {
-        _revokeRole(TRANSFER_FEE_EXEMPT_ROLE, user);
-    }
-
-    /**
-     * @dev May emit a {RoleGranted} event.
-     *
-     * Addressed to be used by DAO contracts
-     *
-     * Requirements:
-     *
-     * - must be a multisig or owner (requires onlyOwner)
-     */
     function addMinter(address newMinter) external onlyOwner {
         _grantRole(MINTER_ROLE, newMinter);
     }
 
-    /**
-     * @dev May emit a {RoleRevoked} event.
-     *
-     * Addressed to be used by DAO contracts
-     *
-     * Requirements:
-     *
-     * - must be a multisig or owner (requires onlyOwner)
-     */
     function removeMinter(address minter) external onlyOwner {
         _revokeRole(MINTER_ROLE, minter);
     }

@@ -12,7 +12,7 @@ const instance = async (
     "KannaToken",
     knnDeployerAddress
   )) as KannaToken__factory;
-  KannaToken = await KannaTokenFactory.deploy(knnDeployerAddress.address);
+  KannaToken = await KannaTokenFactory.deploy();
 
   await KannaToken.deployed();
 

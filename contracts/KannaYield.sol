@@ -2,7 +2,7 @@
 pragma solidity ^0.8.4;
 
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {IKannaToken} from "./interfaces/IKannaToken.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /** @title KNN Yield
     @author KANNA
@@ -21,7 +21,7 @@ contract KannaYield is Ownable {
     event Reward(address indexed user, uint256 reward);
     event Fee(address indexed user, uint256 amount, uint256 fee, uint256 finalAmount);
 
-    IKannaToken public immutable knnToken;
+    IERC20 public immutable knnToken;
     address public immutable feeRecipient;
 
     uint256 public constant FEE_BASIS_POINT = 10_000;
@@ -46,7 +46,7 @@ contract KannaYield is Ownable {
     uint256 public subscriptionFee = 2_0;
 
     constructor(address _knnToken, address _feeRecipient) {
-        knnToken = IKannaToken(_knnToken);
+        knnToken = IERC20(_knnToken);
         feeRecipient = _feeRecipient;
         fees[tier[0]] = 3000;
         fees[tier[1]] = 500;

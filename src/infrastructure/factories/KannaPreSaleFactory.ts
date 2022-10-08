@@ -27,11 +27,9 @@ const instance = async (
 
   const preSaleAmount = parse1e18(350000);
 
-  await knnToken.addTransferFeeExempt(knnPreSale.address);
-
   await knnTreasurer.release(knnPreSale.address, preSaleAmount);
 
-  await knnPreSale.updateQuotation("1");
+  await knnPreSale.updateQuotation("50000000");
   await knnPreSale.updateAvailablity(true);
 
   return knnPreSale;

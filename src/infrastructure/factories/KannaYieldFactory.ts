@@ -30,7 +30,6 @@ const instance = async (
 
   const rewards = parse1e18(400000);
 
-  await knnToken.addTransferFeeExempt(knnYield.address);
   await knnTreasurer.release(knnYield.address, rewards);
 
   return knnYield;
