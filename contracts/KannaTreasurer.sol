@@ -1,34 +1,23 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/utils/Address.sol";
-import "hardhat/console.sol";
-
-import {IKannaToken} from "./interfaces/IKannaToken.sol";
-import {ITreasurer} from "./interfaces/ITreasurer.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /** @title KNN Treasurer
     @author KANNA
-    @notice KANNA Treasury SmartContract
-    @dev controls release flow of KNN Tokens towards impact/DAO initiatives
+    @dev deprecation warning: work in progress to KannaTreasuryV2
     @custom:github  https://github.com/kanna-coin
     @custom:site https://kannacoin.io
+    @custom:discord https://discord.gg/V5KDU8DKCh
     */
-contract KannaTreasurer is ITreasurer, Ownable {
-    using Address for address;
-    IKannaToken private immutable knnToken;
-    address private erc20kannaTokenAddress;
+contract KannaTreasurer is Ownable {
+    IERC20 private immutable knnToken;
 
-    event Release(
-        address signer,
-        address to,
-        uint256 amount,
-        uint256 indexed date
-    );
+    event Release(address signer, address to, uint256 amount, uint256 indexed date);
 
-    constructor(address kannaTokenAddress) {
-        knnToken = IKannaToken(kannaTokenAddress);
+    constructor(address _knnToken) {
+        knnToken = IERC20(_knnToken);
     }
 
     /**
@@ -36,18 +25,12 @@ contract KannaTreasurer is ITreasurer, Ownable {
      *
      * Addressed to be used by DAO initiatives
      *
-     * @param contractAddress contract to transfer tokens from treasury
+     * @param to contract to transfer tokens from treasury
      *
-     * Requirements:
-     *
-     * - contractAddress must be a smart contract
      */
-    function release(address contractAddress, uint256 amount)
-        external
-        onlyOwner
-    {
-        knnToken.transfer(contractAddress, amount);
+    function release(address to, uint256 amount) external onlyOwner {
+        knnToken.transfer(to, amount);
 
-        emit Release(msg.sender, contractAddress, amount, block.timestamp);
+        emit Release(msg.sender, to, amount, block.timestamp);
     }
 }
