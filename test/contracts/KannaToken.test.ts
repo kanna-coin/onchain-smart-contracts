@@ -1,7 +1,7 @@
 import { ethers } from "hardhat";
 import chai from "chai";
 import chaiAsPromised from "chai-as-promised";
-import { KannaToken } from "../../typechain";
+import { KannaToken, KannaTreasurer } from "../../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import getKnnToken from "../../src/infrastructure/factories/KannaTokenFactory";
 import getKnnTreasurer from "../../src/infrastructure/factories/KannaTreasurerFactory";
@@ -9,10 +9,7 @@ import getKnnTreasurer from "../../src/infrastructure/factories/KannaTreasurerFa
 chai.use(chaiAsPromised);
 const { expect } = chai;
 
-const parse1e18 = (integer: number): string => `${integer}000000000000000000`;
-
-const parseKNN = (bigNumberish: any): number =>
-  parseInt(ethers.utils.formatEther(bigNumberish).split(".")[0], 10);
+const tokenContractName = "KannaToken";
 
 describe("KNN Token", () => {
   let knnToken: KannaToken;
@@ -26,14 +23,17 @@ describe("KNN Token", () => {
     knnToken = await getKnnToken(deployerAddress);
   };
 
-  describe(".initializeTreasury", async () => {
+  describe("Treasury", async () => {
     beforeEach(async () => {
       await deployContracts();
     });
 
-    it("should initialize set and initialize amount to treasury", async () => {
+    it("should initialize set and initialize amount to treasury (KannaTreasurer UC)", async () => {
       const [deployerWallet] = signers;
-      const knnTreasurer = await getKnnTreasurer(deployerWallet, knnToken);
+      const knnTreasurer: KannaTreasurer = await getKnnTreasurer(
+        deployerWallet,
+        knnToken
+      );
 
       const error = await knnToken
         .updateTreasury(knnTreasurer.address)
@@ -45,134 +45,75 @@ describe("KNN Token", () => {
 
     it("should NOT allow initialization when treasury are no set", async () => {
       const [deployerWallet] = signers;
-      const knnTreasurer = await getKnnTreasurer(deployerWallet, knnToken);
 
       const error = await knnToken
         .initializeTreasury()
         .then(() => null)
-        .catch((e) => e);
+        .catch(({ message }) => message);
 
-      expect(error).to.not.null;
+      expect(error).to.contain("Treasury not set");
+    });
+
+    it("should NOT allow initialization more than once", async () => {
+      const [deployerWallet] = signers;
+
+      await knnToken.updateTreasury(deployerWallet.address);
+      const success = await knnToken.initializeTreasury();
+
+      const { events } = await success.wait();
+
+      const error = await knnToken
+        .initializeTreasury()
+        .then(() => null)
+        .catch(({ message }) => message);
+
+      expect(events![0].event).to.eq("Transfer");
+
+      expect(error).to.contain("Treasury already initialized");
     });
   });
 
-  // describe(".updateTransactionFee", async () => {
-  //   beforeEach(async () => {
-  //     await deployContracts();
-  //   });
-
-  //   it("should update a transfer to 20% and validate transfer value", async () => {
-  //     await knnToken.updateTransferFee("200");
-
-  //     const [deployerWallet, wallet1, wallet2] = signers;
-
-  //     const knnTreasurer: KannaTreasurer = await getKnnTreasurer(
-  //       deployerWallet,
-  //       knnToken
-  //     );
-
-  //     await knnTreasurer.release(wallet1.address, parse1e18(20000));
-
-  //     const scopedToken: KannaToken = (await ethers.getContractAt(
-  //       "KannaToken",
-  //       knnToken.address,
-  //       wallet1
-  //     )) as KannaToken;
-
-  //     await scopedToken.transfer(wallet2.address, parse1e18(20000));
-
-  //     const wallet2BalanceHex = await knnToken.balanceOf(wallet2.address);
-
-  //     const balance = parseInt(wallet2BalanceHex._hex, 16);
-
-  //     expect(balance).to.eq(1.96e22);
-  //   });
-  // });
-
-  describe(".transferFrom", async () => {
+  describe("Transfer", async () => {
     beforeEach(async () => {
       await deployContracts();
     });
 
-    // it("should apply a transferFee for Approved transfers (transferFrom) outside KNN contracts", async () => {
-    //   await knnToken.updateTransferFee("1");
+    it("should allow use of unified Minter and Treasury (Multisig/GnosisSafe UC)", async () => {
+      const [deployerWallet, wallet1, wallet2] = signers;
 
-    //   const [deployerWallet, wallet1, wallet2] = signers;
+      const amount = ethers.utils.parseEther("2000.0").toString();
 
-    //   const knnTreasurer: KannaTreasurer = await getKnnTreasurer(
-    //     deployerWallet,
-    //     knnToken
-    //   );
+      await knnToken.addMinter(deployerWallet.address);
+      const treasuryAudit = await knnToken.updateTreasury(
+        deployerWallet.address
+      );
 
-    //   await knnTreasurer.release(wallet1.address, parse1e18(20000));
+      const { events } = await treasuryAudit.wait();
+      await knnToken.initializeTreasury();
+      await knnToken.mint(amount);
+      await knnToken.transfer(wallet1.address, amount);
 
-    //   const scopedWallet1Token: KannaToken = (await ethers.getContractAt(
-    //     "KannaToken",
-    //     knnToken.address,
-    //     wallet1
-    //   )) as KannaToken;
+      const scopedToken: KannaToken = (await ethers.getContractAt(
+        tokenContractName,
+        knnToken.address,
+        wallet1
+      )) as KannaToken;
 
-    //   await scopedWallet1Token.approve(wallet2.address, parse1e18(20000));
+      await scopedToken.transfer(wallet2.address, amount);
 
-    //   const scopedWallet2Token: KannaToken = (await ethers.getContractAt(
-    //     "KannaToken",
-    //     knnToken.address,
-    //     wallet2
-    //   )) as KannaToken;
+      const wallet2Balance = await knnToken.balanceOf(wallet2.address);
 
-    //   await scopedWallet2Token.transferFrom(
-    //     wallet1.address,
-    //     wallet2.address,
-    //     parse1e18(20000)
-    //   );
-
-    //   const wallet2BalanceHex = await knnToken.balanceOf(wallet2.address);
-
-    //   const balance = parseInt(wallet2BalanceHex._hex, 16);
-
-    //   expect(balance).to.eq(1.9998e22);
-    // });
+      expect(wallet2Balance.toString()).to.eq(amount);
+      expect(events![0].event).to.eq("TreasuryUpdate");
+    });
   });
 
-  describe(".transfer", async () => {
+  describe("Mint", async () => {
     beforeEach(async () => {
       await deployContracts();
     });
 
-    // it("should apply a transfer fee for transfers outside knn", async () => {
-    //   await knnToken.updateTransferFee("200");
-
-    //   const [deployerWallet, wallet1, wallet2] = signers;
-
-    //   const knnTreasurer: KannaTreasurer = await getKnnTreasurer(
-    //     deployerWallet,
-    //     knnToken
-    //   );
-
-    //   await knnTreasurer.release(wallet1.address, parse1e18(20000));
-
-    //   const scopedToken: KannaToken = (await ethers.getContractAt(
-    //     "KannaToken",
-    //     knnToken.address,
-    //     wallet1
-    //   )) as KannaToken;
-
-    //   await scopedToken.transfer(wallet2.address, parse1e18(20000));
-
-    //   const wallet2BalanceHex = await knnToken.balanceOf(wallet2.address);
-
-    //   const balance = parseInt(wallet2BalanceHex._hex, 16);
-
-    //   expect(balance).to.eq(1.96e22);
-    // });
-  });
-
-  describe(".mint", async () => {
-    beforeEach(async () => {
-      await deployContracts();
-    });
-
-    it("should mint directly to Treasury Contract", async () => {
+    it("should mint directly to a defined treasury account (compliant GnosisSafe<>KannaTreasurer UC)", async () => {
       const [deployerWallet] = signers;
       const knnTreasurer = await getKnnTreasurer(deployerWallet, knnToken);
 
@@ -187,7 +128,7 @@ describe("KNN Token", () => {
       await knnToken.addMinter(deployerWallet.address);
 
       // 0.5MM
-      await knnToken.mint(parse1e18(500000));
+      await knnToken.mint(ethers.utils.parseEther("500000.0").toString());
 
       const treasuryBalanceHexAfter = await knnToken.balanceOf(
         knnTreasurer.address
@@ -213,107 +154,12 @@ describe("KNN Token", () => {
 
       await knnToken.addMinter(deployerWallet.address);
 
-      const result = await knnToken
-        .mint(parse1e18(10500000))
+      const response = await knnToken
+        .mint(ethers.utils.parseEther("10500000.0").toString())
         .then(() => null)
-        .catch((e) => e);
+        .catch(({ message }) => message);
 
-      expect(result?.message).to.not.null;
-    });
-  });
-
-  // describe(".(add)/(remove) TransferFeeExempt", async () => {
-  //   beforeEach(async () => {
-  //     await deployContracts();
-  //   });
-
-  //   it("should NOT-apply-FEE for a transfer within a TRANSFER_FEE_EXEMPT granted wallet", async () => {
-  //     await knnToken.updateTransferFee("500");
-
-  //     const [deployerWallet, wallet1, wallet2] = signers;
-
-  //     const knnTreasurer: KannaTreasurer = await getKnnTreasurer(
-  //       deployerWallet,
-  //       knnToken
-  //     );
-
-  //     await knnTreasurer.release(wallet1.address, parse1e18(20000));
-
-  //     const scopedToken: KannaToken = (await ethers.getContractAt(
-  //       "KannaToken",
-  //       knnToken.address,
-  //       wallet1
-  //     )) as KannaToken;
-
-  //     await knnToken.addTransferFeeExempt(wallet2.address);
-  //     await scopedToken.transfer(wallet2.address, parse1e18(20000));
-
-  //     const wallet2BalanceHex = await knnToken.balanceOf(wallet2.address);
-
-  //     const balance = parseInt(wallet2BalanceHex._hex, 16);
-
-  //     expect(balance).to.eq(2e22);
-  //   });
-
-  //   it("should apply FEE for a transfer with a TRANSFER_FEE_EXEMPT granted wallet", async () => {
-  //     await knnToken.updateTransferFee("500");
-
-  //     const [deployerWallet, wallet1, wallet2] = signers;
-
-  //     const knnTreasurer: KannaTreasurer = await getKnnTreasurer(
-  //       deployerWallet,
-  //       knnToken
-  //     );
-
-  //     await knnTreasurer.release(wallet1.address, parse1e18(20000));
-
-  //     const scopedToken: KannaToken = (await ethers.getContractAt(
-  //       "KannaToken",
-  //       knnToken.address,
-  //       wallet1
-  //     )) as KannaToken;
-
-  //     await knnToken.removeTransferFeeExempt(wallet2.address);
-  //     await knnToken.removeTransferFeeExempt(wallet1.address);
-  //     await scopedToken.transfer(wallet2.address, parse1e18(20000));
-
-  //     const wallet2BalanceHex = await knnToken.balanceOf(wallet2.address);
-
-  //     const balance = parseInt(wallet2BalanceHex._hex, 16);
-
-  //     expect(balance).to.eq(1.9e22);
-  //   });
-  // });
-
-  describe(".addMinter", async () => {
-    beforeEach(async () => {
-      await deployContracts();
-    });
-
-    it("should prevent minting when not a MINTER", async () => {
-      const [deployerWallet] = signers;
-      const knnTreasurer = await getKnnTreasurer(deployerWallet, knnToken);
-
-      const treasuryBalanceHexBefore = await knnToken.balanceOf(
-        knnTreasurer.address
-      );
-
-      const balance1 = parseInt(treasuryBalanceHexBefore._hex, 16);
-
-      expect(balance1).to.eq(1e25);
-
-      const result = await knnToken
-        .mint(parse1e18(1))
-        .then(() => null)
-        .catch((e) => e);
-
-      expect(result?.message).to.not.null;
-    });
-  });
-
-  describe(".removeMinter", async () => {
-    beforeEach(async () => {
-      await deployContracts();
+      expect(response).to.contain("Maximum Supply reached");
     });
 
     it("should prevent minting when MINTER_ROLE not present", async () => {
@@ -331,44 +177,31 @@ describe("KNN Token", () => {
       await knnToken.removeMinter(deployerWallet.address);
 
       const result = await knnToken
-        .mint(parse1e18(1))
+        .mint(ethers.utils.parseEther("1.0").toString())
+        .then(() => null)
+        .catch((e) => e);
+
+      expect(result?.message).to.not.null;
+    });
+
+    it("should prevent minting when not a MINTER", async () => {
+      const [deployerWallet] = signers;
+      const knnTreasurer = await getKnnTreasurer(deployerWallet, knnToken);
+
+      const treasuryBalanceHexBefore = await knnToken.balanceOf(
+        knnTreasurer.address
+      );
+
+      const balance1 = parseInt(treasuryBalanceHexBefore._hex, 16);
+
+      expect(balance1).to.eq(1e25);
+
+      const result = await knnToken
+        .mint(ethers.utils.parseEther("1.0").toString())
         .then(() => null)
         .catch((e) => e);
 
       expect(result?.message).to.not.null;
     });
   });
-
-  // describe(".updateTransferFeeRecipient", async () => {
-  //   beforeEach(async () => {
-  //     await deployContracts();
-  //   });
-
-  //   it("should update the transferFee recipient", async () => {
-  //     const amount = 1500;
-  //     const [deployerWallet, walletFrom, walletTo, newFeeReicipientWallet] =
-  //       signers;
-  //     await knnToken.updateTransferFeeRecipient(newFeeReicipientWallet.address);
-  //     const knnTreasurer = await getKnnTreasurer(deployerWallet, knnToken);
-  //     await knnTreasurer.release(walletFrom.address, parse1e18(amount));
-
-  //     const scopedToken: KannaToken = (await ethers.getContractAt(
-  //       "KannaToken",
-  //       knnToken.address,
-  //       walletFrom
-  //     )) as KannaToken;
-
-  //     await scopedToken.transfer(walletTo.address, parse1e18(amount));
-
-  //     const toBalance = await knnToken.balanceOf(walletTo.address);
-  //     const feeRecipientBalance = await knnToken.balanceOf(
-  //       newFeeReicipientWallet.address
-  //     );
-  //     const receivedAmount = parseKNN(toBalance);
-  //     const feeBalance = parseKNN(feeRecipientBalance);
-
-  //     expect(amount * 0.99).to.eq(receivedAmount);
-  //     expect(amount * 0.01).to.eq(feeBalance);
-  //   });
-  // });
 });

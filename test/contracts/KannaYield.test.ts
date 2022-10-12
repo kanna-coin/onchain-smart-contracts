@@ -113,11 +113,11 @@ describe("KNN Yield⬆", async () => {
 
       const balance = await knnYield.balanceOf(anyHolder.address);
 
-      const subscriptionFee = 200;
+      const subscriptionFee = 20;
 
       const userBalanceOnPool =
         parseKNN(subscriptionAmount) -
-        (parseKNN(subscriptionAmount) * subscriptionFee) / 100000;
+        (parseKNN(subscriptionAmount) * subscriptionFee) / 10000;
 
       console.log(userBalanceOnPool);
 
@@ -1034,10 +1034,54 @@ describe("KNN Yield⬆", async () => {
       expect(balanceAmount).to.eq(maxValueAfterFees);
     });
 
+    // it("should validate Tier #4 FEE (plus Subscription FEE) 1.5% + 0.2% when after completing 30 days", async () => {
+    //   const rewardsDuration = 90 * 24 * 60 ** 2;
+
+    //   const amount = 100000;
+    //   const rewardAmount = parse1e18(1);
+
+    //   await knnTreasurer.release(knnYield.address, rewardAmount);
+    //   await knnTreasurer.release(firstHolder.address, parse1e18(amount));
+
+    //   const firstHolderTokenSession = await ethers.getContractAt(
+    //     tokenContractName,
+    //     knnToken.address,
+    //     firstHolder
+    //   );
+
+    //   await firstHolderTokenSession.approve(
+    //     knnYield.address,
+    //     parse1e18(amount)
+    //   );
+    //   const firstHolderYieldSession = await ethers.getContractAt(
+    //     yieldContractName,
+    //     knnYield.address,
+    //     firstHolder
+    //   );
+
+    //   await knnYield.addReward(rewardAmount, rewardsDuration);
+    //   await firstHolderYieldSession.subscribe(parse1e18(amount));
+    //   await network.provider.send("evm_mine");
+    //   await network.provider.send("evm_increaseTime", [40 * 24 * 60 ** 2]);
+    //   await network.provider.send("evm_mine");
+
+    //   await network.provider.send("evm_mine");
+    //   await firstHolderYieldSession.exit();
+    //   await network.provider.send("evm_mine");
+
+    //   const firstHolderBalance = await knnToken.balanceOf(firstHolder.address);
+    //   const balanceAmount = parseKNN(firstHolderBalance);
+    //   const fee = 0.015;
+    //   const subscriptionFee = 0.002;
+    //   const maxValueAfterFees = amount * (1 - fee) * (1 - subscriptionFee);
+
+    //   expect(balanceAmount).to.eq(maxValueAfterFees);
+    // });
+
     it("should validate Tier #4 FEE (plus Subscription FEE) 1.5% + 0.2% when after completing 30 days", async () => {
       const rewardsDuration = 90 * 24 * 60 ** 2;
 
-      const amount = 100000;
+      const amount = 1000000;
       const rewardAmount = parse1e18(1);
 
       await knnTreasurer.release(knnYield.address, rewardAmount);
@@ -1055,7 +1099,6 @@ describe("KNN Yield⬆", async () => {
       );
 
       await knnYield.addReward(rewardAmount, rewardsDuration);
-      await network.provider.send("evm_increaseTime", [30 * 24 * 60 ** 2]);
       await network.provider.send("evm_mine");
 
       const firstHolderYieldSession = await ethers.getContractAt(
@@ -1065,6 +1108,8 @@ describe("KNN Yield⬆", async () => {
       );
 
       await firstHolderYieldSession.subscribe(parse1e18(amount));
+      await network.provider.send("evm_mine");
+      await network.provider.send("evm_increaseTime", [30 * 24 * 60 ** 2]);
       await network.provider.send("evm_mine");
       await firstHolderYieldSession.exit();
       await network.provider.send("evm_mine");
