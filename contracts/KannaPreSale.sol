@@ -17,6 +17,7 @@ contract KannaPreSale is Ownable {
     uint256 public constant USD_AGGREGATOR_DECIMALS = 1e8;
     uint256 public constant KNN_DECIMALS = 1e18;
     uint256 public knnPriceInUSD;
+    uint256 public knnLocked;
     bool public available;
 
     event Purchase(
@@ -44,6 +45,11 @@ contract KannaPreSale is Ownable {
         }
     }
 
+    modifier isAvailable() {
+        require(available, "Pre sale NOT started yet");
+        _;
+    }
+
     /**
      * @dev Withdraw ETH from sold tokens
      */
@@ -52,6 +58,24 @@ contract KannaPreSale is Ownable {
         recipient.transfer(amount);
 
         emit Withdraw(recipient, amount);
+    }
+
+    /**
+     * @dev Retrieves available supply
+     */
+    function availableSupply() public view returns (uint256) {
+        return knnToken.balanceOf(address(this)) - knnLocked;
+    }
+
+    /**
+     * @dev Decrease Total Supply
+     *
+     */
+    function lockSupply(uint256 amountInKNN) external onlyOwner {
+        require(amountInKNN > 0, "Invalid amount");
+        require(availableSupply() >= amountInKNN, "Insufficient supply!");
+
+        knnLocked += amountInKNN;
     }
 
     /**
@@ -71,6 +95,7 @@ contract KannaPreSale is Ownable {
         available = false;
         uint256 leftover = knnToken.balanceOf(address(this));
         knnToken.transfer(leftoverRecipient, leftover);
+        knnLocked = 0;
     }
 
     /**
@@ -130,13 +155,12 @@ contract KannaPreSale is Ownable {
      *
      * Emits a {Purchase} event.
      */
-    function buyTokens() external payable {
-        require(available, "Pre sale NOT started yet");
+    function buyTokens() external payable isAvailable {
         require(msg.value > USD_AGGREGATOR_DECIMALS, "Invalid amount");
 
         (uint256 finalAmount, uint256 ethPriceInUSD) = convertToKNN(msg.value);
 
-        require(knnToken.balanceOf(address(this)) >= finalAmount, "Insufficient supply!");
+        require(availableSupply() >= finalAmount, "Insufficient supply!");
         require(knnToken.transfer(msg.sender, finalAmount), "Transaction reverted!");
         emit Purchase(msg.sender, msg.value, knnPriceInUSD, ethPriceInUSD, finalAmount);
     }

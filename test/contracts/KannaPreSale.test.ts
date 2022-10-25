@@ -66,25 +66,74 @@ describe("KNN PreSale", () => {
       expect(balance).to.lessThan(3.5e23);
     });
 
-    it("should not buy KNN tokens when presale is unavailable", async () => {
-      const [deployerWallet] = signers;
+    describe("should not buy KNN tokens", async () => {
+      it("when presale is unavailable", async () => {
+        const [deployerWallet] = signers;
 
-      await network.provider.send("hardhat_setBalance", [
-        deployerWallet.address,
-        "0xFFFFFFFFFFFFFFFF",
-      ]);
-      await network.provider.send("evm_mine");
+        await network.provider.send("hardhat_setBalance", [
+          deployerWallet.address,
+          "0xFFFFFFFFFFFFFFFF",
+        ]);
+        await network.provider.send("evm_mine");
 
-      await knnPreSale.updateAvailablity(false);
+        await knnPreSale.updateAvailablity(false);
 
-      const options = { value: ethers.utils.parseEther("1") };
+        const options = { value: ethers.utils.parseEther("1") };
 
-      const error = await knnPreSale
-        .buyTokens(options)
-        .then(() => null)
-        .catch((e) => e);
+        const error = await knnPreSale
+          .buyTokens(options)
+          .then(() => null)
+          .catch((e) => e);
 
-      expect(error).to.not.null;
+        expect(error).to.not.null;
+      });
+
+      it("when amount is greater than contract balance", async () => {
+        const [deployerWallet] = signers;
+
+        await network.provider.send("hardhat_setBalance", [
+          deployerWallet.address,
+          "0xFFFFFFFFFFFFFFFF",
+        ]);
+        await network.provider.send("evm_mine");
+
+        const balance = await knnToken.balanceOf(knnPreSale.address);
+
+        const [balanceInWei] = await knnPreSale.convertToWEI(balance);
+
+        const options = { value: balanceInWei.add(1e2) };
+
+        const error = await knnPreSale
+          .buyTokens(options)
+          .then(() => null)
+          .catch((e) => e);
+
+        expect(error).to.not.null;
+      });
+
+      it("when amount is greater than available supply", async () => {
+        const [deployerWallet] = signers;
+
+        await network.provider.send("hardhat_setBalance", [
+          deployerWallet.address,
+          "0xFFFFFFFFFFFFFFFF",
+        ]);
+        await network.provider.send("evm_mine");
+
+        await knnPreSale.lockSupply(1e10);
+
+        const balance = await knnToken.balanceOf(knnPreSale.address);
+        const [balanceInWei] = await knnPreSale.convertToWEI(balance);
+
+        const options = { value: balanceInWei };
+
+        const error = await knnPreSale
+          .buyTokens(options)
+          .then(() => null)
+          .catch((e) => e);
+
+        expect(error).to.not.null;
+      });
     });
 
     // it("should validate ETH amount", async () => {
@@ -130,6 +179,20 @@ describe("KNN PreSale", () => {
       const newPrice = parseInt(newPriceHex._hex, 16);
 
       expect(currentPrice).to.lessThan(newPrice);
+    });
+
+    it("should lock supply", async () => {
+      const balance = await knnToken.balanceOf(knnPreSale.address);
+
+      const toLock = 1e10;
+
+      await knnPreSale.lockSupply(toLock);
+
+      const availableSupply = await knnPreSale.availableSupply();
+
+      const expectedSupply = balance.sub(toLock);
+
+      expect(availableSupply).to.eq(expectedSupply);
     });
   });
 });
