@@ -255,5 +255,42 @@ describe("KNN PreSale", () => {
 
       expect(error).to.not.null;
     });
+
+    it("should revert the receive function", async () => {
+      const [deployerWallet] = signers;
+
+      await network.provider.send("hardhat_setBalance", [
+        deployerWallet.address,
+        "0xFFFFFFFFFFFFFFFF",
+      ]);
+      await network.provider.send("evm_mine");
+
+      const tx = deployerWallet.sendTransaction({
+        to: knnPreSale.address,
+        value: ethers.utils.parseEther("5.001001999238")
+      });
+
+      await expect(tx)
+        .to.be.revertedWith("Cannot Receive: Should call {buyTokens} function in order to swap ETH for KNN");
+    });
+
+    it("should invoke the fallback function", async () => {
+      const [deployerWallet] = signers;
+
+      const nonExistentFuncSignature = 'nonExistentFunc(uint256,uint256)';
+      const fakeDemoContract = new ethers.Contract(
+        knnPreSale.address,
+        [
+          ...knnPreSale.interface.fragments,
+          `function ${nonExistentFuncSignature}`,
+        ],
+        deployerWallet,
+      );
+
+      const tx = fakeDemoContract[nonExistentFuncSignature](8, 9);
+
+      await expect(tx)
+        .to.be.revertedWith("Fallback: Should call {buyTokens} function in order to swap ETH for KNN");
+    });
   });
 });
