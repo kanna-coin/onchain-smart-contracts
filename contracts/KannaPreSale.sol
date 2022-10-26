@@ -79,6 +79,17 @@ contract KannaPreSale is Ownable {
     }
 
     /**
+     * @dev Decrease Supply Locked
+     *
+     */
+    function unlockSupply(uint256 amountInKNN) external onlyOwner {
+        require(amountInKNN > 0, "Invalid amount");
+        require(knnLocked >= amountInKNN, "Insufficient locked supply!");
+
+        knnLocked -= amountInKNN;
+    }
+
+    /**
      * @dev Update Pre-Sale availability
      *
      * @param _available (true: available | false: unavailable)

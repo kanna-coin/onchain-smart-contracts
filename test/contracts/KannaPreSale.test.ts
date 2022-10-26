@@ -188,11 +188,72 @@ describe("KNN PreSale", () => {
 
       await knnPreSale.lockSupply(toLock);
 
-      const availableSupply = await knnPreSale.availableSupply();
+      let availableSupply = await knnPreSale.availableSupply();
 
-      const expectedSupply = balance.sub(toLock);
+      let expectedSupply = balance.sub(toLock);
 
       expect(availableSupply).to.eq(expectedSupply);
+
+      await knnPreSale.lockSupply(toLock);
+
+      availableSupply = await knnPreSale.availableSupply();
+
+      expectedSupply = expectedSupply.sub(toLock);
+
+      expect(availableSupply).to.eq(expectedSupply);
+    });
+
+    it("should not lock supply greater than supply", async () => {
+      const availableSupply = await knnPreSale.availableSupply();
+
+      const toLock = availableSupply.add(1);
+
+      const error = await knnPreSale
+        .lockSupply(toLock)
+        .then(() => null)
+        .catch((e) => e);
+
+      expect(error).to.not.null;
+    });
+
+    it("should unlock supply", async () => {
+      const balance = await knnToken.balanceOf(knnPreSale.address);
+
+      const toLock = 1e10;
+
+      await knnPreSale.lockSupply(toLock);
+
+      let expectedSupply = balance.sub(toLock);
+
+      await knnPreSale.unlockSupply(1e9);
+
+      expectedSupply = expectedSupply.add(1e9);
+
+      let availableSupply = await knnPreSale.availableSupply();
+
+      expect(availableSupply).to.eq(expectedSupply);
+
+      await knnPreSale.unlockSupply(5 * 1e9);
+
+      expectedSupply = expectedSupply.add(5 * 1e9);
+
+      availableSupply = await knnPreSale.availableSupply();
+
+      expect(availableSupply).to.eq(expectedSupply);
+    });
+
+    it("should not unlock supply greater than locked", async () => {
+      const toLock = 1e10;
+      const toUnlonk = toLock + 1;
+
+      await knnPreSale.lockSupply(toLock);
+
+      const error = await knnPreSale
+        .unlockSupply(toUnlonk)
+        .then(() => null)
+        .catch((e) => e);
+
+      expect(error).to.not.null;
     });
   });
 });
