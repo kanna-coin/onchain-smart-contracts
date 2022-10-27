@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: MIT
-
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.4;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
@@ -57,6 +56,9 @@ contract KannaYield is Ownable {
         fees[tier[4]] = 100;
     }
 
+    /**
+     * @dev Retrieves user fee from a given duration
+     */
     function feeOf(uint256 subscriptionDuration) private view returns (uint256) {
         if (block.timestamp >= endDate) return reducedFee;
 
@@ -69,6 +71,9 @@ contract KannaYield is Ownable {
         return reducedFee;
     }
 
+    /**
+     * @dev Transfer collected fees
+     */
     function collectFees() external onlyOwner returns (uint256) {
         uint256 paid = knnYieldTotalFee;
         knnYieldTotalFee = 0;
@@ -80,18 +85,23 @@ contract KannaYield is Ownable {
         return paid;
     }
 
-    function poolSize() external view returns (uint256) {
-        return knnYieldPool;
-    }
-
+    /**
+     * @dev Retrieves user balance on pool
+     */
     function balanceOf(address holder) external view returns (uint256) {
         return rawBalances[holder];
     }
 
+    /**
+     * @dev Retrieves the last timestamp when the current reward was calculated.
+     */
     function lastPaymentEvent() public view returns (uint256) {
         return block.timestamp < endDate ? block.timestamp : endDate;
     }
 
+    /**
+     * @dev Retrieves the current reward per token coeficient
+     */
     function rewardPerToken() public view returns (uint256) {
         if (knnYieldPool == 0) {
             return rewardPerTokenStored;
@@ -100,10 +110,16 @@ contract KannaYield is Ownable {
         return rewardPerTokenStored + (((lastPaymentEvent() - lastUpdateTime) * rewardRate * 1e18) / knnYieldPool);
     }
 
+    /**
+     * @dev Retrieve the current available reward for a given address
+     */
     function calculateReward(address holder) public view returns (uint256) {
         return ((rawBalances[holder] * (rewardPerToken() - holderRewardPerTokenPaid[holder])) / 1e18) + earned[holder];
     }
 
+    /**
+     * @dev Allow user to deposit an amount and start receiving rewards.
+     */
     function subscribe(uint256 subscriptionAmount) external updateReward(msg.sender) {
         require(endDate > block.timestamp, "No reward available");
         require(subscriptionAmount > 0, "Cannot subscribe 0 KNN");
@@ -111,9 +127,7 @@ contract KannaYield is Ownable {
 
         knnToken.transferFrom(msg.sender, address(this), subscriptionAmount);
 
-        uint256 finalAmount = subscriptionAmount - ((subscriptionAmount * subscriptionFee) / FEE_BASIS_POINT);
-        knnYieldTotalFee += subscriptionAmount - finalAmount;
-        knnYieldPool += finalAmount;
+        knnYieldPool += subscriptionAmount;
 
         uint256 subscriptionDate = started[msg.sender];
 
@@ -121,11 +135,15 @@ contract KannaYield is Ownable {
             started[msg.sender] = block.timestamp;
         }
 
-        rawBalances[msg.sender] += finalAmount;
+        rawBalances[msg.sender] += subscriptionAmount;
 
-        emit Subscription(msg.sender, subscriptionAmount, subscriptionFee, finalAmount);
+        emit Subscription(msg.sender, subscriptionAmount, subscriptionFee, subscriptionAmount);
     }
 
+    /**
+     * @dev Allow user withdraw funds with a penalty of reseting
+     * the {started} to current block timestamp.
+     */
     function withdraw(uint256 amount) public updateReward(msg.sender) {
         require(amount > 0, "Invalid amount");
         require(rawBalances[msg.sender] >= amount, "Insufficient balance");
@@ -140,20 +158,9 @@ contract KannaYield is Ownable {
         emit Withdraw(msg.sender, amount);
     }
 
-    function claim() public updateReward(msg.sender) {
-        uint256 reward = earned[msg.sender];
-
-        if (reward == 0) {
-            return;
-        }
-
-        earned[msg.sender] = 0;
-
-        _transferFee(msg.sender, reward);
-
-        emit Reward(msg.sender, reward);
-    }
-
+    /**
+     * @dev Return funds to the user
+     */
     function exit() external updateReward(msg.sender) {
         uint256 balance = rawBalances[msg.sender];
         uint256 reward = earned[msg.sender];
@@ -177,33 +184,16 @@ contract KannaYield is Ownable {
         emit Reward(msg.sender, reward);
     }
 
-    /// @dev experimental feature
-    function reApply() external updateReward(msg.sender) {
-        require(endDate > block.timestamp, "No reward available");
-        uint256 claimed = earned[msg.sender];
-        uint256 balance = rawBalances[msg.sender];
-        earned[msg.sender] = 0;
-
-        knnYieldPool += claimed;
-        balance += claimed;
-        rawBalances[msg.sender] = balance;
-
-        if (balance == 0) {
-            return;
-        }
-
-        emit Interest(msg.sender, claimed, balance);
-    }
-
+    /**
+     * @dev Transfer funds to user with a duration-based fee.
+     */
     function _transferFee(address to, uint256 amount) private returns (uint256) {
         require(started[msg.sender] > 0, "Not in pool");
         uint256 duration = block.timestamp - started[msg.sender];
 
-        uint256 userFee = feeOf(duration);
+        uint256 userFee = feeOf(duration) + subscriptionFee;
 
-        uint256 finalAmount;
-
-        finalAmount = amount - ((amount * userFee) / FEE_BASIS_POINT);
+        uint256 finalAmount = amount - ((amount * userFee) / FEE_BASIS_POINT);
         knnYieldTotalFee += amount - finalAmount;
 
         knnToken.transfer(to, finalAmount);
@@ -212,6 +202,9 @@ contract KannaYield is Ownable {
         return userFee;
     }
 
+    /**
+     * @dev Adds a reward and a
+     */
     function addReward(uint256 reward, uint256 rewardsDuration) external onlyOwner updateReward(address(0)) {
         require(block.timestamp + rewardsDuration >= endDate, "Cannot reduce current yield contract duration");
         if (block.timestamp >= endDate) {
@@ -233,6 +226,9 @@ contract KannaYield is Ownable {
         emit RewardAdded(msg.sender, reward);
     }
 
+    /**
+     * @dev Update current user reward
+     */
     modifier updateReward(address holder) {
         rewardPerTokenStored = rewardPerToken();
         lastUpdateTime = lastPaymentEvent();
