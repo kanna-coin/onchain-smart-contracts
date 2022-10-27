@@ -210,7 +210,7 @@ contract KannaYield is Ownable {
     }
 
     /**
-     * @dev Adds a reward and a
+     * @dev Adds a `reward` to be distributed over a `duration`
      */
     function addReward(uint256 reward, uint256 rewardsDuration) external onlyOwner updateReward(address(0)) {
         require(block.timestamp + rewardsDuration >= endDate, "Cannot reduce current yield contract duration");
