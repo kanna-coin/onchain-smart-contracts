@@ -4,13 +4,20 @@ pragma solidity ^0.8.4;
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-/** @title KNN Treasurer
-    @author KANNA
-    @dev deprecation warning: work in progress to KannaTreasuryV2
-    @custom:github  https://github.com/kanna-coin
-    @custom:site https://kannacoin.io
-    @custom:discord https://discord.gg/V5KDU8DKCh
-    */
+/**
+ *   __                                    __
+ *  |  | _______    ____   ____ _____    _/  |________   ____ _____    ________ _________   ___________
+ *  |  |/ /\__  \  /    \ /    \\__  \   \   __\_  __ \_/ __ \\__  \  /  ___/  |  \_  __ \_/ __ \_  __ \
+ *  |    <  / __ \|   |  \   |  \/ __ \_  |  |  |  | \/\  ___/ / __ \_\___ \|  |  /|  | \/\  ___/|  | \/
+ *  |__|_ \(____  /___|  /___|  (____  /  |__|  |__|    \___  >____  /____  >____/ |__|    \___  >__|
+ *       \/     \/     \/     \/     \/                     \/     \/     \/                   \/
+
+ *  @title KNN Treasurer
+ *  @author KANNA Team
+ *  @custom:github  https://github.com/kanna-coin
+ *  @custom:site https://kannacoin.io
+ *  @custom:discord https://discord.gg/V5KDU8DKCh
+ */
 contract KannaTreasurer is Ownable {
     IERC20 private immutable knnToken;
 

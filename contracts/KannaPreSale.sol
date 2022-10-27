@@ -6,12 +6,21 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 
-/** @title KNN PreSale for KNN Token
-    @author KANNA Team
-    @custom:github  https://github.com/kanna-coin
-    @custom:site https://kannacoin.io
-    @custom:discord https://discord.gg/V5KDU8DKCh
-    */
+/**
+ *
+ *   __                                                                      .__
+ *  |  | _______    ____   ____ _____    _____________   ____   ___________  |  |   ____
+ *  |  |/ /\__  \  /    \ /    \\__  \   \____ \_  __ \_/ __ \ /  ___/\__  \ |  | _/ __ \
+ *  |    <  / __ \|   |  \   |  \/ __ \_ |  |_> >  | \/\  ___/ \___ \  / __ \|  |_\  ___/
+ *  |__|_ \(____  /___|  /___|  (____  / |   __/|__|    \___  >____  >(____  /____/\___  >
+ *       \/     \/     \/     \/     \/  |__|               \/     \/      \/          \/
+ *
+ *  @title KNN PreSale for KNN Token
+ *  @author KANNA Team
+ *  @custom:github  https://github.com/kanna-coin
+ *  @custom:site https://kannacoin.io
+ *  @custom:discord https://discord.gg/V5KDU8DKCh
+ */
 contract KannaPreSale is Ownable, AccessControl {
     IERC20 public immutable knnToken;
     AggregatorV3Interface public priceAggregator;

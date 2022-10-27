@@ -4,15 +4,22 @@ pragma solidity ^0.8.4;
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
-/** @title KNN Yield
-    @author KANNA Team
-    @notice KANNA Staking Pool SmartContract
-    @dev distributes a reward within a given duration to its holders.
+/**
+ *   __                                          .__       .__       .___
+ *  |  | _______    ____   ____ _____     ___.__.|__| ____ |  |    __| _/
+ *  |  |/ /\__  \  /    \ /    \\__  \   <   |  ||  |/ __ \|  |   / __ | 
+ *  |    <  / __ \|   |  \   |  \/ __ \_  \___  ||  \  ___/|  |__/ /_/ | 
+ *  |__|_ \(____  /___|  /___|  (____  /  / ____||__|\___  >____/\____ | 
+ *       \/     \/     \/     \/     \/   \/             \/           \/ 
+ * 
+ *  @title KNN Yield
+ *  @author KANNA Team
+ *  @dev distributes a reward within a given duration to its holders.
     rates are weighted according to its {subscription} amount over the total {poolSize}.
-    @custom:github  https://github.com/kanna-coin
-    @custom:site https://kannacoin.io
-    @custom:discord https://discord.gg/V5KDU8DKCh
-    */
+ *  @custom:github  https://github.com/kanna-coin
+ *  @custom:site https://kannacoin.io
+ *  @custom:discord https://discord.gg/V5KDU8DKCh
+ */
 contract KannaYield is Ownable {
     event RewardAdded(address indexed user, uint256 reward);
     event Interest(address indexed user, uint256 subscriptionAmount, uint256 fee);

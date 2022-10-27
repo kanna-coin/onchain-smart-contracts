@@ -5,12 +5,20 @@ import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 
-/** @title KNN Token (ERC20)
-    @author KANNA Team
-    @custom:github  https://github.com/kanna-coin
-    @custom:site https://kannacoin.io
-    @custom:discord https://discord.gg/V5KDU8DKCh
-    */
+/**
+ *   __                                    __          __
+ *  |  | _______    ____   ____ _____    _/  |_  ____ |  | __ ____   ____
+ *  |  |/ /\__  \  /    \ /    \\__  \   \   __\/  _ \|  |/ // __ \ /    \
+ *  |    <  / __ \|   |  \   |  \/ __ \_  |  | (  <_> )    <\  ___/|   |  \
+ *  |__|_ \(____  /___|  /___|  (____  /  |__|  \____/|__|_ \\___  >___|  /
+ *       \/     \/     \/     \/     \/                    \/    \/     \/
+ *
+ *  @title KNN Token (ERC20)
+ *  @author KANNA Team
+ *  @custom:github  https://github.com/kanna-coin
+ *  @custom:site https://kannacoin.io
+ *  @custom:discord https://discord.gg/V5KDU8DKCh
+ */
 contract KannaToken is ERC20, Ownable, AccessControl {
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
     uint256 public immutable INITIAL_SUPPLY = 10_000_000 * 10**decimals();
