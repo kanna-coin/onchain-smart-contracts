@@ -244,12 +244,12 @@ describe("KNN PreSale", () => {
 
     it("should not unlock supply greater than locked", async () => {
       const toLock = 1e10;
-      const toUnlonk = toLock + 1;
+      const toUnlock = toLock + 1;
 
       await knnPreSale.lockSupply(toLock);
 
       const error = await knnPreSale
-        .unlockSupply(toUnlonk)
+        .unlockSupply(toUnlock)
         .then(() => null)
         .catch((e) => e);
 
@@ -267,30 +267,91 @@ describe("KNN PreSale", () => {
 
       const tx = deployerWallet.sendTransaction({
         to: knnPreSale.address,
-        value: ethers.utils.parseEther("5.001001999238")
+        value: ethers.utils.parseEther("5.001001999238"),
       });
 
-      await expect(tx)
-        .to.be.revertedWith("Cannot Receive: Should call {buyTokens} function in order to swap ETH for KNN");
+      await expect(tx).to.be.revertedWith(
+        "Cannot Receive: Should call {buyTokens} function in order to swap ETH for KNN"
+      );
     });
 
     it("should invoke the fallback function", async () => {
       const [deployerWallet] = signers;
 
-      const nonExistentFuncSignature = 'nonExistentFunc(uint256,uint256)';
+      const nonExistentFuncSignature = "nonExistentFunc(uint256,uint256)";
       const fakeDemoContract = new ethers.Contract(
         knnPreSale.address,
         [
           ...knnPreSale.interface.fragments,
           `function ${nonExistentFuncSignature}`,
         ],
-        deployerWallet,
+        deployerWallet
       );
 
       const tx = fakeDemoContract[nonExistentFuncSignature](8, 9);
 
-      await expect(tx)
-        .to.be.revertedWith("Fallback: Should call {buyTokens} function in order to swap ETH for KNN");
+      await expect(tx).to.be.revertedWith(
+        "Fallback: Should call {buyTokens} function in order to swap ETH for KNN"
+      );
+    });
+
+    it("should allow claim", async () => {
+      const [, claimManagerAccount, userAccount] = signers;
+      const amount = 1;
+
+      await knnPreSale.lockSupply(amount);
+      await knnPreSale.addClaimManager(claimManagerAccount.address);
+
+      const managerSession = await ethers.getContractAt(
+        "KannaPreSale",
+        knnPreSale.address,
+        claimManagerAccount
+      );
+
+      await managerSession.claim(userAccount.address, amount);
+
+      const balanceUint256 = await knnToken.balanceOf(userAccount.address);
+      const balance = parseInt(balanceUint256._hex, 16);
+
+      expect(balance).to.eq(amount);
+    });
+
+    it("should validate claimable amount", async () => {
+      const [, claimManagerAccount, userAccount] = signers;
+      const amount = 1;
+
+      await knnPreSale.addClaimManager(claimManagerAccount.address);
+
+      const managerSession = await ethers.getContractAt(
+        "KannaPreSale",
+        knnPreSale.address,
+        claimManagerAccount
+      );
+
+      const tx = managerSession.claim(userAccount.address, amount);
+
+      await expect(tx).to.be.revertedWith("Insufficient locked amount");
+    });
+
+    it("should validate CLAIM_MANAGER_ROLE", async () => {
+      const [, claimManagerAccount, userAccount] = signers;
+      const amount = 1;
+
+      await knnPreSale.lockSupply(amount);
+      await knnPreSale.removeClaimManager(claimManagerAccount.address);
+
+      const managerSession = await ethers.getContractAt(
+        "KannaPreSale",
+        knnPreSale.address,
+        claimManagerAccount
+      );
+
+      const error = await managerSession
+        .claim(userAccount.address, amount)
+        .then(() => null)
+        .catch((e: object) => e);
+
+      expect(error).to.not.null;
     });
   });
 });
