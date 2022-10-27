@@ -4,6 +4,7 @@ pragma solidity ^0.8.4;
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
+import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 
 /** @title KNN PreSale for KNN Token
     @author KANNA Team
@@ -11,9 +12,12 @@ import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/interfaces/Ag
     @custom:site https://kannacoin.io
     @custom:discord https://discord.gg/V5KDU8DKCh
     */
-contract KannaPreSale is Ownable {
+contract KannaPreSale is Ownable, AccessControl {
     IERC20 public immutable knnToken;
     AggregatorV3Interface public priceAggregator;
+
+    bytes32 public constant CLAIM_MANAGER_ROLE = keccak256("CLAIM_MANAGER_ROLE");
+
     uint256 public constant USD_AGGREGATOR_DECIMALS = 1e8;
     uint256 public constant KNN_DECIMALS = 1e18;
     uint256 public knnPriceInUSD;
@@ -27,6 +31,8 @@ contract KannaPreSale is Ownable {
         uint256 ethPriceInUSD,
         uint256 indexed amountInKNN
     );
+
+    event Claim(address indexed holder, uint256 amountInKNN);
 
     event QuotationUpdate(address indexed sender, uint256 from, uint256 to);
     event Withdraw(address indexed recipient, uint256 amount);
@@ -48,6 +54,37 @@ contract KannaPreSale is Ownable {
     modifier isAvailable() {
         require(available, "Pre sale NOT started yet");
         _;
+    }
+
+    /**
+     * @dev Grants `CLAIM_MANAGER_ROLE` to a `claimManager` account.
+     *
+     * If `claimManager` account had not been already granted `role`, emits a {RoleGranted}
+     * event.
+     *
+     * Requirements:
+     *
+     * - the caller must have admin role.
+     *
+     * May emit a {RoleGranted} event.
+     */
+    function addClaimManager(address claimManager) external onlyOwner {
+        _grantRole(CLAIM_MANAGER_ROLE, claimManager);
+    }
+
+    /**
+     * @dev Removes `CLAIM_MANAGER_ROLE` from a `claimManager` account.
+     *
+     * If `claimManager` had been granted `CLAIM_MANAGER_ROLE`, emits a {RoleRevoked} event.
+     *
+     * Requirements:
+     *
+     * - the caller must have admin role.
+     *
+     * May emit a {RoleRevoked} event.
+     */
+    function removeClaimManager(address claimManager) external onlyOwner {
+        _revokeRole(CLAIM_MANAGER_ROLE, claimManager);
     }
 
     /**
@@ -87,6 +124,20 @@ contract KannaPreSale is Ownable {
         require(knnLocked >= amountInKNN, "Insufficient locked supply!");
 
         knnLocked -= amountInKNN;
+    }
+
+    /**
+     * @dev release claimed tokens to recipient
+     */
+    function claim(address recipient, uint256 amountInKNN) external onlyRole(CLAIM_MANAGER_ROLE) {
+        require(amountInKNN > 0, "Invalid amount");
+        require(knnLocked >= amountInKNN, "Insufficient locked amount");
+        require(knnToken.balanceOf(address(this)) >= amountInKNN, "Insufficient balance");
+        knnToken.transfer(recipient, amountInKNN);
+
+        knnLocked -= amountInKNN;
+
+        emit Claim(recipient, amountInKNN);
     }
 
     /**
