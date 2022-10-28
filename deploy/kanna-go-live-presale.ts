@@ -1,15 +1,13 @@
 import { ethers, run } from "hardhat";
-import getKnnToken from "../src/infrastructure/factories/KannaTokenFactory";
+import "@nomiclabs/hardhat-etherscan";
 import {
+  getKnnToken,
   getKnnYield,
   getKnnYieldParameters,
-} from "../src/infrastructure/factories/KannaYieldFactory";
-import {
   getKnnPreSale,
   getPreSaleParameters,
-} from "../src/infrastructure/factories/KannaPreSaleFactory";
+} from "../src/infrastructure/factories";
 
-import "@nomiclabs/hardhat-etherscan";
 const sleep = (seconds: number) =>
   new Promise((resolve) => setTimeout(resolve, 1000 * seconds));
 

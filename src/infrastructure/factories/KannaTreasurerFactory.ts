@@ -1,15 +1,16 @@
 import "@nomiclabs/hardhat-waffle";
-import { ethers } from "hardhat";
+import { ethers, waffle } from "hardhat";
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { MockContract } from "ethereum-waffle";
 import {
   KannaTreasurer__factory,
   KannaTreasurer,
   KannaToken,
 } from "../../../typechain";
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
-const instance = async (
+export const getKnnTreasurer = async (
   knnDeployerAddress: SignerWithAddress,
-  knnToken: KannaToken
+  knnToken: KannaToken | MockContract
 ): Promise<KannaTreasurer> => {
   let knnTreasurer: KannaTreasurer;
 
@@ -27,4 +28,10 @@ const instance = async (
   return knnTreasurer;
 };
 
-export default instance;
+export const getKnnTreasurerMock = async (
+  knnDeployerAddress: SignerWithAddress
+) => {
+  const knnTreasurer = await waffle.deployMockContract(knnDeployerAddress, KannaTreasurer__factory.abi);
+
+  return knnTreasurer;
+};
