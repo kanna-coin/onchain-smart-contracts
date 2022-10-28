@@ -14,7 +14,7 @@
     "deploy:treasurer": "npx hardhat run --network localhost deploy/2_KannaTreasurer_deploy.ts",
     "deploy:yield": "npx hardhat run --network localhost deploy/3_KannaYield_deploy.ts",
     "deploy:presale": "npx hardhat run --network localhost deploy/4_KannaPreSale_deploy.ts",
-    "deploy": "npx hardhat run --network goerli deploy/kanna-go-live-presale.ts"
+    "deploy": "npx hardhat run --network localhost deploy/kanna-go-live-presale.ts"
   },
   "repository": {
     "type": "git",
