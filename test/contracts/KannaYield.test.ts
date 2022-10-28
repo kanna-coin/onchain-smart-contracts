@@ -47,7 +47,7 @@ describe("KNN Yield⬆", async () => {
       const yieldBalance = await knnToken.balanceOf(knnYield.address);
       const balance = parseInt(yieldBalance._hex, 16);
 
-      const poolBalance = await knnYield.poolSize();
+      const poolBalance = await knnYield.knnYieldPool();
       const poolSize = parseInt(poolBalance._hex, 16);
 
       expect(balance).to.eq(4e23);
@@ -113,15 +113,7 @@ describe("KNN Yield⬆", async () => {
 
       const balance = await knnYield.balanceOf(anyHolder.address);
 
-      const subscriptionFee = 20;
-
-      const userBalanceOnPool =
-        parseKNN(subscriptionAmount) -
-        (parseKNN(subscriptionAmount) * subscriptionFee) / 10000;
-
-      console.log(userBalanceOnPool);
-
-      expect(parseKNN(balance)).to.eq(userBalanceOnPool);
+      expect(parseKNN(balance)).to.eq(parseKNN(subscriptionAmount));
     });
 
     it("should distribute a 400K rewards over a yearly duration for 3holders EQUALY", async () => {
@@ -280,175 +272,175 @@ describe("KNN Yield⬆", async () => {
       );
     });
 
-    it("should validate Claim", async () => {
-      const rewardsDuration = 100 * 24 * 60 ** 2;
-      const day = 1 * 24 * 60 ** 2;
+    // it("should validate Claim", async () => {
+    //   const rewardsDuration = 100 * 24 * 60 ** 2;
+    //   const day = 1 * 24 * 60 ** 2;
 
-      const reward = 400000;
+    //   const reward = 400000;
 
-      const amount = 1;
-      const rewardAmount = parse1e18(reward * 3);
-      const secondReward = reward / 10;
+    //   const amount = 1;
+    //   const rewardAmount = parse1e18(reward * 3);
+    //   const secondReward = reward / 10;
 
-      await knnTreasurer.release(knnYield.address, rewardAmount);
-      await knnTreasurer.release(firstHolder.address, parse1e18(amount));
-      await knnTreasurer.release(secondHolder.address, parse1e18(amount));
+    //   await knnTreasurer.release(knnYield.address, rewardAmount);
+    //   await knnTreasurer.release(firstHolder.address, parse1e18(amount));
+    //   await knnTreasurer.release(secondHolder.address, parse1e18(amount));
 
-      const firstHolderTokenSession = await ethers.getContractAt(
-        tokenContractName,
-        knnToken.address,
-        firstHolder
-      );
+    //   const firstHolderTokenSession = await ethers.getContractAt(
+    //     tokenContractName,
+    //     knnToken.address,
+    //     firstHolder
+    //   );
 
-      await firstHolderTokenSession.approve(
-        knnYield.address,
-        parse1e18(amount)
-      );
+    //   await firstHolderTokenSession.approve(
+    //     knnYield.address,
+    //     parse1e18(amount)
+    //   );
 
-      const secondHolderTokenSession = await ethers.getContractAt(
-        tokenContractName,
-        knnToken.address,
-        secondHolder
-      );
+    //   const secondHolderTokenSession = await ethers.getContractAt(
+    //     tokenContractName,
+    //     knnToken.address,
+    //     secondHolder
+    //   );
 
-      await secondHolderTokenSession.approve(
-        knnYield.address,
-        parse1e18(amount)
-      );
+    //   await secondHolderTokenSession.approve(
+    //     knnYield.address,
+    //     parse1e18(amount)
+    //   );
 
-      await knnYield.addReward(parse1e18(reward / 2), rewardsDuration);
-      await network.provider.send("evm_mine");
+    //   await knnYield.addReward(parse1e18(reward / 2), rewardsDuration);
+    //   await network.provider.send("evm_mine");
 
-      const firstHolderYieldSession = await ethers.getContractAt(
-        yieldContractName,
-        knnYield.address,
-        firstHolder
-      );
+    //   const firstHolderYieldSession = await ethers.getContractAt(
+    //     yieldContractName,
+    //     knnYield.address,
+    //     firstHolder
+    //   );
 
-      const secondHolderYieldSession = await ethers.getContractAt(
-        yieldContractName,
-        knnYield.address,
-        secondHolder
-      );
+    //   const secondHolderYieldSession = await ethers.getContractAt(
+    //     yieldContractName,
+    //     knnYield.address,
+    //     secondHolder
+    //   );
 
-      await firstHolderYieldSession.subscribe(parse1e18(amount));
-      await secondHolderYieldSession.subscribe(parse1e18(amount));
-      await network.provider.send("evm_mine");
+    //   await firstHolderYieldSession.subscribe(parse1e18(amount));
+    //   await secondHolderYieldSession.subscribe(parse1e18(amount));
+    //   await network.provider.send("evm_mine");
 
-      let newRewardAdded = false;
-      for (let i = day; i < rewardsDuration; i += day * 2) {
-        await firstHolderYieldSession.claim();
-        await network.provider.send("evm_mine");
-        await network.provider.send("evm_increaseTime", [i]);
-        await network.provider.send("evm_mine");
+    //   let newRewardAdded = false;
+    //   for (let i = day; i < rewardsDuration; i += day * 2) {
+    //     await firstHolderYieldSession.claim();
+    //     await network.provider.send("evm_mine");
+    //     await network.provider.send("evm_increaseTime", [i]);
+    //     await network.provider.send("evm_mine");
 
-        if (i > rewardsDuration / 2 && !newRewardAdded) {
-          await knnYield.addReward(parse1e18(reward / 10), rewardsDuration / 2);
-          newRewardAdded = true;
-        }
-      }
+    //     if (i > rewardsDuration / 2 && !newRewardAdded) {
+    //       await knnYield.addReward(parse1e18(reward / 10), rewardsDuration / 2);
+    //       newRewardAdded = true;
+    //     }
+    //   }
 
-      await firstHolderYieldSession.exit();
-      await secondHolderYieldSession.exit();
-      await network.provider.send("evm_mine");
+    //   await firstHolderYieldSession.exit();
+    //   await secondHolderYieldSession.exit();
+    //   await network.provider.send("evm_mine");
 
-      const firstHolderBalance = await knnToken.balanceOf(firstHolder.address);
-      const secondHolderBalance = await knnToken.balanceOf(
-        secondHolder.address
-      );
-      const firstBalanceAmount = parseKNN(firstHolderBalance);
-      const secondBalanceAmount = parseKNN(secondHolderBalance);
+    //   const firstHolderBalance = await knnToken.balanceOf(firstHolder.address);
+    //   const secondHolderBalance = await knnToken.balanceOf(
+    //     secondHolder.address
+    //   );
+    //   const firstBalanceAmount = parseKNN(firstHolderBalance);
+    //   const secondBalanceAmount = parseKNN(secondHolderBalance);
 
-      expect(firstBalanceAmount).to.lessThan(secondBalanceAmount);
-      expect(firstBalanceAmount + secondBalanceAmount).to.lessThanOrEqual(
-        reward + secondReward
-      );
-    });
+    //   expect(firstBalanceAmount).to.lessThan(secondBalanceAmount);
+    //   expect(firstBalanceAmount + secondBalanceAmount).to.lessThanOrEqual(
+    //     reward + secondReward
+    //   );
+    // });
 
-    it("should validate ReApply", async () => {
-      const rewardsDuration = 100 * 24 * 60 ** 2;
-      const day = 1 * 24 * 60 ** 2;
+    // it("should validate ReApply", async () => {
+    //   const rewardsDuration = 100 * 24 * 60 ** 2;
+    //   const day = 1 * 24 * 60 ** 2;
 
-      const reward = 400000;
+    //   const reward = 400000;
 
-      const amount = 1;
-      const rewardAmount = parse1e18(reward);
+    //   const amount = 1;
+    //   const rewardAmount = parse1e18(reward);
 
-      await knnTreasurer.release(knnYield.address, rewardAmount);
-      await knnTreasurer.release(firstHolder.address, parse1e18(amount));
-      await knnTreasurer.release(secondHolder.address, parse1e18(amount));
+    //   await knnTreasurer.release(knnYield.address, rewardAmount);
+    //   await knnTreasurer.release(firstHolder.address, parse1e18(amount));
+    //   await knnTreasurer.release(secondHolder.address, parse1e18(amount));
 
-      const firstHolderTokenSession = await ethers.getContractAt(
-        tokenContractName,
-        knnToken.address,
-        firstHolder
-      );
+    //   const firstHolderTokenSession = await ethers.getContractAt(
+    //     tokenContractName,
+    //     knnToken.address,
+    //     firstHolder
+    //   );
 
-      await firstHolderTokenSession.approve(
-        knnYield.address,
-        parse1e18(amount)
-      );
+    //   await firstHolderTokenSession.approve(
+    //     knnYield.address,
+    //     parse1e18(amount)
+    //   );
 
-      const secondHolderTokenSession = await ethers.getContractAt(
-        tokenContractName,
-        knnToken.address,
-        secondHolder
-      );
+    //   const secondHolderTokenSession = await ethers.getContractAt(
+    //     tokenContractName,
+    //     knnToken.address,
+    //     secondHolder
+    //   );
 
-      await secondHolderTokenSession.approve(
-        knnYield.address,
-        parse1e18(amount)
-      );
+    //   await secondHolderTokenSession.approve(
+    //     knnYield.address,
+    //     parse1e18(amount)
+    //   );
 
-      await knnYield.addReward(rewardAmount, rewardsDuration);
-      await network.provider.send("evm_mine");
+    //   await knnYield.addReward(rewardAmount, rewardsDuration);
+    //   await network.provider.send("evm_mine");
 
-      const firstHolderYieldSession = await ethers.getContractAt(
-        yieldContractName,
-        knnYield.address,
-        firstHolder
-      );
+    //   const firstHolderYieldSession = await ethers.getContractAt(
+    //     yieldContractName,
+    //     knnYield.address,
+    //     firstHolder
+    //   );
 
-      const secondHolderYieldSession = await ethers.getContractAt(
-        yieldContractName,
-        knnYield.address,
-        secondHolder
-      );
+    //   const secondHolderYieldSession = await ethers.getContractAt(
+    //     yieldContractName,
+    //     knnYield.address,
+    //     secondHolder
+    //   );
 
-      await firstHolderYieldSession.subscribe(parse1e18(amount));
-      await secondHolderYieldSession.subscribe(parse1e18(amount));
-      await network.provider.send("evm_mine");
+    //   await firstHolderYieldSession.subscribe(parse1e18(amount));
+    //   await secondHolderYieldSession.subscribe(parse1e18(amount));
+    //   await network.provider.send("evm_mine");
 
-      for (let i = day; i < rewardsDuration / 10; i += day) {
-        await firstHolderYieldSession.reApply();
+    //   for (let i = day; i < rewardsDuration / 10; i += day) {
+    //     await firstHolderYieldSession.reApply();
 
-        await network.provider.send("evm_mine");
-        await network.provider.send("evm_increaseTime", [i]);
-        await network.provider.send("evm_mine");
+    //     await network.provider.send("evm_mine");
+    //     await network.provider.send("evm_increaseTime", [i]);
+    //     await network.provider.send("evm_mine");
 
-        if (i >= 7 * day) {
-          continue;
-        }
+    //     if (i >= 7 * day) {
+    //       continue;
+    //     }
 
-        await secondHolderYieldSession.reApply();
-      }
+    //     await secondHolderYieldSession.reApply();
+    //   }
 
-      await firstHolderYieldSession.exit();
-      await secondHolderYieldSession.exit();
-      await network.provider.send("evm_mine");
+    //   await firstHolderYieldSession.exit();
+    //   await secondHolderYieldSession.exit();
+    //   await network.provider.send("evm_mine");
 
-      const firstHolderBalance = await knnToken.balanceOf(firstHolder.address);
-      const secondHolderBalance = await knnToken.balanceOf(
-        secondHolder.address
-      );
-      const firstBalanceAmount = parseKNN(firstHolderBalance);
-      const secondBalanceAmount = parseKNN(secondHolderBalance);
+    //   const firstHolderBalance = await knnToken.balanceOf(firstHolder.address);
+    //   const secondHolderBalance = await knnToken.balanceOf(
+    //     secondHolder.address
+    //   );
+    //   const firstBalanceAmount = parseKNN(firstHolderBalance);
+    //   const secondBalanceAmount = parseKNN(secondHolderBalance);
 
-      expect(firstBalanceAmount).to.greaterThan(secondBalanceAmount);
-      expect(firstBalanceAmount + secondBalanceAmount).to.lessThanOrEqual(
-        reward
-      );
-    });
+    //   expect(firstBalanceAmount).to.greaterThan(secondBalanceAmount);
+    //   expect(firstBalanceAmount + secondBalanceAmount).to.lessThanOrEqual(
+    //     reward
+    //   );
+    // });
 
     it("should distribute a 400K rewards over a yearly duration for two holders accordingly", async () => {
       const rewardsDuration = 365 * 24 * 60 ** 2;
@@ -937,9 +929,8 @@ describe("KNN Yield⬆", async () => {
 
       const firstHolderBalance = await knnToken.balanceOf(firstHolder.address);
       const balanceAmount = parseKNN(firstHolderBalance);
-      const fee = 0.3;
-      const subscriptionFee = 0.002;
-      const maxValueAfterFees = amount * (1 - fee) * (1 - subscriptionFee);
+      const fee = 0.302;
+      const maxValueAfterFees = amount * (1 - fee);
 
       expect(balanceAmount).to.eq(maxValueAfterFees);
     });
@@ -982,9 +973,8 @@ describe("KNN Yield⬆", async () => {
 
       const firstHolderBalance = await knnToken.balanceOf(anyHolder.address);
       const balanceAmount = parseKNN(firstHolderBalance);
-      const fee = 0.05;
-      const subscriptionFee = 0.002;
-      const maxValueAfterFees = amount * (1 - fee) * (1 - subscriptionFee);
+      const fee = 0.052;
+      const maxValueAfterFees = amount * (1 - fee);
 
       expect(balanceAmount).to.eq(maxValueAfterFees);
     });
@@ -1027,9 +1017,8 @@ describe("KNN Yield⬆", async () => {
 
       const firstHolderBalance = await knnToken.balanceOf(anyHolder.address);
       const balanceAmount = parseKNN(firstHolderBalance);
-      const fee = 0.025;
-      const subscriptionFee = 0.002;
-      const maxValueAfterFees = amount * (1 - fee) * (1 - subscriptionFee);
+      const fee = 0.027;
+      const maxValueAfterFees = amount * (1 - fee);
 
       expect(balanceAmount).to.eq(maxValueAfterFees);
     });
@@ -1116,9 +1105,8 @@ describe("KNN Yield⬆", async () => {
 
       const firstHolderBalance = await knnToken.balanceOf(firstHolder.address);
       const balanceAmount = parseKNN(firstHolderBalance);
-      const fee = 0.015;
-      const subscriptionFee = 0.002;
-      const maxValueAfterFees = amount * (1 - fee) * (1 - subscriptionFee);
+      const fee = 0.017;
+      const maxValueAfterFees = amount * (1 - fee);
 
       expect(balanceAmount).to.eq(maxValueAfterFees);
     });
@@ -1161,9 +1149,8 @@ describe("KNN Yield⬆", async () => {
 
       const firstHolderBalance = await knnToken.balanceOf(firstHolder.address);
       const balanceAmount = parseKNN(firstHolderBalance);
-      const fee = 0.01;
-      const subscriptionFee = 0.002;
-      const maxValueAfterFees = amount * (1 - fee) * (1 - subscriptionFee);
+      const fee = 0.012;
+      const maxValueAfterFees = amount * (1 - fee);
 
       expect(balanceAmount).to.eq(maxValueAfterFees);
     });
@@ -1206,9 +1193,8 @@ describe("KNN Yield⬆", async () => {
 
       const firstHolderBalance = await knnToken.balanceOf(firstHolder.address);
       const balanceAmount = parseKNN(firstHolderBalance);
-      const fee = 0.001;
-      const subscriptionFee = 0.002;
-      const maxValueAfterFees = amount * (1 - fee) * (1 - subscriptionFee);
+      const fee = 0.003;
+      const maxValueAfterFees = amount * (1 - fee);
 
       expect(balanceAmount).to.eq(maxValueAfterFees);
     });
@@ -1251,9 +1237,8 @@ describe("KNN Yield⬆", async () => {
 
       const firstHolderBalance = await knnToken.balanceOf(firstHolder.address);
       const balanceAmount = parseKNN(firstHolderBalance);
-      const fee = 0.001;
-      const subscriptionFee = 0.002;
-      const maxValueAfterFees = amount * (1 - fee) * (1 - subscriptionFee);
+      const fee = 0.003;
+      const maxValueAfterFees = amount * (1 - fee);
 
       expect(balanceAmount).to.eq(maxValueAfterFees);
     });
