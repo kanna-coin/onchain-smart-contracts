@@ -14,7 +14,6 @@ interface Etherscan {
 
 type HardhatUserEtherscanConfig = HardhatUserConfig & Etherscan;
 
-const API_URL = process.env.API_URL;
 const PRIVATE_KEY = process.env.PRIVATE_KEY as string;
 const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY;
 
@@ -29,7 +28,7 @@ const config: HardhatUserEtherscanConfig = {
         // eslint-disable-next-line
         enabled: true,
         url: process.env.RPC_NODE_ENDPOINT || "",
-        blockNumber: 15704870,
+        // blockNumber: 15704870,
       },
       mining: {
         mempool: {
@@ -38,10 +37,10 @@ const config: HardhatUserEtherscanConfig = {
       },
     },
     localhost: {},
-    // goerli: {
-    //   url: API_URL,
-    //   accounts: [PRIVATE_KEY],
-    // },
+    goerli: {
+      url: process.env.RPC_NODE_ENDPOINT,
+      accounts: [PRIVATE_KEY],
+    },
     coverage: {
       url: "http://127.0.0.1:8555", // Coverage launches its own ganache-cli client
     },

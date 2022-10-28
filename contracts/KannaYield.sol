@@ -22,7 +22,6 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
  */
 contract KannaYield is Ownable {
     event RewardAdded(address indexed user, uint256 reward);
-    event Interest(address indexed user, uint256 subscriptionAmount, uint256 fee);
     event Collect(address indexed user, address indexed returnAccount, uint256 fee);
     event Subscription(address indexed user, uint256 subscriptionAmount, uint256 fee, uint256 finalAmount);
     event Withdraw(address indexed user, uint256 amount);

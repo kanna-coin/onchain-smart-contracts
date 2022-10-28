@@ -7,14 +7,14 @@
     "build": "npm run clean && npm run compile",
     "clean": "npx hardhat clean",
     "compile": "npx hardhat compile",
-    "test": "npx hardhat test",
+    "test": "npx hardhat test --network hardhat",
     "node": "npx hardhat node",
     "coverage": "npm run build && npx hardhat coverage --temp artifacts",
     "deploy:token": "npx hardhat run --network localhost deploy/1_KannaToken_deploy.ts",
     "deploy:treasurer": "npx hardhat run --network localhost deploy/2_KannaTreasurer_deploy.ts",
     "deploy:yield": "npx hardhat run --network localhost deploy/3_KannaYield_deploy.ts",
     "deploy:presale": "npx hardhat run --network localhost deploy/4_KannaPreSale_deploy.ts",
-    "deploy": "npx hardhat run --network localhost deploy/kanna-go-live-presale.ts"
+    "deploy": "npx hardhat run --network goerli deploy/kanna-go-live-presale.ts"
   },
   "repository": {
     "type": "git",
@@ -29,7 +29,7 @@
   "devDependencies": {
     "@chainlink/contracts": "^0.5.1",
     "@nomiclabs/hardhat-ethers": "^2.0.2",
-    "@nomiclabs/hardhat-etherscan": "^2.1.2",
+    "@nomiclabs/hardhat-etherscan": "^2.1.8",
     "@nomiclabs/hardhat-waffle": "^2.0.1",
     "@openzeppelin/contracts": "^4.7.1",
     "@typechain/ethers-v5": "^7.0.0",

@@ -10,29 +10,35 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
 const parse1e18 = (integer: number): string => `${integer}000000000000000000`;
 
-const instance = async (
+export const getKnnYieldParameters = (
+  knnToken: KannaToken,
+  feeRecipient: SignerWithAddress
+): [string, string] => {
+  return [knnToken.address, feeRecipient.address];
+};
+
+export const getKnnYield = async (
   knnDeployerAddress: SignerWithAddress,
   knnToken: KannaToken,
-  knnTreasurer: KannaTreasurer
+  knnTreasurer?: KannaTreasurer
 ): Promise<KannaYield> => {
   let knnYield: KannaYield;
+
+  const parameters = getKnnYieldParameters(knnToken, knnDeployerAddress);
 
   const knnYieldFactory = (await ethers.getContractFactory(
     "KannaYield",
     knnDeployerAddress
   )) as KannaYield__factory;
-  knnYield = await knnYieldFactory.deploy(
-    knnToken.address,
-    knnDeployerAddress.address
-  );
+  knnYield = await knnYieldFactory.deploy(...parameters);
 
   await knnYield.deployed();
 
   const rewards = parse1e18(400000);
 
-  await knnTreasurer.release(knnYield.address, rewards);
+  if (knnTreasurer) {
+    await knnTreasurer.release(knnYield.address, rewards);
+  }
 
   return knnYield;
 };
-
-export default instance;

@@ -5,10 +5,12 @@ import { KannaTreasurer, KannaToken, KannaPreSale } from "../../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import getKnnToken from "../../src/infrastructure/factories/KannaTokenFactory";
 import getKnnTreasurer from "../../src/infrastructure/factories/KannaTreasurerFactory";
-import getKnnPreSale from "../../src/infrastructure/factories/KannaPreSaleFactory";
+import { getKnnPreSale } from "../../src/infrastructure/factories/KannaPreSaleFactory";
 
 chai.use(chaiAsPromised);
 const { expect } = chai;
+
+const ref = "ref";
 
 describe("KNN PreSale", () => {
   let signers: SignerWithAddress[];
@@ -114,13 +116,15 @@ describe("KNN PreSale", () => {
       it("when amount is greater than available supply", async () => {
         const [deployerWallet] = signers;
 
+        await knnPreSale.addClaimManager(deployerWallet.address);
+
         await network.provider.send("hardhat_setBalance", [
           deployerWallet.address,
           "0xFFFFFFFFFFFFFFFF",
         ]);
         await network.provider.send("evm_mine");
 
-        await knnPreSale.lockSupply(1e10);
+        await knnPreSale.lockSupply(1e10, ref);
 
         const balance = await knnToken.balanceOf(knnPreSale.address);
         const [balanceInWei] = await knnPreSale.convertToWEI(balance);
@@ -136,44 +140,10 @@ describe("KNN PreSale", () => {
       });
     });
 
-    // it("should validate ETH amount", async () => {
-    //   const options = { value: ethers.utils.parseEther("0.005") };
-    //   const error = await knnPreSale
-    //     .buyTokens(options)
-    //     .then(() => null)
-    //     .catch((e) => e);
-
-    //   expect(error).to.eq({});
-    // });
-
-    // it("should start with 0 sold tokens", async () => {
-    //   const soldHex = await knnPreSale.sold();
-    //   const sold = parseInt(soldHex._hex, 16);
-
-    //   expect(sold).to.eq(0);
-    // });
-
-    // it("should retrieve sold tokens", async () => {
-    //   const [deployerWallet] = signers;
-
-    //   await network.provider.send("hardhat_setBalance", [
-    //     deployerWallet.address,
-    //     "0xFFFFFFFFFFFFFFFF",
-    //   ]);
-    //   await network.provider.send("evm_mine");
-
-    //   const options = { value: ethers.utils.parseEther("1.0") };
-    //   await knnPreSale.buyTokens(options);
-    //   const soldHex = await knnToken.balanceOf()
-    //   const sold = parseInt(soldHex._hex, 16);
-
-    //   expect(sold).to.eq(1e18);
-    // });
-
     it("should update quotation", async () => {
-      const currentPriceHex = await knnPreSale.price();
+      const currentPriceHex = await knnPreSale.knnPriceInUSD();
       await knnPreSale.updateQuotation(5 * 1e8);
-      const newPriceHex = await knnPreSale.price();
+      const newPriceHex = await knnPreSale.knnPriceInUSD();
 
       const currentPrice = parseInt(currentPriceHex._hex, 16);
       const newPrice = parseInt(newPriceHex._hex, 16);
@@ -182,11 +152,13 @@ describe("KNN PreSale", () => {
     });
 
     it("should lock supply", async () => {
+      const [deployerWallet] = signers;
       const balance = await knnToken.balanceOf(knnPreSale.address);
 
       const toLock = 1e10;
 
-      await knnPreSale.lockSupply(toLock);
+      await knnPreSale.addClaimManager(deployerWallet.address);
+      await knnPreSale.lockSupply(toLock, ref);
 
       let availableSupply = await knnPreSale.availableSupply();
 
@@ -194,7 +166,7 @@ describe("KNN PreSale", () => {
 
       expect(availableSupply).to.eq(expectedSupply);
 
-      await knnPreSale.lockSupply(toLock);
+      await knnPreSale.lockSupply(toLock, ref);
 
       availableSupply = await knnPreSale.availableSupply();
 
@@ -209,7 +181,7 @@ describe("KNN PreSale", () => {
       const toLock = availableSupply.add(1);
 
       const error = await knnPreSale
-        .lockSupply(toLock)
+        .lockSupply(toLock, ref)
         .then(() => null)
         .catch((e) => e);
 
@@ -217,15 +189,18 @@ describe("KNN PreSale", () => {
     });
 
     it("should unlock supply", async () => {
+      const [deployerWallet] = signers;
+
       const balance = await knnToken.balanceOf(knnPreSale.address);
 
       const toLock = 1e10;
 
-      await knnPreSale.lockSupply(toLock);
+      await knnPreSale.addClaimManager(deployerWallet.address);
+      await knnPreSale.lockSupply(toLock, ref);
 
       let expectedSupply = balance.sub(toLock);
 
-      await knnPreSale.unlockSupply(1e9);
+      await knnPreSale.unlockSupply(1e9, ref);
 
       expectedSupply = expectedSupply.add(1e9);
 
@@ -233,7 +208,7 @@ describe("KNN PreSale", () => {
 
       expect(availableSupply).to.eq(expectedSupply);
 
-      await knnPreSale.unlockSupply(5 * 1e9);
+      await knnPreSale.unlockSupply(5 * 1e9, ref);
 
       expectedSupply = expectedSupply.add(5 * 1e9);
 
@@ -243,13 +218,15 @@ describe("KNN PreSale", () => {
     });
 
     it("should not unlock supply greater than locked", async () => {
+      const [deployerWallet] = signers;
       const toLock = 1e10;
       const toUnlock = toLock + 1;
 
-      await knnPreSale.lockSupply(toLock);
+      await knnPreSale.addClaimManager(deployerWallet.address);
+      await knnPreSale.lockSupply(toLock, ref);
 
       const error = await knnPreSale
-        .unlockSupply(toUnlock)
+        .unlockSupply(toUnlock, ref)
         .then(() => null)
         .catch((e) => e);
 
@@ -270,9 +247,7 @@ describe("KNN PreSale", () => {
         value: ethers.utils.parseEther("5.001001999238"),
       });
 
-      await expect(tx).to.be.revertedWith(
-        "Cannot Receive: Should call {buyTokens} function in order to swap ETH for KNN"
-      );
+      await expect(tx).to.be.reverted;
     });
 
     it("should invoke the fallback function", async () => {
@@ -290,16 +265,16 @@ describe("KNN PreSale", () => {
 
       const tx = fakeDemoContract[nonExistentFuncSignature](8, 9);
 
-      await expect(tx).to.be.revertedWith(
-        "Fallback: Should call {buyTokens} function in order to swap ETH for KNN"
-      );
+      await expect(tx).to.be.reverted;
     });
 
     it("should allow claim", async () => {
-      const [, claimManagerAccount, userAccount] = signers;
+      const [deployerWallet, claimManagerAccount, userAccount] = signers;
       const amount = 1;
 
-      await knnPreSale.lockSupply(amount);
+      await knnPreSale.addClaimManager(deployerWallet.address);
+
+      await knnPreSale.lockSupply(amount, ref);
       await knnPreSale.addClaimManager(claimManagerAccount.address);
 
       const managerSession = await ethers.getContractAt(
@@ -308,7 +283,7 @@ describe("KNN PreSale", () => {
         claimManagerAccount
       );
 
-      await managerSession.claim(userAccount.address, amount);
+      await managerSession.claim(userAccount.address, amount, ref);
 
       const balanceUint256 = await knnToken.balanceOf(userAccount.address);
       const balance = parseInt(balanceUint256._hex, 16);
@@ -328,16 +303,17 @@ describe("KNN PreSale", () => {
         claimManagerAccount
       );
 
-      const tx = managerSession.claim(userAccount.address, amount);
+      const tx = managerSession.claim(userAccount.address, amount, ref);
 
-      await expect(tx).to.be.revertedWith("Insufficient locked amount");
+      await expect(tx).to.be.reverted;
     });
 
     it("should validate CLAIM_MANAGER_ROLE", async () => {
-      const [, claimManagerAccount, userAccount] = signers;
+      const [deployerWallet, claimManagerAccount, userAccount] = signers;
       const amount = 1;
 
-      await knnPreSale.lockSupply(amount);
+      await knnPreSale.addClaimManager(deployerWallet.address);
+      await knnPreSale.lockSupply(amount, ref);
       await knnPreSale.removeClaimManager(claimManagerAccount.address);
 
       const managerSession = await ethers.getContractAt(
@@ -347,7 +323,7 @@ describe("KNN PreSale", () => {
       );
 
       const error = await managerSession
-        .claim(userAccount.address, amount)
+        .claim(userAccount.address, amount, ref)
         .then(() => null)
         .catch((e: object) => e);
 
