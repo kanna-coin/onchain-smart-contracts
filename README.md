@@ -50,7 +50,7 @@ Create/modify network config in `hardhat.config.ts` and add API key and private 
 
 - [x] Token: `0x356426E973a377b058Da8DC6999aD4f91bC8b218`
       https://goerli.etherscan.io/address/0x356426E973a377b058Da8DC6999aD4f91bC8b218#code
-- [x] PreSale: `0x5583125bBdD9D9aB1D39449b52c205eE91C3af2E`
-      https://goerli.etherscan.io/address/0x5583125bBdD9D9aB1D39449b52c205eE91C3af2E#code
-- [x] Yield: `0x0756C30f249765fcFB6db8FC88189FbC0F239dad`
+- [x] PreSale: `0x0756C30f249765fcFB6db8FC88189FbC0F239dad`
       https://goerli.etherscan.io/address/0x0756C30f249765fcFB6db8FC88189FbC0F239dad#code
+- [x] Yield: `0x2Ef5145fc04D3c48547d82A6D9cC7470c38b0665`
+      https://goerli.etherscan.io/address/0x2Ef5145fc04D3c48547d82A6D9cC7470c38b0665#code
