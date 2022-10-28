@@ -1,8 +1,14 @@
 import { ethers } from "hardhat";
 import getKnnToken from "../src/infrastructure/factories/KannaTokenFactory";
 import getKnnTreasurer from "../src/infrastructure/factories/KannaTreasurerFactory";
-import getKnnYield from "../src/infrastructure/factories/KannaYieldFactory";
-import getKnnPreSale from "../src/infrastructure/factories/KannaPreSaleFactory";
+import {
+  getKnnYield,
+  getKnnYieldParameters,
+} from "../src/infrastructure/factories/KannaYieldFactory";
+import {
+  getKnnPreSale,
+  getPreSaleParameters,
+} from "../src/infrastructure/factories/KannaPreSaleFactory";
 
 async function main() {
   const [deployerWallet] = await ethers.getSigners();

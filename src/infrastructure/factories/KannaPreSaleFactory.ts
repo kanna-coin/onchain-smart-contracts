@@ -10,29 +10,36 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
 const parse1e18 = (integer: number): string => `${integer}000000000000000000`;
 
-const instance = async (
+const preSaleAmount = parse1e18(350000);
+
+const quotation = "50000000";
+
+export const getPreSaleParameters = (
+  knnToken: KannaToken
+): [string, string, string] => {
+  return [knnToken.address, process.env.PRICE_AGGREGATOR_ADDRESS!, quotation];
+};
+
+export const getKnnPreSale = async (
   knnDeployerAddress: SignerWithAddress,
   knnToken: KannaToken,
-  knnTreasurer: KannaTreasurer
+  knnTreasurer?: KannaTreasurer
 ): Promise<KannaPreSale> => {
   let knnPreSale: KannaPreSale;
+
+  const parameters = getPreSaleParameters(knnToken);
 
   const knnPreSaleFactory = (await ethers.getContractFactory(
     "KannaPreSale",
     knnDeployerAddress
   )) as KannaPreSale__factory;
-  knnPreSale = await knnPreSaleFactory.deploy(knnToken.address);
+  knnPreSale = await knnPreSaleFactory.deploy(...parameters);
 
   await knnPreSale.deployed();
 
-  const preSaleAmount = parse1e18(350000);
-
-  await knnTreasurer.release(knnPreSale.address, preSaleAmount);
-
-  await knnPreSale.updateQuotation("50000000");
-  await knnPreSale.updateAvailablity(true);
+  if (knnTreasurer) {
+    await knnTreasurer.release(knnPreSale.address, preSaleAmount);
+  }
 
   return knnPreSale;
 };
-
-export default instance;

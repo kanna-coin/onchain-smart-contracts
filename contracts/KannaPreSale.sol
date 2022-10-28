@@ -6,12 +6,21 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 
-/** @title KNN PreSale for KNN Token
-    @author KANNA Team
-    @custom:github  https://github.com/kanna-coin
-    @custom:site https://kannacoin.io
-    @custom:discord https://discord.gg/V5KDU8DKCh
-    */
+/**
+ *
+ *   __                                                                      .__
+ *  |  | _______    ____   ____ _____    _____________   ____   ___________  |  |   ____
+ *  |  |/ /\__  \  /    \ /    \\__  \   \____ \_  __ \_/ __ \ /  ___/\__  \ |  | _/ __ \
+ *  |    <  / __ \|   |  \   |  \/ __ \_ |  |_> >  | \/\  ___/ \___ \  / __ \|  |_\  ___/
+ *  |__|_ \(____  /___|  /___|  (____  / |   __/|__|    \___  >____  >(____  /____/\___  >
+ *       \/     \/     \/     \/     \/  |__|               \/     \/      \/          \/
+ *
+ *  @title KNN PreSale for KNN Token
+ *  @author KANNA Team
+ *  @custom:github  https://github.com/kanna-coin
+ *  @custom:site https://kannacoin.io
+ *  @custom:discord https://discord.gg/V5KDU8DKCh
+ */
 contract KannaPreSale is Ownable, AccessControl {
     IERC20 public immutable knnToken;
     AggregatorV3Interface public priceAggregator;
@@ -22,7 +31,7 @@ contract KannaPreSale is Ownable, AccessControl {
     uint256 public constant KNN_DECIMALS = 1e18;
     uint256 public knnPriceInUSD;
     uint256 public knnLocked;
-    bool public available;
+    bool public available = true;
 
     event Purchase(
         address indexed holder,
@@ -32,23 +41,21 @@ contract KannaPreSale is Ownable, AccessControl {
         uint256 indexed amountInKNN
     );
 
-    event Claim(address indexed holder, uint256 amountInKNN);
+    event Claim(address indexed holder, string indexed ref, uint256 amountInKNN);
+    event Lock(string indexed ref, uint256 amountInKNN);
+    event Unlock(string indexed ref, uint256 amountInKNN);
 
     event QuotationUpdate(address indexed sender, uint256 from, uint256 to);
     event Withdraw(address indexed recipient, uint256 amount);
 
-    constructor(address _knnToken) {
+    constructor(
+        address _knnToken,
+        address _priceAggregator,
+        uint256 targetQuotation
+    ) {
         knnToken = IERC20(_knnToken);
-
-        if (block.chainid == 1 || block.chainid == 31337) {
-            // chainlink eth-usd feed @ mainnet
-            priceAggregator = AggregatorV3Interface(0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419);
-        } else if (block.chainid == 5) {
-            // chainlink eth-usd feed @ goerli testnet
-            priceAggregator = AggregatorV3Interface(0xD4a33860578De61DBAbDc8BFdb98FD742fA7028e);
-        } else {
-            revert("Unsupported chain");
-        }
+        priceAggregator = AggregatorV3Interface(_priceAggregator);
+        knnPriceInUSD = targetQuotation;
     }
 
     modifier isAvailable() {
@@ -108,28 +115,36 @@ contract KannaPreSale is Ownable, AccessControl {
      * @dev Decrease Total Supply
      *
      */
-    function lockSupply(uint256 amountInKNN) external onlyOwner {
+    function lockSupply(uint256 amountInKNN, string calldata ref) external onlyRole(CLAIM_MANAGER_ROLE) {
         require(amountInKNN > 0, "Invalid amount");
         require(availableSupply() >= amountInKNN, "Insufficient supply!");
 
         knnLocked += amountInKNN;
+
+        emit Lock(ref, amountInKNN);
     }
 
     /**
      * @dev Decrease Supply Locked
      *
      */
-    function unlockSupply(uint256 amountInKNN) external onlyOwner {
+    function unlockSupply(uint256 amountInKNN, string calldata ref) external onlyRole(CLAIM_MANAGER_ROLE) {
         require(amountInKNN > 0, "Invalid amount");
         require(knnLocked >= amountInKNN, "Insufficient locked supply!");
 
         knnLocked -= amountInKNN;
+
+        emit Unlock(ref, amountInKNN);
     }
 
     /**
      * @dev release claimed tokens to recipient
      */
-    function claim(address recipient, uint256 amountInKNN) external onlyRole(CLAIM_MANAGER_ROLE) {
+    function claim(
+        address recipient,
+        uint256 amountInKNN,
+        string calldata ref
+    ) external onlyRole(CLAIM_MANAGER_ROLE) {
         require(amountInKNN > 0, "Invalid amount");
         require(knnLocked >= amountInKNN, "Insufficient locked amount");
         require(knnToken.balanceOf(address(this)) >= amountInKNN, "Insufficient balance");
@@ -137,7 +152,7 @@ contract KannaPreSale is Ownable, AccessControl {
 
         knnLocked -= amountInKNN;
 
-        emit Claim(recipient, amountInKNN);
+        emit Claim(recipient, ref, amountInKNN);
     }
 
     /**
@@ -155,17 +170,8 @@ contract KannaPreSale is Ownable, AccessControl {
      */
     function end(address leftoverRecipient) external onlyOwner {
         available = false;
-        uint256 leftover = knnToken.balanceOf(address(this));
-        knnToken.transfer(leftoverRecipient, leftover);
-        knnLocked = 0;
-    }
-
-    /**
-     * @dev Retrieves current token price in ETH
-     */
-    function price() external view returns (uint256) {
-        require(knnPriceInUSD > 0, "Quotation unavailable");
-        return knnPriceInUSD;
+        uint256 leftover = availableSupply();
+        if (leftover > 0) knnToken.transfer(leftoverRecipient, leftover);
     }
 
     /**
@@ -225,13 +231,5 @@ contract KannaPreSale is Ownable, AccessControl {
         require(availableSupply() >= finalAmount, "Insufficient supply!");
         require(knnToken.transfer(msg.sender, finalAmount), "Transaction reverted!");
         emit Purchase(msg.sender, msg.value, knnPriceInUSD, ethPriceInUSD, finalAmount);
-    }
-
-    fallback() external payable {
-        revert("Fallback: Should call {buyTokens} function in order to swap ETH for KNN");
-    }
-
-    receive() external payable {
-        revert("Cannot Receive: Should call {buyTokens} function in order to swap ETH for KNN");
     }
 }
