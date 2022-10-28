@@ -38,21 +38,19 @@ Terminal 2 `npm run test -- --network localhost`
 
 `npm run coverage`
 
-- [ ] TODO: Coverage Report for methods without `evm_automine`
-
 ---
 
 ### Deploy to Testnet:
 
 Create/modify network config in `hardhat.config.ts` and add API key and private key, then run:
 
-`npx hardhat run --network rinkeby scripts/deploy.ts`
+`npm run deploy`
 
 ## Goerli
 
-- [x] Token: `0xc1fE043caB916555F2F1D49369C5Ea984A1B0085`
-      https://goerli.etherscan.io/address/0xc1fe043cab916555f2f1d49369c5ea984a1b0085#code
+- [x] Token: `0x356426E973a377b058Da8DC6999aD4f91bC8b218`
+      https://goerli.etherscan.io/address/0x356426E973a377b058Da8DC6999aD4f91bC8b218#code
 - [x] PreSale: `0x5583125bBdD9D9aB1D39449b52c205eE91C3af2E`
       https://goerli.etherscan.io/address/0x5583125bBdD9D9aB1D39449b52c205eE91C3af2E#code
-- [x] Yield: `0x96a64f8913d7B8501cd21321efEE1ddb6bC52b8e`
-      https://goerli.etherscan.io/address/0x96a64f8913d7B8501cd21321efEE1ddb6bC52b8e#code
+- [x] Yield: `0x0756C30f249765fcFB6db8FC88189FbC0F239dad`
+      https://goerli.etherscan.io/address/0x0756C30f249765fcFB6db8FC88189FbC0F239dad#code
