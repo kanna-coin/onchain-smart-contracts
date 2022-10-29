@@ -29,10 +29,40 @@ describe("KNN Treasurer", () => {
     });
 
     it("should initialize KNN Treasurer with initialSupply of 10MM", async () => {
-      const treasuryBalanceHex = await knnToken.balanceOf(knnTreasurer.address);
-      const balance = parseInt(treasuryBalanceHex._hex, 16);
+      const treasuryBalance = await knnToken.balanceOf(knnTreasurer.address);
+      const balance = parseInt(treasuryBalance._hex, 16);
 
       expect(balance).to.greaterThanOrEqual(1e25);
+    });
+
+    it("should release balance to wallet", async () => {
+      const [deployerWallet, wallet] = signers;
+
+      const treasuryBalance = await knnToken.balanceOf(knnTreasurer.address);
+
+      const amount = 1e9;
+
+      const tx = knnTreasurer.release(wallet.address, amount);
+
+      const releaseTransaction = await tx;
+
+      releaseTransaction.timestamp;
+
+      expect(tx).to.emit(knnTreasurer, "Release").withArgs(
+        deployerWallet.address,
+        wallet.address,
+        amount,
+        releaseTransaction.timestamp
+      );
+
+      const walletBalance = await knnToken.balanceOf(wallet.address);
+
+      expect(walletBalance).to.eq(amount);
+
+      const newTreasuryBalance = await knnToken.balanceOf(knnTreasurer.address);
+      const expectedTreasuryBalance = treasuryBalance.sub(amount);
+
+      expect(newTreasuryBalance).to.eq(expectedTreasuryBalance);
     });
   });
 });

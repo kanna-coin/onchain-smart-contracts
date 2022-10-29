@@ -1,14 +1,12 @@
 import { ethers } from "hardhat";
 import chai from "chai";
 import chaiAsPromised from "chai-as-promised";
-import { KannaToken, KannaTreasurer } from "../../typechain";
+import { KannaToken } from "../../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { getKnnToken, getKnnTreasurer } from "../../src/infrastructure/factories";
 
 chai.use(chaiAsPromised);
 const { expect } = chai;
-
-const tokenContractName = "KannaToken";
 
 describe("KNN Token", () => {
   let knnToken: KannaToken;
@@ -22,53 +20,87 @@ describe("KNN Token", () => {
     knnToken = await getKnnToken(deployerAddress);
   };
 
+  const getDeployerWallet = async () => {
+    const [deployerWallet] = signers;
+
+    return deployerWallet;
+  };
+
+  const getUserSession = async (): Promise<[KannaToken, SignerWithAddress]> => {
+    const [, , userWallet] = signers;
+
+    const userSession = await ethers.getContractAt(
+      "KannaToken",
+      knnToken.address,
+      userWallet
+    ) as KannaToken;
+
+    return [userSession, userWallet];
+  };
+
+  const getUser2Session = async (): Promise<[KannaToken, SignerWithAddress]> => {
+    const [, , , userWallet] = signers;
+
+    const userSession = await ethers.getContractAt(
+      "KannaToken",
+      knnToken.address,
+      userWallet
+    ) as KannaToken;
+
+    return [userSession, userWallet];
+  };
+
+  const getMinterSession = async (): Promise<[KannaToken, SignerWithAddress]> => {
+    const [, minterWallet] = signers;
+
+    await knnToken.addMinter(minterWallet.address);
+
+    const minterSession = await ethers.getContractAt(
+      "KannaToken",
+      knnToken.address,
+      minterWallet
+    ) as KannaToken;
+
+    return [minterSession, minterWallet];
+  };
+
   describe("Treasury", async () => {
     beforeEach(async () => {
       await deployContracts();
     });
 
     it("should initialize set and initialize amount to treasury (KannaTreasurer UC)", async () => {
-      const [deployerWallet] = signers;
-      const knnTreasurer: KannaTreasurer = await getKnnTreasurer(
-        deployerWallet,
-        knnToken
-      );
+      const deployerWallet = await getDeployerWallet();
+      const knnTreasurer = await getKnnTreasurer(deployerWallet, knnToken);
 
-      const error = await knnToken
-        .updateTreasury(knnTreasurer.address)
-        .then(() => null)
-        .catch((e) => e);
+      const oldTreasury = await knnToken.treasury();
 
-      expect(error).to.null;
+      await expect(knnToken.updateTreasury(knnTreasurer.address))
+        .to.emit(knnToken, 'TreasuryUpdate').withArgs(
+          deployerWallet.address,
+          oldTreasury,
+          knnTreasurer.address
+        );
+    });
+
+    it("should NOT allow invalid address", async () => {
+      await expect(knnToken.updateTreasury(ethers.constants.AddressZero))
+        .to.be.revertedWith("Invalid treasury address");
     });
 
     it("should NOT allow initialization when treasury are no set", async () => {
-      const [deployerWallet] = signers;
-
-      const error = await knnToken
-        .initializeTreasury()
-        .then(() => null)
-        .catch(({ message }) => message);
-
-      expect(error).to.contain("Treasury not set");
+      await expect(knnToken.initializeTreasury()).to.rejectedWith("Treasury not set");
     });
 
     it("should NOT allow initialization more than once", async () => {
-      const [deployerWallet] = signers;
+      const deployerWallet = await getDeployerWallet();
 
       await knnToken.updateTreasury(deployerWallet.address);
-      const success = await knnToken.initializeTreasury();
 
-      const { events } = await success.wait();
+      await expect(knnToken.initializeTreasury())
+        .to.emit(knnToken, "Transfer");
 
-      const error = await knnToken
-        .initializeTreasury()
-        .then(() => null)
-        .catch(({ message }) => message);
-
-      expect(events![0].event).to.eq("Transfer");
-
-      expect(error).to.contain("Treasury already initialized");
+      await expect(knnToken.initializeTreasury()).to.rejectedWith("Treasury already initialized");
     });
   });
 
@@ -78,32 +110,26 @@ describe("KNN Token", () => {
     });
 
     it("should allow use of unified Minter and Treasury (Multisig/GnosisSafe UC)", async () => {
-      const [deployerWallet, wallet1, wallet2] = signers;
+      const deployerWallet = await getDeployerWallet();
+      const [minterSession] = await getMinterSession();
+      const [userSession, userWallet] = await getUserSession();
+      const [, user2Wallet] = await getUser2Session();
 
-      const amount = ethers.utils.parseEther("2000.0").toString();
+      const amount = ethers.utils.parseEther("2000.0");
 
-      await knnToken.addMinter(deployerWallet.address);
-      const treasuryAudit = await knnToken.updateTreasury(
-        deployerWallet.address
-      );
+      await expect(knnToken.updateTreasury(deployerWallet.address))
+        .to.emit(knnToken, "TreasuryUpdate");
 
-      const { events } = await treasuryAudit.wait();
       await knnToken.initializeTreasury();
-      await knnToken.mint(amount);
-      await knnToken.transfer(wallet1.address, amount);
 
-      const scopedToken: KannaToken = (await ethers.getContractAt(
-        tokenContractName,
-        knnToken.address,
-        wallet1
-      )) as KannaToken;
+      await minterSession.mint(amount);
+      await knnToken.transfer(userWallet.address, amount);
 
-      await scopedToken.transfer(wallet2.address, amount);
+      await userSession.transfer(user2Wallet.address, amount);
 
-      const wallet2Balance = await knnToken.balanceOf(wallet2.address);
+      const wallet2Balance = await knnToken.balanceOf(user2Wallet.address);
 
-      expect(wallet2Balance.toString()).to.eq(amount);
-      expect(events![0].event).to.eq("TreasuryUpdate");
+      expect(wallet2Balance).to.eq(amount);
     });
   });
 
@@ -113,21 +139,20 @@ describe("KNN Token", () => {
     });
 
     it("should mint directly to a defined treasury account (compliant GnosisSafe<>KannaTreasurer UC)", async () => {
-      const [deployerWallet] = signers;
+      const deployerWallet = await getDeployerWallet();
+      const [minterSession] = await getMinterSession();
       const knnTreasurer = await getKnnTreasurer(deployerWallet, knnToken);
 
-      const treasuryBalanceHexBefore = await knnToken.balanceOf(
+      const treasuryBalanceBefore = await knnToken.balanceOf(
         knnTreasurer.address
       );
 
-      const balance1 = parseInt(treasuryBalanceHexBefore._hex, 16);
+      const balance1 = parseInt(treasuryBalanceBefore._hex, 16);
 
       expect(balance1).to.eq(1e25);
 
-      await knnToken.addMinter(deployerWallet.address);
-
       // 0.5MM
-      await knnToken.mint(ethers.utils.parseEther("500000.0").toString());
+      await minterSession.mint(ethers.utils.parseEther("500000.0"));
 
       const treasuryBalanceHexAfter = await knnToken.balanceOf(
         knnTreasurer.address
@@ -140,7 +165,8 @@ describe("KNN Token", () => {
     });
 
     it("should limit max supply to 19MM Tokens", async () => {
-      const [deployerWallet] = signers;
+      const deployerWallet = await getDeployerWallet();
+      const [minterSession] = await getMinterSession();
       const knnTreasurer = await getKnnTreasurer(deployerWallet, knnToken);
 
       const treasuryBalanceHexBefore = await knnToken.balanceOf(
@@ -151,56 +177,38 @@ describe("KNN Token", () => {
 
       expect(balance1).to.eq(1e25);
 
-      await knnToken.addMinter(deployerWallet.address);
-
-      const response = await knnToken
-        .mint(ethers.utils.parseEther("10500000.0").toString())
-        .then(() => null)
-        .catch(({ message }) => message);
-
-      expect(response).to.contain("Maximum Supply reached");
+      await expect(minterSession.mint(ethers.utils.parseEther("10500000.0")))
+        .to.be.revertedWith("Maximum Supply reached");
     });
 
     it("should prevent minting when MINTER_ROLE not present", async () => {
-      const [deployerWallet] = signers;
-      const knnTreasurer = await getKnnTreasurer(deployerWallet, knnToken);
+      const [minterSession, minterWallet] = await getMinterSession();
 
-      const treasuryBalanceHexBefore = await knnToken.balanceOf(
-        knnTreasurer.address
-      );
+      await knnToken.removeMinter(minterWallet.address);
 
-      const balance1 = parseInt(treasuryBalanceHexBefore._hex, 16);
-
-      expect(balance1).to.eq(1e25);
-
-      await knnToken.removeMinter(deployerWallet.address);
-
-      const result = await knnToken
-        .mint(ethers.utils.parseEther("1.0").toString())
-        .then(() => null)
-        .catch((e) => e);
-
-      expect(result?.message).to.not.null;
+      await expect(minterSession.mint(ethers.utils.parseEther("1.0")))
+        .to.be.reverted;
     });
 
     it("should prevent minting when not a MINTER", async () => {
-      const [deployerWallet] = signers;
+      await expect(knnToken.mint(ethers.utils.parseEther("1.0")))
+        .to.be.reverted;
+    });
+
+    it("should prevent minting without treasury", async () => {
+      const [minterSession] = await getMinterSession();
+
+      await expect(minterSession.mint(ethers.utils.parseEther("1.0")))
+        .to.be.revertedWith("No treasury");
+    });
+
+    it("should prevent minting empty amount", async () => {
+      const deployerWallet = await getDeployerWallet();
+      const [minterSession] = await getMinterSession();
       const knnTreasurer = await getKnnTreasurer(deployerWallet, knnToken);
 
-      const treasuryBalanceHexBefore = await knnToken.balanceOf(
-        knnTreasurer.address
-      );
-
-      const balance1 = parseInt(treasuryBalanceHexBefore._hex, 16);
-
-      expect(balance1).to.eq(1e25);
-
-      const result = await knnToken
-        .mint(ethers.utils.parseEther("1.0").toString())
-        .then(() => null)
-        .catch((e) => e);
-
-      expect(result?.message).to.not.null;
+      await expect(minterSession.mint(0))
+        .to.be.revertedWith("Invalid Amount");
     });
   });
 });
