@@ -1,5 +1,5 @@
 import { ethers } from "hardhat";
-import getKnnToken from "../src/infrastructure/factories/KannaTokenFactory";
+import { getKnnToken } from "../src/infrastructure/factories";
 
 async function main() {
   const [deployerWallet] = await ethers.getSigners();

@@ -3,9 +3,7 @@ import chai from "chai";
 import chaiAsPromised from "chai-as-promised";
 import { KannaYield, KannaTreasurer, KannaToken } from "../../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import getKnnToken from "../../src/infrastructure/factories/KannaTokenFactory";
-import getKnnTreasurer from "../../src/infrastructure/factories/KannaTreasurerFactory";
-import { getKnnYield } from "../../src/infrastructure/factories/KannaYieldFactory";
+import { getKnnToken, getKnnTreasurer, getKnnYield } from "../../src/infrastructure/factories";
 
 chai.use(chaiAsPromised);
 const { expect } = chai;

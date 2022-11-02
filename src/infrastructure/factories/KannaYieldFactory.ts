@@ -1,17 +1,18 @@
 import "@nomiclabs/hardhat-waffle";
-import { ethers } from "hardhat";
+import { ethers, waffle } from "hardhat";
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { MockContract } from "ethereum-waffle";
 import {
   KannaTreasurer,
   KannaToken,
   KannaYield__factory,
   KannaYield,
 } from "../../../typechain";
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
 const parse1e18 = (integer: number): string => `${integer}000000000000000000`;
 
 export const getKnnYieldParameters = (
-  knnToken: KannaToken,
+  knnToken: KannaToken | MockContract,
   feeRecipient: SignerWithAddress
 ): [string, string] => {
   return [knnToken.address, feeRecipient.address];
@@ -19,8 +20,8 @@ export const getKnnYieldParameters = (
 
 export const getKnnYield = async (
   knnDeployerAddress: SignerWithAddress,
-  knnToken: KannaToken,
-  knnTreasurer?: KannaTreasurer
+  knnToken: KannaToken | MockContract,
+  knnTreasurer?: KannaTreasurer | MockContract
 ): Promise<KannaYield> => {
   let knnYield: KannaYield;
 
@@ -39,6 +40,14 @@ export const getKnnYield = async (
   if (knnTreasurer) {
     await knnTreasurer.release(knnYield.address, rewards);
   }
+
+  return knnYield;
+};
+
+export const getKnnYieldMock = async (
+  knnDeployerAddress: SignerWithAddress
+) => {
+  const knnYield = await waffle.deployMockContract(knnDeployerAddress, KannaYield__factory.abi);
 
   return knnYield;
 };

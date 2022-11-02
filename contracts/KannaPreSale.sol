@@ -9,7 +9,7 @@ import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 /**
  *
  *   __                                                                      .__
- *  |  | _______    ____   ____ _____    _____________   ____   ___________  |  |   ____
+ *  |  | ___\|/_    ____   ____ _\|/_    _____________   ____   _______\|/_  |  |   ____
  *  |  |/ /\__  \  /    \ /    \\__  \   \____ \_  __ \_/ __ \ /  ___/\__  \ |  | _/ __ \
  *  |    <  / __ \|   |  \   |  \/ __ \_ |  |_> >  | \/\  ___/ \___ \  / __ \|  |_\  ___/
  *  |__|_ \(____  /___|  /___|  (____  / |   __/|__|    \___  >____  >(____  /____/\___  >
@@ -53,6 +53,8 @@ contract KannaPreSale is Ownable, AccessControl {
         address _priceAggregator,
         uint256 targetQuotation
     ) {
+        require(targetQuotation > 0, "Invalid quotation");
+
         knnToken = IERC20(_knnToken);
         priceAggregator = AggregatorV3Interface(_priceAggregator);
         knnPriceInUSD = targetQuotation;
@@ -193,8 +195,6 @@ contract KannaPreSale is Ownable, AccessControl {
      * @dev Converts a given amount {amountInKNN} to WEI
      */
     function convertToWEI(uint256 amountInKNN) public view returns (uint256, uint256) {
-        require(knnPriceInUSD > 0, "KNN price not set");
-
         (, int256 answer, , , ) = priceAggregator.latestRoundData();
 
         uint256 ethPriceInUSD = uint256(answer);
@@ -207,8 +207,6 @@ contract KannaPreSale is Ownable, AccessControl {
      * @dev Converts a given amount {amountInWEI} to KNN
      */
     function convertToKNN(uint256 amountInWEI) public view returns (uint256, uint256) {
-        require(knnPriceInUSD > 0, "KNN price not set");
-
         (, int256 answer, , , ) = priceAggregator.latestRoundData();
 
         uint256 ethPriceInUSD = uint256(answer);
@@ -229,7 +227,9 @@ contract KannaPreSale is Ownable, AccessControl {
         (uint256 finalAmount, uint256 ethPriceInUSD) = convertToKNN(msg.value);
 
         require(availableSupply() >= finalAmount, "Insufficient supply!");
-        require(knnToken.transfer(msg.sender, finalAmount), "Transaction reverted!");
+
+        knnToken.transfer(msg.sender, finalAmount);
+
         emit Purchase(msg.sender, msg.value, knnPriceInUSD, ethPriceInUSD, finalAmount);
     }
 }
