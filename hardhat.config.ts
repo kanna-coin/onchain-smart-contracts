@@ -28,7 +28,7 @@ const config: HardhatUserEtherscanConfig = {
         // eslint-disable-next-line
         enabled: true,
         url: process.env.RPC_NODE_ENDPOINT || "",
-        blockNumber: 15704870,
+        // blockNumber: 15704870,
       },
       mining: {
         mempool: {
