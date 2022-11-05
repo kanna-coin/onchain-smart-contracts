@@ -41,9 +41,9 @@ contract KannaPreSale is Ownable, AccessControl {
         uint256 indexed amountInKNN
     );
 
-    event Claim(address indexed holder, string indexed ref, uint256 amountInKNN);
-    event Lock(string indexed ref, uint256 amountInKNN);
-    event Unlock(string indexed ref, uint256 amountInKNN);
+    event Claim(address indexed holder, uint256 indexed ref, uint256 amountInKNN);
+    event Lock(uint256 indexed ref, uint256 amountInKNN);
+    event Unlock(uint256 indexed ref, uint256 amountInKNN);
 
     event QuotationUpdate(address indexed sender, uint256 from, uint256 to);
     event Withdraw(address indexed recipient, uint256 amount);
@@ -117,7 +117,7 @@ contract KannaPreSale is Ownable, AccessControl {
      * @dev Decrease Total Supply
      *
      */
-    function lockSupply(uint256 amountInKNN, string calldata ref) external onlyRole(CLAIM_MANAGER_ROLE) {
+    function lockSupply(uint256 amountInKNN, uint256 ref) external onlyRole(CLAIM_MANAGER_ROLE) {
         require(amountInKNN > 0, "Invalid amount");
         require(availableSupply() >= amountInKNN, "Insufficient supply!");
 
@@ -130,7 +130,7 @@ contract KannaPreSale is Ownable, AccessControl {
      * @dev Decrease Supply Locked
      *
      */
-    function unlockSupply(uint256 amountInKNN, string calldata ref) external onlyRole(CLAIM_MANAGER_ROLE) {
+    function unlockSupply(uint256 amountInKNN, uint256 ref) external onlyRole(CLAIM_MANAGER_ROLE) {
         require(amountInKNN > 0, "Invalid amount");
         require(knnLocked >= amountInKNN, "Insufficient locked supply!");
 
@@ -145,7 +145,7 @@ contract KannaPreSale is Ownable, AccessControl {
     function claim(
         address recipient,
         uint256 amountInKNN,
-        string calldata ref
+        uint256 ref
     ) external onlyRole(CLAIM_MANAGER_ROLE) {
         require(amountInKNN > 0, "Invalid amount");
         require(knnLocked >= amountInKNN, "Insufficient locked amount");
