@@ -413,7 +413,25 @@ describe("KNN PreSale", () => {
 
       await managerSession.lockSupply(amount, ref);
 
-      await expect(managerSession.claim(userAccount.address, amount, ref))
+      await expect(managerSession.claim(userAccount.address, amount, ref, true))
+        .to.emit(managerSession, "Claim")
+        .withArgs(userAccount.address, ref, amount);
+
+      const balanceUint256 = await knnToken.balanceOf(userAccount.address);
+      const balance = parseInt(balanceUint256._hex, 16);
+
+      expect(balance).to.eq(amount);
+    });
+
+    it("should allow claim without unlocking", async () => {
+      const [, managerSession] = await getManagerSession();
+      const userAccount = await getUserWallet();
+
+      const amount = 1;
+
+      await expect(
+        managerSession.claim(userAccount.address, amount, ref, false)
+      )
         .to.emit(managerSession, "Claim")
         .withArgs(userAccount.address, ref, amount);
 
@@ -430,7 +448,7 @@ describe("KNN PreSale", () => {
         const amount = 1;
 
         await expect(
-          managerSession.claim(userAccount.address, amount, ref)
+          managerSession.claim(userAccount.address, amount, ref, true)
         ).to.be.revertedWith("Insufficient locked amount");
       });
 
@@ -440,7 +458,7 @@ describe("KNN PreSale", () => {
         const amount = 0;
 
         await expect(
-          managerSession.claim(userAccount.address, amount, ref)
+          managerSession.claim(userAccount.address, amount, ref, true)
         ).to.be.revertedWith("Invalid amount");
       });
 
@@ -468,7 +486,7 @@ describe("KNN PreSale", () => {
           .returns(0);
 
         await expect(
-          knnPreSaleWithMock.claim(userAccount.address, 1e2, ref)
+          knnPreSaleWithMock.claim(userAccount.address, 1e2, ref, true)
         ).to.be.revertedWith("Insufficient balance");
 
         const eth = ethers.utils.parseEther("5.001001999238");
@@ -484,8 +502,9 @@ describe("KNN PreSale", () => {
 
         await knnPreSale.removeClaimManager(managerAccount.address);
 
-        await expect(managerSession.claim(userAccount.address, amount, ref)).to
-          .be.reverted;
+        await expect(
+          managerSession.claim(userAccount.address, amount, ref, true)
+        ).to.be.reverted;
       });
     });
 

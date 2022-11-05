@@ -145,14 +145,17 @@ contract KannaPreSale is Ownable, AccessControl {
     function claim(
         address recipient,
         uint256 amountInKNN,
-        uint256 ref
+        uint256 ref,
+        bool unlock
     ) external onlyRole(CLAIM_MANAGER_ROLE) {
         require(amountInKNN > 0, "Invalid amount");
-        require(knnLocked >= amountInKNN, "Insufficient locked amount");
+        require(!unlock || knnLocked >= amountInKNN, "Insufficient locked amount");
         require(knnToken.balanceOf(address(this)) >= amountInKNN, "Insufficient balance");
         knnToken.transfer(recipient, amountInKNN);
 
-        knnLocked -= amountInKNN;
+        if (unlock) {
+            knnLocked -= amountInKNN;
+        }
 
         emit Claim(recipient, ref, amountInKNN);
     }
