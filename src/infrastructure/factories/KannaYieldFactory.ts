@@ -11,6 +11,11 @@ import {
 
 const parse1e18 = (integer: number): string => `${integer}000000000000000000`;
 
+export const getKnnYieldFactory = async (deployerAddress: SignerWithAddress) => (await ethers.getContractFactory(
+  "KannaYield",
+  deployerAddress
+)) as KannaYield__factory;
+
 export const getKnnYieldParameters = (
   knnToken: KannaToken | MockContract,
   feeRecipient: SignerWithAddress
@@ -27,10 +32,8 @@ export const getKnnYield = async (
 
   const parameters = getKnnYieldParameters(knnToken, knnDeployerAddress);
 
-  const knnYieldFactory = (await ethers.getContractFactory(
-    "KannaYield",
-    knnDeployerAddress
-  )) as KannaYield__factory;
+  const knnYieldFactory = await getKnnYieldFactory(knnDeployerAddress);
+
   knnYield = await knnYieldFactory.deploy(...parameters);
 
   await knnYield.deployed();

@@ -2,6 +2,7 @@
 pragma solidity ^0.8.4;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
@@ -23,7 +24,7 @@ import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
  */
 contract KannaPreSale is Ownable, AccessControl {
     IERC20 public immutable knnToken;
-    AggregatorV3Interface public priceAggregator;
+    AggregatorV3Interface public immutable priceAggregator;
 
     bytes32 public constant CLAIM_MANAGER_ROLE = keccak256("CLAIM_MANAGER_ROLE");
 
@@ -53,6 +54,8 @@ contract KannaPreSale is Ownable, AccessControl {
         address _priceAggregator,
         uint256 targetQuotation
     ) {
+        require(address(_knnToken) != address(0), "Invalid token address");
+        require(address(_priceAggregator) != address(0), "Invalid price aggregator address");
         require(targetQuotation > 0, "Invalid quotation");
 
         knnToken = IERC20(_knnToken);
@@ -62,6 +65,11 @@ contract KannaPreSale is Ownable, AccessControl {
 
     modifier isAvailable() {
         require(available, "Pre sale NOT started yet");
+        _;
+    }
+
+    modifier positiveAmount(uint256 amount) {
+        require(amount > 0, "Invalid amount");
         _;
     }
 
@@ -117,8 +125,7 @@ contract KannaPreSale is Ownable, AccessControl {
      * @dev Decrease Total Supply
      *
      */
-    function lockSupply(uint256 amountInKNN, uint256 ref) external onlyRole(CLAIM_MANAGER_ROLE) {
-        require(amountInKNN > 0, "Invalid amount");
+    function lockSupply(uint256 amountInKNN, uint256 ref) external onlyRole(CLAIM_MANAGER_ROLE) positiveAmount(amountInKNN) {
         require(availableSupply() >= amountInKNN, "Insufficient supply!");
 
         knnLocked += amountInKNN;
@@ -130,8 +137,7 @@ contract KannaPreSale is Ownable, AccessControl {
      * @dev Decrease Supply Locked
      *
      */
-    function unlockSupply(uint256 amountInKNN, uint256 ref) external onlyRole(CLAIM_MANAGER_ROLE) {
-        require(amountInKNN > 0, "Invalid amount");
+    function unlockSupply(uint256 amountInKNN, uint256 ref) external onlyRole(CLAIM_MANAGER_ROLE) positiveAmount(amountInKNN) {
         require(knnLocked >= amountInKNN, "Insufficient locked supply!");
 
         knnLocked -= amountInKNN;
@@ -147,10 +153,15 @@ contract KannaPreSale is Ownable, AccessControl {
         uint256 amountInKNN,
         uint256 ref,
         bool unlock
-    ) external onlyRole(CLAIM_MANAGER_ROLE) {
-        require(amountInKNN > 0, "Invalid amount");
-        require(!unlock || knnLocked >= amountInKNN, "Insufficient locked amount");
-        require(knnToken.balanceOf(address(this)) >= amountInKNN, "Insufficient balance");
+    ) external onlyRole(CLAIM_MANAGER_ROLE)  positiveAmount(amountInKNN) {
+        require(address(recipient) != address(0), "Invalid address");
+
+        if (unlock) {
+            require(knnLocked >= amountInKNN, "Insufficient locked amount");
+        } else {
+            require(availableSupply() >= amountInKNN, "Insufficient available supply");
+        }
+
         knnToken.transfer(recipient, amountInKNN);
 
         if (unlock) {
@@ -187,8 +198,7 @@ contract KannaPreSale is Ownable, AccessControl {
      * @param targetQuotation unit price in ETH
      *
      */
-    function updateQuotation(uint256 targetQuotation) external onlyOwner {
-        require(targetQuotation > 0, "Invalid quotation");
+    function updateQuotation(uint256 targetQuotation) external onlyOwner positiveAmount(targetQuotation) {
         emit QuotationUpdate(msg.sender, knnPriceInUSD, targetQuotation);
 
         knnPriceInUSD = targetQuotation;
@@ -197,10 +207,10 @@ contract KannaPreSale is Ownable, AccessControl {
     /**
      * @dev Converts a given amount {amountInKNN} to WEI
      */
-    function convertToWEI(uint256 amountInKNN) public view returns (uint256, uint256) {
+    function convertToWEI(uint256 amountInKNN) public view positiveAmount(amountInKNN) returns (uint256, uint256) {
         (, int256 answer, , , ) = priceAggregator.latestRoundData();
 
-        uint256 ethPriceInUSD = uint256(answer);
+        uint256 ethPriceInUSD = SafeCast.toUint256(answer);
         require(ethPriceInUSD > 0, "Invalid round answer");
 
         return ((amountInKNN * knnPriceInUSD) / ethPriceInUSD, ethPriceInUSD);
@@ -209,10 +219,10 @@ contract KannaPreSale is Ownable, AccessControl {
     /**
      * @dev Converts a given amount {amountInWEI} to KNN
      */
-    function convertToKNN(uint256 amountInWEI) public view returns (uint256, uint256) {
+    function convertToKNN(uint256 amountInWEI) public view positiveAmount(amountInWEI) returns (uint256, uint256) {
         (, int256 answer, , , ) = priceAggregator.latestRoundData();
 
-        uint256 ethPriceInUSD = uint256(answer);
+        uint256 ethPriceInUSD = SafeCast.toUint256(answer);
         require(ethPriceInUSD > 0, "Invalid round answer");
 
         return ((amountInWEI * ethPriceInUSD) / knnPriceInUSD, ethPriceInUSD);

@@ -3,7 +3,7 @@ import chai from "chai";
 import chaiAsPromised from "chai-as-promised";
 import { KannaYield, KannaTreasurer, KannaToken } from "../../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { getKnnToken, getKnnTreasurer, getKnnYield } from "../../src/infrastructure/factories";
+import { getKnnToken, getKnnTreasurer, getKnnYield, getKnnYieldFactory } from "../../src/infrastructure/factories";
 
 chai.use(chaiAsPromised);
 const { expect } = chai;
@@ -50,6 +50,25 @@ describe("KNN Yield⬆", async () => {
 
       expect(balance).to.eq(4e23);
       expect(poolSize).to.eq(0);
+    });
+
+    it("should not initialize with invalid token address", async () => {
+      const knnYieldFactory = await getKnnYieldFactory(deployerWallet);
+
+      await expect(
+        knnYieldFactory.deploy(
+          ethers.constants.AddressZero,
+          deployerWallet.address,
+        )
+      ).to.be.revertedWith("Invalid token address");
+    });
+
+    it("should not initialize with invalid fee recipient address", async () => {
+      const knnYieldFactory = await getKnnYieldFactory(deployerWallet);
+
+      await expect(
+        knnYieldFactory.deploy(knnToken.address, ethers.constants.AddressZero)
+      ).to.be.revertedWith("Invalid fee recipient address");
     });
 
     it("should allow to re-add/extend reward", async () => {

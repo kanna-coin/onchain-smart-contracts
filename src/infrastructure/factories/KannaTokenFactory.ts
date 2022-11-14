@@ -3,15 +3,17 @@ import { ethers, waffle } from "hardhat";
 import { KannaToken__factory, KannaToken } from "../../../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
+export const getKannaTokenFactory = async (deployerAddress: SignerWithAddress) => (await ethers.getContractFactory(
+  "KannaToken",
+  deployerAddress
+)) as KannaToken__factory;
+
 export const getKnnToken = async (
   knnDeployerAddress: SignerWithAddress
 ): Promise<KannaToken> => {
   let KannaToken: KannaToken;
 
-  const KannaTokenFactory = (await ethers.getContractFactory(
-    "KannaToken",
-    knnDeployerAddress
-  )) as KannaToken__factory;
+  const KannaTokenFactory = await getKannaTokenFactory(knnDeployerAddress);
   KannaToken = await KannaTokenFactory.deploy();
 
   await KannaToken.deployed();

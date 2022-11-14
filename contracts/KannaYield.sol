@@ -53,6 +53,9 @@ contract KannaYield is Ownable {
     uint256 public subscriptionFee = 2_0;
 
     constructor(address _knnToken, address _feeRecipient) {
+        require(address(_knnToken) != address(0), "Invalid token address");
+        require(address(_feeRecipient) != address(0), "Invalid fee recipient address");
+
         knnToken = IERC20(_knnToken);
         feeRecipient = _feeRecipient;
         fees[tier[0]] = 3000;

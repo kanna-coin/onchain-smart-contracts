@@ -8,16 +8,18 @@ import {
   KannaToken,
 } from "../../../typechain";
 
+export const getKnnTreasurerFactory = async (deployerAddress: SignerWithAddress) => (await ethers.getContractFactory(
+  "KannaTreasurer",
+  deployerAddress
+)) as KannaTreasurer__factory;
+
 export const getKnnTreasurer = async (
   knnDeployerAddress: SignerWithAddress,
   knnToken: KannaToken | MockContract
 ): Promise<KannaTreasurer> => {
   let knnTreasurer: KannaTreasurer;
 
-  const knnTreasurerFactory = (await ethers.getContractFactory(
-    "KannaTreasurer",
-    knnDeployerAddress
-  )) as KannaTreasurer__factory;
+  const knnTreasurerFactory = await getKnnTreasurerFactory(knnDeployerAddress);
   knnTreasurer = await knnTreasurerFactory.deploy(knnToken.address);
 
   await knnTreasurer.deployed();
