@@ -50,7 +50,7 @@ contract KannaYield is Ownable {
     mapping(address => uint256) public started;
     mapping(uint256 => uint256) public fees;
 
-    uint256 public subscriptionFee = 2_0;
+    uint256 public constant subscriptionFee = 2_0;
 
     constructor(address _knnToken, address _feeRecipient) {
         require(address(_knnToken) != address(0), "Invalid token address");
