@@ -32,7 +32,6 @@ contract KannaPreSale is Ownable, AccessControl {
     uint256 public constant KNN_DECIMALS = 1e18;
     uint256 public immutable knnPriceInUSD;
     uint256 public knnLocked;
-    bool public available = true;
 
     event Purchase(
         address indexed holder,
@@ -60,11 +59,6 @@ contract KannaPreSale is Ownable, AccessControl {
         knnToken = IERC20(_knnToken);
         priceAggregator = AggregatorV3Interface(_priceAggregator);
         knnPriceInUSD = targetQuotation;
-    }
-
-    modifier isAvailable() {
-        require(available, "Pre sale NOT started yet");
-        _;
     }
 
     modifier positiveAmount(uint256 amount) {
@@ -173,20 +167,10 @@ contract KannaPreSale is Ownable, AccessControl {
     }
 
     /**
-     * @dev Update Pre-Sale availability
-     *
-     * @param _available (true: available | false: unavailable)
-     */
-    function updateAvailablity(bool _available) external onlyOwner {
-        available = _available;
-    }
-
-    /**
      * @dev Return non-sold tokens and ends pre-sale
      *
      */
     function end(address leftoverRecipient) external onlyOwner {
-        available = false;
         uint256 leftover = availableSupply();
         if (leftover > 0) knnToken.transfer(leftoverRecipient, leftover);
     }
@@ -221,7 +205,7 @@ contract KannaPreSale is Ownable, AccessControl {
      *
      * Emits a {Purchase} event.
      */
-    function buyTokens() external payable isAvailable {
+    function buyTokens() external payable {
         require(msg.value > USD_AGGREGATOR_DECIMALS, "Invalid amount");
 
         (uint256 finalAmount, uint256 ethPriceInUSD) = convertToKNN(msg.value);

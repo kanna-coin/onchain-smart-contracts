@@ -152,23 +152,6 @@ describe("KNN PreSale", () => {
     });
 
     describe("should not buy KNN tokens", async () => {
-      it("when presale is unavailable", async () => {
-        const deployerWallet = await getDeployerWallet();
-
-        await network.provider.send("hardhat_setBalance", [
-          deployerWallet.address,
-          "0xFFFFFFFFFFFFFFFF",
-        ]);
-        await network.provider.send("evm_mine");
-
-        await knnPreSale.updateAvailablity(false);
-
-        const options = { value: ethers.utils.parseEther("1") };
-
-        await expect(knnPreSale.buyTokens(options)).to.be.revertedWith(
-          "Pre sale NOT started yet"
-        );
-      });
 
       it("when amount is lower than USD_AGGREGATOR_DECIMALS", async () => {
         const invalidValue = 1e8 - 1;
@@ -587,10 +570,6 @@ describe("KNN PreSale", () => {
 
       knnPreSale.end(userAccount.address);
 
-      const preSaleAvailable = await knnPreSale.available();
-
-      expect(preSaleAvailable).to.false;
-
       const newAvailableSupply = await knnPreSale.availableSupply();
 
       expect(newAvailableSupply).to.equal(0);
@@ -615,10 +594,6 @@ describe("KNN PreSale", () => {
       expect(newAvailableSupply).to.equal(0);
 
       knnPreSale.end(userAccount.address);
-
-      const preSaleAvailable = await knnPreSale.available();
-
-      expect(preSaleAvailable).to.false;
 
       const newUserBalance = await knnToken.balanceOf(userAccount.address);
 
