@@ -4,6 +4,10 @@
 
 ---
 
+## Tests Coverage
+
+[Coverage report](COVERAGE.md)
+
 ## Local environment requirements:
 
 - Node.js v16.x.x

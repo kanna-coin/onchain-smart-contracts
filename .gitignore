@@ -4,5 +4,6 @@ build/
 typechain/
 artifacts/
 coverage*
+!COVERAGE.md
 .env
 .DS_Store
