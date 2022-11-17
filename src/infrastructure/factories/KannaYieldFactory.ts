@@ -3,7 +3,6 @@ import { ethers, waffle } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { MockContract } from "ethereum-waffle";
 import {
-  KannaTreasurer,
   KannaToken,
   KannaYield__factory,
   KannaYield,
@@ -26,7 +25,7 @@ export const getKnnYieldParameters = (
 export const getKnnYield = async (
   knnDeployerAddress: SignerWithAddress,
   knnToken: KannaToken | MockContract,
-  knnTreasurer?: KannaTreasurer | MockContract
+  knnTreasurer?: KannaToken | MockContract
 ): Promise<KannaYield> => {
   const parameters = getKnnYieldParameters(knnToken, knnDeployerAddress);
 
@@ -39,7 +38,7 @@ export const getKnnYield = async (
   const rewards = parse1e18(400000);
 
   if (knnTreasurer) {
-    await knnTreasurer.release(knnYield.address, rewards);
+    await knnTreasurer.transfer(knnYield.address, rewards);
   }
 
   return knnYield;

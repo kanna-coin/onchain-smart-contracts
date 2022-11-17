@@ -6,7 +6,6 @@ import AggregatorV3InterfaceAbi from "@chainlink/contracts/abi/v0.8/AggregatorV3
 import {
   KannaPreSale__factory,
   KannaPreSale,
-  KannaTreasurer,
   KannaToken,
 } from "../../../typechain";
 
@@ -32,7 +31,7 @@ export const getPreSaleParameters = (
 export const getKnnPreSale = async (
   knnDeployerAddress: SignerWithAddress,
   knnToken: KannaToken | MockContract,
-  knnTreasurer?: KannaTreasurer | MockContract,
+  knnTreasurer?: KannaToken | MockContract,
   aggregatorAddress: string = process.env.PRICE_AGGREGATOR_ADDRESS!,
   quotation: string = defaultQuotation,
 ): Promise<KannaPreSale> => {
@@ -45,7 +44,7 @@ export const getKnnPreSale = async (
   await knnPreSale.deployed();
 
   if (knnTreasurer) {
-    await knnTreasurer.release(knnPreSale.address, preSaleAmount);
+    await knnTreasurer.transfer(knnPreSale.address, preSaleAmount);
   }
 
   return knnPreSale;

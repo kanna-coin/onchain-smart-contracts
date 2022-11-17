@@ -1,7 +1,7 @@
 import { ethers, network } from "hardhat";
 import chai from "chai";
 import chaiAsPromised from "chai-as-promised";
-import { KannaTreasurer, KannaToken, KannaPreSale } from "../../typechain";
+import { KannaToken, KannaPreSale } from "../../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import {
   getKnnToken,
@@ -21,17 +21,17 @@ const ref = "1";
 describe("KNN PreSale", () => {
   let signers: SignerWithAddress[];
   let knnToken: KannaToken;
-  let knnTreasurer: KannaTreasurer;
+  let knnTreasurer: KannaToken | undefined;
   let knnPreSale: KannaPreSale;
 
   const deployContracts = async () => {
     signers = await ethers.getSigners();
 
-    const [deployerWallet] = signers;
+    const [deployerWallet, , , treasuryWallet] = signers;
 
-    knnToken = await getKnnToken(deployerWallet);
+    knnToken = await getKnnToken(deployerWallet, treasuryWallet);
 
-    knnTreasurer = await getKnnTreasurer(deployerWallet, knnToken);
+    knnTreasurer = await getKnnTreasurer(knnToken);
 
     knnPreSale = await getKnnPreSale(deployerWallet, knnToken, knnTreasurer);
   };
@@ -46,6 +46,12 @@ describe("KNN PreSale", () => {
     const [, , userAccount] = signers;
 
     return userAccount;
+  };
+
+  const getTreasuryWallet = async () => {
+    const [, , , treasuryWallet] = signers;
+
+    return treasuryWallet;
   };
 
   const getManagerSession = async (): Promise<
@@ -211,7 +217,8 @@ describe("KNN PreSale", () => {
 
       it("when KNN transfer fail", async () => {
         const deployerWallet = await getDeployerWallet();
-        const mockToken = await getKnnTokenMock(deployerWallet);
+        const treasuryWallet = await getTreasuryWallet();
+        const mockToken = await getKnnTokenMock(deployerWallet, treasuryWallet);
 
         await mockToken.mock.transfer.reverts();
 
