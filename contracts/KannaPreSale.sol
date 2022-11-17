@@ -151,24 +151,26 @@ contract KannaPreSale is Ownable, AccessControl {
     function claim(
         address recipient,
         uint256 amountInKNN,
-        uint256 ref,
-        bool unlock
-    ) external onlyRole(CLAIM_MANAGER_ROLE)  positiveAmount(amountInKNN) {
-        require(address(recipient) != address(0), "Invalid address");
+        uint256 ref
+    ) external {
+        require(availableSupply() >= amountInKNN, "Insufficient available supply");
 
-        if (unlock) {
-            require(knnLocked >= amountInKNN, "Insufficient locked amount");
-        } else {
-            require(availableSupply() >= amountInKNN, "Insufficient available supply");
-        }
+        _claim(recipient, amountInKNN, ref);
+    }
 
-        knnToken.transfer(recipient, amountInKNN);
+    /**
+     * @dev release claimed locked tokens to recipient
+     */
+    function claimLocked(
+        address recipient,
+        uint256 amountInKNN,
+        uint256 ref
+    ) external {
+        require(knnLocked >= amountInKNN, "Insufficient locked amount");
 
-        if (unlock) {
-            knnLocked -= amountInKNN;
-        }
+        _claim(recipient, amountInKNN, ref);
 
-        emit Claim(recipient, ref, amountInKNN);
+        knnLocked -= amountInKNN;
     }
 
     /**
@@ -244,5 +246,17 @@ contract KannaPreSale is Ownable, AccessControl {
         knnToken.transfer(msg.sender, finalAmount);
 
         emit Purchase(msg.sender, msg.value, knnPriceInUSD, ethPriceInUSD, finalAmount);
+    }
+
+    function _claim(
+        address recipient,
+        uint256 amountInKNN,
+        uint256 ref
+    ) internal virtual onlyRole(CLAIM_MANAGER_ROLE) positiveAmount(amountInKNN) {
+        require(address(recipient) != address(0), "Invalid address");
+
+        knnToken.transfer(recipient, amountInKNN);
+
+        emit Claim(recipient, ref, amountInKNN);
     }
 }

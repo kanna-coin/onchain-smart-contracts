@@ -435,7 +435,7 @@ describe("KNN PreSale", () => {
         .reverted;
     });
 
-    it("should allow claim", async () => {
+    it("should allow claim locked", async () => {
       const [, managerSession] = await getManagerSession();
       const userAccount = await getUserWallet();
 
@@ -443,7 +443,7 @@ describe("KNN PreSale", () => {
 
       await managerSession.lockSupply(amount, ref);
 
-      await expect(managerSession.claim(userAccount.address, amount, ref, true))
+      await expect(managerSession.claimLocked(userAccount.address, amount, ref))
         .to.emit(managerSession, "Claim")
         .withArgs(userAccount.address, ref, amount);
 
@@ -453,14 +453,14 @@ describe("KNN PreSale", () => {
       expect(balance).to.eq(amount);
     });
 
-    it("should allow claim without unlocking", async () => {
+    it("should allow claim", async () => {
       const [, managerSession] = await getManagerSession();
       const userAccount = await getUserWallet();
 
       const amount = 1;
 
       await expect(
-        managerSession.claim(userAccount.address, amount, ref, false)
+        managerSession.claim(userAccount.address, amount, ref)
       )
         .to.emit(managerSession, "Claim")
         .withArgs(userAccount.address, ref, amount);
@@ -477,7 +477,7 @@ describe("KNN PreSale", () => {
         const amount = 1;
 
         await expect(
-          managerSession.claim(ethers.constants.AddressZero, amount, ref, true)
+          managerSession.claim(ethers.constants.AddressZero, amount, ref)
         ).to.be.revertedWith("Invalid address");
       });
 
@@ -487,7 +487,7 @@ describe("KNN PreSale", () => {
         const amount = 1;
 
         await expect(
-          managerSession.claim(userAccount.address, amount, ref, true)
+          managerSession.claimLocked(userAccount.address, amount, ref)
         ).to.be.revertedWith("Insufficient locked amount");
       });
 
@@ -500,7 +500,7 @@ describe("KNN PreSale", () => {
         const amount = availableSupply.add(1);
 
         await expect(
-          managerSession.claim(userAccount.address, amount, ref, false)
+          managerSession.claim(userAccount.address, amount, ref)
         ).to.be.revertedWith("Insufficient available supply");
       });
 
@@ -510,7 +510,7 @@ describe("KNN PreSale", () => {
         const amount = 0;
 
         await expect(
-          managerSession.claim(userAccount.address, amount, ref, true)
+          managerSession.claim(userAccount.address, amount, ref)
         ).to.be.revertedWith("Invalid amount");
       });
 
@@ -522,7 +522,7 @@ describe("KNN PreSale", () => {
         await knnPreSale.removeClaimManager(managerAccount.address);
 
         await expect(
-          managerSession.claim(userAccount.address, amount, ref, true)
+          managerSession.claim(userAccount.address, amount, ref)
         ).to.be.reverted;
       });
     });
