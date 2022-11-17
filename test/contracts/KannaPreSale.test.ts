@@ -245,32 +245,6 @@ describe("KNN PreSale", () => {
       });
     });
 
-    it("should update quotation", async () => {
-      const deployerWallet = await getDeployerWallet();
-
-      const currentPriceHex = await knnPreSale.knnPriceInUSD();
-
-      const quotation = 5 * 1e8;
-      await expect(knnPreSale.updateQuotation(quotation))
-        .to.emit(knnPreSale, "QuotationUpdate")
-        .withArgs(deployerWallet.address, currentPriceHex, quotation);
-
-      const newPriceHex = await knnPreSale.knnPriceInUSD();
-
-      const currentPrice = parseInt(currentPriceHex._hex, 16);
-      const newPrice = parseInt(newPriceHex._hex, 16);
-
-      expect(currentPrice).to.lessThan(newPrice);
-    });
-
-    it("should not update quotation when empty amount", async () => {
-      const quotation = 0;
-
-      await expect(knnPreSale.updateQuotation(quotation)).to.be.revertedWith(
-        "Invalid amount"
-      );
-    });
-
     it("should lock supply", async () => {
       const [, managerSession] = await getManagerSession();
 

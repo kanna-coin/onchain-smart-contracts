@@ -30,7 +30,7 @@ contract KannaPreSale is Ownable, AccessControl {
 
     uint256 public constant USD_AGGREGATOR_DECIMALS = 1e8;
     uint256 public constant KNN_DECIMALS = 1e18;
-    uint256 public knnPriceInUSD;
+    uint256 public immutable knnPriceInUSD;
     uint256 public knnLocked;
     bool public available = true;
 
@@ -46,7 +46,6 @@ contract KannaPreSale is Ownable, AccessControl {
     event Lock(uint256 indexed ref, uint256 amountInKNN);
     event Unlock(uint256 indexed ref, uint256 amountInKNN);
 
-    event QuotationUpdate(address indexed sender, uint256 from, uint256 to);
     event Withdraw(address indexed recipient, uint256 amount);
 
     constructor(
@@ -190,20 +189,6 @@ contract KannaPreSale is Ownable, AccessControl {
         available = false;
         uint256 leftover = availableSupply();
         if (leftover > 0) knnToken.transfer(leftoverRecipient, leftover);
-    }
-
-    /**
-     * @dev Update tokenQuotation to a new value in ETH
-     *
-     * Emits a {QuotationUpdate} event.
-     *
-     * @param targetQuotation unit price in ETH
-     *
-     */
-    function updateQuotation(uint256 targetQuotation) external onlyOwner positiveAmount(targetQuotation) {
-        emit QuotationUpdate(msg.sender, knnPriceInUSD, targetQuotation);
-
-        knnPriceInUSD = targetQuotation;
     }
 
     /**
