@@ -152,23 +152,6 @@ describe("KNN PreSale", () => {
     });
 
     describe("should not buy KNN tokens", async () => {
-      it("when presale is unavailable", async () => {
-        const deployerWallet = await getDeployerWallet();
-
-        await network.provider.send("hardhat_setBalance", [
-          deployerWallet.address,
-          "0xFFFFFFFFFFFFFFFF",
-        ]);
-        await network.provider.send("evm_mine");
-
-        await knnPreSale.updateAvailablity(false);
-
-        const options = { value: ethers.utils.parseEther("1") };
-
-        await expect(knnPreSale.buyTokens(options)).to.be.revertedWith(
-          "Pre sale NOT started yet"
-        );
-      });
 
       it("when amount is lower than USD_AGGREGATOR_DECIMALS", async () => {
         const invalidValue = 1e8 - 1;
@@ -243,32 +226,6 @@ describe("KNN PreSale", () => {
         await expect(knnPreSaleWithMock.buyTokens({ value: eth })).to.be
           .reverted;
       });
-    });
-
-    it("should update quotation", async () => {
-      const deployerWallet = await getDeployerWallet();
-
-      const currentPriceHex = await knnPreSale.knnPriceInUSD();
-
-      const quotation = 5 * 1e8;
-      await expect(knnPreSale.updateQuotation(quotation))
-        .to.emit(knnPreSale, "QuotationUpdate")
-        .withArgs(deployerWallet.address, currentPriceHex, quotation);
-
-      const newPriceHex = await knnPreSale.knnPriceInUSD();
-
-      const currentPrice = parseInt(currentPriceHex._hex, 16);
-      const newPrice = parseInt(newPriceHex._hex, 16);
-
-      expect(currentPrice).to.lessThan(newPrice);
-    });
-
-    it("should not update quotation when empty amount", async () => {
-      const quotation = 0;
-
-      await expect(knnPreSale.updateQuotation(quotation)).to.be.revertedWith(
-        "Invalid amount"
-      );
     });
 
     it("should lock supply", async () => {
@@ -613,10 +570,6 @@ describe("KNN PreSale", () => {
 
       knnPreSale.end(userAccount.address);
 
-      const preSaleAvailable = await knnPreSale.available();
-
-      expect(preSaleAvailable).to.false;
-
       const newAvailableSupply = await knnPreSale.availableSupply();
 
       expect(newAvailableSupply).to.equal(0);
@@ -641,10 +594,6 @@ describe("KNN PreSale", () => {
       expect(newAvailableSupply).to.equal(0);
 
       knnPreSale.end(userAccount.address);
-
-      const preSaleAvailable = await knnPreSale.available();
-
-      expect(preSaleAvailable).to.false;
 
       const newUserBalance = await knnToken.balanceOf(userAccount.address);
 
