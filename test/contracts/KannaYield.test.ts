@@ -1,9 +1,9 @@
 import { ethers, network } from "hardhat";
 import chai from "chai";
 import chaiAsPromised from "chai-as-promised";
-import { KannaYield, KannaTreasurer, KannaToken } from "../../typechain";
+import { KannaYield, KannaToken } from "../../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { getKnnToken, getKnnTreasurer, getKnnYield, getKnnYieldFactory } from "../../src/infrastructure/factories";
+import { getKnnToken, getKnnTreasurer, getKnnYield, getKnnYieldFactory, releaseFromTreasury } from "../../src/infrastructure/factories";
 
 chai.use(chaiAsPromised);
 const { expect } = chai;
@@ -19,7 +19,7 @@ const parse1e18 = (integer: number): string => `${integer}000000000000000000`;
 
 describe("KNN Yield⬆", async () => {
   let knnToken: KannaToken;
-  let knnTreasurer: KannaTreasurer;
+  let knnTreasurer: KannaToken | undefined;
   let knnYield: KannaYield;
 
   const [
@@ -30,12 +30,13 @@ describe("KNN Yield⬆", async () => {
     fourthHolder,
     fifthHolder,
     anyHolder,
+    treasuryWallet,
   ] = await ethers.getSigners();
 
   beforeEach(async () => {
-    knnToken = await getKnnToken(deployerWallet);
+    knnToken = await getKnnToken(deployerWallet, treasuryWallet);
 
-    knnTreasurer = await getKnnTreasurer(deployerWallet, knnToken);
+    knnTreasurer = await getKnnTreasurer(knnToken);
 
     knnYield = await getKnnYield(deployerWallet, knnToken, knnTreasurer);
   });
@@ -92,12 +93,8 @@ describe("KNN Yield⬆", async () => {
 
     it("should allow user to subscribe for 200.0 KNN", async () => {
       const subscriptionAmount = "200000000000000000000000";
-      const txTransfer = await knnTreasurer.release(
-        anyHolder.address,
-        subscriptionAmount
-      );
 
-      txTransfer.wait();
+      await releaseFromTreasury(knnToken, anyHolder.address, subscriptionAmount);
 
       const tokenSession = await ethers.getContractAt(
         tokenContractName,
@@ -139,10 +136,10 @@ describe("KNN Yield⬆", async () => {
       const amount = "800000000000000000000000";
       const rewardAmount = "400000000000000000000000";
 
-      await knnTreasurer.release(knnYield.address, rewardAmount);
-      await knnTreasurer.release(firstHolder.address, amount);
-      await knnTreasurer.release(secondHolder.address, amount);
-      await knnTreasurer.release(thirdHolder.address, amount);
+      await releaseFromTreasury(knnToken, knnYield.address, rewardAmount);
+      await releaseFromTreasury(knnToken, firstHolder.address, amount);
+      await releaseFromTreasury(knnToken, secondHolder.address, amount);
+      await releaseFromTreasury(knnToken, thirdHolder.address, amount);
 
       const firstHolderTokenSession = await ethers.getContractAt(
         tokenContractName,
@@ -244,12 +241,7 @@ describe("KNN Yield⬆", async () => {
       const [firstAmount] = ["800000000000000000000000"];
       const rewardAmount = "400000000000000000000000";
 
-      const txTransfer = await knnTreasurer.release(
-        firstHolder.address,
-        firstAmount
-      );
-
-      await txTransfer.wait();
+      await releaseFromTreasury(knnToken, firstHolder.address, firstAmount);
 
       const firstHolderTokenSession = await ethers.getContractAt(
         tokenContractName,
@@ -298,22 +290,9 @@ describe("KNN Yield⬆", async () => {
       ];
       const rewardAmount = "400000000000000000000000";
 
-      // await knnToken.mint("9000000000000000000000000");
-      await knnTreasurer.release(knnYield.address, rewardAmount);
-
-      const firstTxTransfer = await knnTreasurer.release(
-        firstHolder.address,
-        firstAmount
-      );
-
-      await firstTxTransfer.wait();
-
-      const secondTxTransfer = await knnTreasurer.release(
-        secondHolder.address,
-        secondAmount
-      );
-
-      await secondTxTransfer.wait();
+      await releaseFromTreasury(knnToken, knnYield.address, rewardAmount);
+      await releaseFromTreasury(knnToken, firstHolder.address, firstAmount);
+      await releaseFromTreasury(knnToken, secondHolder.address, secondAmount);
 
       const firstHolderTokenSession = await ethers.getContractAt(
         tokenContractName,
@@ -411,21 +390,9 @@ describe("KNN Yield⬆", async () => {
       const rewardAmount = "400000000000000000000000";
 
       // await knnToken.mint("9000000000000000000000000");
-      await knnTreasurer.release(knnYield.address, rewardAmount);
-
-      const firstTxTransfer = await knnTreasurer.release(
-        firstHolder.address,
-        firstAmount
-      );
-
-      await firstTxTransfer.wait();
-
-      const secondTxTransfer = await knnTreasurer.release(
-        secondHolder.address,
-        secondAmount
-      );
-
-      await secondTxTransfer.wait();
+      await releaseFromTreasury(knnToken, knnYield.address, rewardAmount);
+      await releaseFromTreasury(knnToken, firstHolder.address, firstAmount);
+      await releaseFromTreasury(knnToken, secondHolder.address, secondAmount);
 
       const firstHolderTokenSession = await ethers.getContractAt(
         tokenContractName,
@@ -520,28 +487,10 @@ describe("KNN Yield⬆", async () => {
       const rewardAmount = "400000000000000000000000";
 
       // await knnToken.mint("9000000000000000000000000");
-      await knnTreasurer.release(knnYield.address, rewardAmount);
-
-      const firstTxTransfer = await knnTreasurer.release(
-        firstHolder.address,
-        amount
-      );
-
-      await firstTxTransfer.wait();
-
-      const secondTxTransfer = await knnTreasurer.release(
-        secondHolder.address,
-        amount
-      );
-
-      await secondTxTransfer.wait();
-
-      const thirdTxTransfer = await knnTreasurer.release(
-        thirdHolder.address,
-        amount
-      );
-
-      await thirdTxTransfer.wait();
+      await releaseFromTreasury(knnToken, knnYield.address, rewardAmount);
+      await releaseFromTreasury(knnToken, firstHolder.address, amount);
+      await releaseFromTreasury(knnToken, secondHolder.address, amount);
+      await releaseFromTreasury(knnToken, thirdHolder.address, amount);
 
       const firstHolderTokenSession = await ethers.getContractAt(
         tokenContractName,
@@ -652,21 +601,9 @@ describe("KNN Yield⬆", async () => {
       const rewardAmount = "400000000000000000000000";
 
       // await knnToken.mint("9000000000000000000000000");
-      await knnTreasurer.release(knnYield.address, rewardAmount);
-
-      const firstTxTransfer = await knnTreasurer.release(
-        firstHolder.address,
-        firstAmount
-      );
-
-      await firstTxTransfer.wait();
-
-      const secondTxTransfer = await knnTreasurer.release(
-        secondHolder.address,
-        secondAmount
-      );
-
-      await secondTxTransfer.wait();
+      await releaseFromTreasury(knnToken, knnYield.address, rewardAmount);
+      await releaseFromTreasury(knnToken, firstHolder.address, firstAmount);
+      await releaseFromTreasury(knnToken, secondHolder.address, secondAmount);
 
       const firstHolderTokenSession = await ethers.getContractAt(
         tokenContractName,
@@ -746,8 +683,8 @@ describe("KNN Yield⬆", async () => {
       const amount = 100000;
       const rewardAmount = parse1e18(1);
 
-      await knnTreasurer.release(knnYield.address, rewardAmount);
-      await knnTreasurer.release(firstHolder.address, parse1e18(amount));
+      await releaseFromTreasury(knnToken, knnYield.address, rewardAmount);
+      await releaseFromTreasury(knnToken, firstHolder.address, parse1e18(amount));
 
       const firstHolderTokenSession = await ethers.getContractAt(
         tokenContractName,
@@ -788,8 +725,8 @@ describe("KNN Yield⬆", async () => {
       const amount = 100000;
       const rewardAmount = parse1e18(1);
 
-      await knnTreasurer.release(knnYield.address, rewardAmount);
-      await knnTreasurer.release(anyHolder.address, parse1e18(amount));
+      await releaseFromTreasury(knnToken, knnYield.address, rewardAmount);
+      await releaseFromTreasury(knnToken, anyHolder.address, parse1e18(amount));
 
       const firstHolderTokenSession = await ethers.getContractAt(
         tokenContractName,
@@ -832,8 +769,8 @@ describe("KNN Yield⬆", async () => {
       const amount = 100000;
       const rewardAmount = parse1e18(1);
 
-      await knnTreasurer.release(knnYield.address, rewardAmount);
-      await knnTreasurer.release(anyHolder.address, parse1e18(amount));
+      await releaseFromTreasury(knnToken, knnYield.address, rewardAmount);
+      await releaseFromTreasury(knnToken, anyHolder.address, parse1e18(amount));
 
       const firstHolderTokenSession = await ethers.getContractAt(
         tokenContractName,
@@ -876,8 +813,8 @@ describe("KNN Yield⬆", async () => {
       const amount = 1000000;
       const rewardAmount = parse1e18(1);
 
-      await knnTreasurer.release(knnYield.address, rewardAmount);
-      await knnTreasurer.release(firstHolder.address, parse1e18(amount));
+      await releaseFromTreasury(knnToken, knnYield.address, rewardAmount);
+      await releaseFromTreasury(knnToken, firstHolder.address, parse1e18(amount));
 
       const firstHolderTokenSession = await ethers.getContractAt(
         tokenContractName,
@@ -920,8 +857,8 @@ describe("KNN Yield⬆", async () => {
       const amount = 1000000;
       const rewardAmount = parse1e18(1);
 
-      await knnTreasurer.release(knnYield.address, rewardAmount);
-      await knnTreasurer.release(firstHolder.address, parse1e18(amount));
+      await releaseFromTreasury(knnToken, knnYield.address, rewardAmount);
+      await releaseFromTreasury(knnToken, firstHolder.address, parse1e18(amount));
 
       const firstHolderTokenSession = await ethers.getContractAt(
         tokenContractName,
@@ -964,8 +901,8 @@ describe("KNN Yield⬆", async () => {
       const amount = 1000000;
       const rewardAmount = parse1e18(1);
 
-      await knnTreasurer.release(knnYield.address, rewardAmount);
-      await knnTreasurer.release(firstHolder.address, parse1e18(amount));
+      await releaseFromTreasury(knnToken, knnYield.address, rewardAmount);
+      await releaseFromTreasury(knnToken, firstHolder.address, parse1e18(amount));
 
       const firstHolderTokenSession = await ethers.getContractAt(
         tokenContractName,
@@ -1008,8 +945,8 @@ describe("KNN Yield⬆", async () => {
       const amount = 1000000;
       const rewardAmount = parse1e18(1);
 
-      await knnTreasurer.release(knnYield.address, rewardAmount);
-      await knnTreasurer.release(firstHolder.address, parse1e18(amount));
+      await releaseFromTreasury(knnToken, knnYield.address, rewardAmount);
+      await releaseFromTreasury(knnToken, firstHolder.address, parse1e18(amount));
 
       const firstHolderTokenSession = await ethers.getContractAt(
         tokenContractName,
@@ -1054,28 +991,10 @@ describe("KNN Yield⬆", async () => {
       const rewardAmount = "400000000000000000000000";
 
       // await knnToken.mint("9000000000000000000000000");
-      await knnTreasurer.release(knnYield.address, rewardAmount);
-
-      const firstTxTransfer = await knnTreasurer.release(
-        firstHolder.address,
-        amount
-      );
-
-      await firstTxTransfer.wait();
-
-      const secondTxTransfer = await knnTreasurer.release(
-        secondHolder.address,
-        amount
-      );
-
-      await secondTxTransfer.wait();
-
-      const thirdTxTransfer = await knnTreasurer.release(
-        thirdHolder.address,
-        amount
-      );
-
-      await thirdTxTransfer.wait();
+      await releaseFromTreasury(knnToken, knnYield.address, rewardAmount);
+      await releaseFromTreasury(knnToken, firstHolder.address, amount);
+      await releaseFromTreasury(knnToken, secondHolder.address, amount);
+      await releaseFromTreasury(knnToken, thirdHolder.address, amount);
 
       const firstHolderTokenSession = await ethers.getContractAt(
         tokenContractName,
@@ -1179,7 +1098,7 @@ describe("KNN Yield⬆", async () => {
       const rewardAmount = parse1e18(600);
 
       // await knnToken.mint(rewardAmount);
-      await knnTreasurer.release(knnYield.address, rewardAmount);
+      await releaseFromTreasury(knnToken, knnYield.address, rewardAmount);
 
       await network.provider.send("evm_setAutomine", [false]);
 
@@ -1200,7 +1119,7 @@ describe("KNN Yield⬆", async () => {
         givenTokens[holder.address] += amount;
 
         const amount1e18 = parse1e18(amount);
-        await knnTreasurer.release(holder.address, amount1e18);
+        await releaseFromTreasury(knnToken, holder.address, amount1e18);
 
         const scopedToken = await ethers.getContractAt(
           tokenContractName,
