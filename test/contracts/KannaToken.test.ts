@@ -199,7 +199,7 @@ describe("KNN Token", () => {
       const [minterSession] = await getMinterSession();
 
       await expect(minterSession.mint(ethers.utils.parseEther("1.0")))
-        .to.be.revertedWith("No treasury");
+        .to.be.revertedWith("ERC20: mint to the zero address");
     });
 
     it("should prevent minting empty amount", async () => {

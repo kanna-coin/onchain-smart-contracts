@@ -1,4 +1,4 @@
-import { ethers, network, waffle } from "hardhat";
+import { ethers, network } from "hardhat";
 import chai from "chai";
 import chaiAsPromised from "chai-as-promised";
 import { KannaTreasurer, KannaToken, KannaPreSale } from "../../typechain";
@@ -9,6 +9,8 @@ import {
   getKnnPreSale,
   getKnnTokenMock,
   getAggregatorMock,
+  getKnnPreSaleFactory,
+  getPreSaleParameters,
 } from "../../src/infrastructure/factories";
 
 chai.use(chaiAsPromised);
@@ -72,6 +74,34 @@ describe("KNN PreSale", () => {
       const balance = parseInt(tokensToSell._hex, 16);
 
       expect(balance).to.greaterThanOrEqual(5e22);
+    });
+
+    it("should not initialize KNN PreSale with invalid token address", async () => {
+      const deployerWallet = await getDeployerWallet();
+
+      const knnPreSaleFactory = await getKnnPreSaleFactory(deployerWallet);
+
+      const [, aggregatorAddress, quotation] = getPreSaleParameters(knnToken);
+
+      await expect(
+        knnPreSaleFactory.deploy(
+          ethers.constants.AddressZero,
+          aggregatorAddress,
+          quotation
+        )
+      ).to.be.revertedWith("Invalid token address");
+    });
+
+    it("should not initialize KNN PreSale with invalid price aggregator address", async () => {
+      const deployerWallet = await getDeployerWallet();
+
+      const knnPreSaleFactory = await getKnnPreSaleFactory(deployerWallet);
+
+      const parameters = getPreSaleParameters(knnToken, ethers.constants.AddressZero);
+
+      await expect(
+        knnPreSaleFactory.deploy(...parameters)
+      ).to.be.revertedWith("Invalid price aggregator address");
     });
 
     it("should not initialize KNN PreSale with empty quotation", async () => {
@@ -237,7 +267,7 @@ describe("KNN PreSale", () => {
       const quotation = 0;
 
       await expect(knnPreSale.updateQuotation(quotation)).to.be.revertedWith(
-        "Invalid quotation"
+        "Invalid amount"
       );
     });
 
@@ -405,7 +435,7 @@ describe("KNN PreSale", () => {
         .reverted;
     });
 
-    it("should allow claim", async () => {
+    it("should allow claim locked", async () => {
       const [, managerSession] = await getManagerSession();
       const userAccount = await getUserWallet();
 
@@ -413,7 +443,7 @@ describe("KNN PreSale", () => {
 
       await managerSession.lockSupply(amount, ref);
 
-      await expect(managerSession.claim(userAccount.address, amount, ref, true))
+      await expect(managerSession.claimLocked(userAccount.address, amount, ref))
         .to.emit(managerSession, "Claim")
         .withArgs(userAccount.address, ref, amount);
 
@@ -423,14 +453,14 @@ describe("KNN PreSale", () => {
       expect(balance).to.eq(amount);
     });
 
-    it("should allow claim without unlocking", async () => {
+    it("should allow claim", async () => {
       const [, managerSession] = await getManagerSession();
       const userAccount = await getUserWallet();
 
       const amount = 1;
 
       await expect(
-        managerSession.claim(userAccount.address, amount, ref, false)
+        managerSession.claim(userAccount.address, amount, ref)
       )
         .to.emit(managerSession, "Claim")
         .withArgs(userAccount.address, ref, amount);
@@ -442,14 +472,36 @@ describe("KNN PreSale", () => {
     });
 
     describe("should not claim", async () => {
+      it("to invalid recipient address", async () => {
+        const [, managerSession] = await getManagerSession();
+        const amount = 1;
+
+        await expect(
+          managerSession.claim(ethers.constants.AddressZero, amount, ref)
+        ).to.be.revertedWith("Invalid address");
+      });
+
       it("when claimable amount greater than locked", async () => {
         const [, managerSession] = await getManagerSession();
         const userAccount = await getUserWallet();
         const amount = 1;
 
         await expect(
-          managerSession.claim(userAccount.address, amount, ref, true)
+          managerSession.claimLocked(userAccount.address, amount, ref)
         ).to.be.revertedWith("Insufficient locked amount");
+      });
+
+      it("when claimable amount greater available supply", async () => {
+        const [, managerSession] = await getManagerSession();
+        const userAccount = await getUserWallet();
+
+        const availableSupply = await knnPreSale.availableSupply();
+
+        const amount = availableSupply.add(1);
+
+        await expect(
+          managerSession.claim(userAccount.address, amount, ref)
+        ).to.be.revertedWith("Insufficient available supply");
       });
 
       it("when empty amount", async () => {
@@ -458,41 +510,8 @@ describe("KNN PreSale", () => {
         const amount = 0;
 
         await expect(
-          managerSession.claim(userAccount.address, amount, ref, true)
+          managerSession.claim(userAccount.address, amount, ref)
         ).to.be.revertedWith("Invalid amount");
-      });
-
-      it("when insufficient balance", async () => {
-        const deployerWallet = await getDeployerWallet();
-        const userAccount = await getUserWallet();
-        const mockToken = await getKnnTokenMock(deployerWallet);
-
-        const knnPreSaleWithMock = await getKnnPreSale(
-          deployerWallet,
-          mockToken
-        );
-        await knnPreSaleWithMock.addClaimManager(deployerWallet.address);
-
-        await mockToken.mock.balanceOf
-          .withArgs(knnPreSaleWithMock.address)
-          .returns(1e2);
-        await mockToken.mock.transfer.returns(true);
-        await mockToken.mock.balanceOf.returns(0);
-
-        await knnPreSaleWithMock.lockSupply(1e2, ref);
-
-        await mockToken.mock.balanceOf
-          .withArgs(knnPreSaleWithMock.address)
-          .returns(0);
-
-        await expect(
-          knnPreSaleWithMock.claim(userAccount.address, 1e2, ref, true)
-        ).to.be.revertedWith("Insufficient balance");
-
-        const eth = ethers.utils.parseEther("5.001001999238");
-
-        await expect(knnPreSaleWithMock.buyTokens({ value: eth })).to.be
-          .reverted;
       });
 
       it("when invalid CLAIM_MANAGER_ROLE", async () => {
@@ -503,7 +522,7 @@ describe("KNN PreSale", () => {
         await knnPreSale.removeClaimManager(managerAccount.address);
 
         await expect(
-          managerSession.claim(userAccount.address, amount, ref, true)
+          managerSession.claim(userAccount.address, amount, ref)
         ).to.be.reverted;
       });
     });
@@ -556,6 +575,12 @@ describe("KNN PreSale", () => {
       ).to.be.revertedWith("Invalid round answer");
     });
 
+    it("should not convert KNN to Wei when Invalid amount", async () => {
+      await expect(
+        knnPreSale.convertToWEI(0)
+      ).to.be.revertedWith("Invalid amount");
+    });
+
     it("should not convert Wei to KNN when Invalid round answer", async () => {
       const deployerWallet = await getDeployerWallet();
       const aggregatorMock = await getAggregatorMock(deployerWallet);
@@ -572,6 +597,12 @@ describe("KNN PreSale", () => {
       await expect(
         knnPreSaleWithAggregatorMock.convertToKNN(1e2)
       ).to.be.revertedWith("Invalid round answer");
+    });
+
+    it("should not convert Wei to KNN when Invalid amount", async () => {
+      await expect(
+        knnPreSale.convertToKNN(0)
+      ).to.be.revertedWith("Invalid amount");
     });
 
     it("should end contract", async () => {

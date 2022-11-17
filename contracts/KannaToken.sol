@@ -21,8 +21,8 @@ import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
  */
 contract KannaToken is ERC20, Ownable, AccessControl {
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
-    uint256 public immutable INITIAL_SUPPLY = 10_000_000 * 10**decimals();
-    uint256 public immutable MAX_SUPPLY = 19_000_000 * 10**decimals();
+    uint256 public constant INITIAL_SUPPLY = 10_000_000 * 10**18;
+    uint256 public constant MAX_SUPPLY = 19_000_000 * 10**18;
 
     address public treasury;
 
@@ -54,7 +54,7 @@ contract KannaToken is ERC20, Ownable, AccessControl {
      * - the caller must have admin role
      */
     function updateTreasury(address newTreasury) external onlyOwner {
-        require(address(newTreasury) != address(0), "Invalid treasury address");
+        require(newTreasury != address(0), "Invalid treasury address");
         emit TreasuryUpdate(msg.sender, treasury, newTreasury);
         treasury = newTreasury;
     }
@@ -69,7 +69,6 @@ contract KannaToken is ERC20, Ownable, AccessControl {
      * - the caller must have a minter role.
      */
     function mint(uint256 amount) external onlyRole(MINTER_ROLE) {
-        require(treasury != address(0), "No treasury");
         require(amount > 0, "Invalid Amount");
         require(totalSupply() + amount <= MAX_SUPPLY, "Maximum Supply reached!");
         _mint(treasury, amount);

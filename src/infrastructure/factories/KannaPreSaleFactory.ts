@@ -16,6 +16,11 @@ const preSaleAmount = parse1e18(350_000);
 
 const defaultQuotation = "50000000";
 
+export const getKnnPreSaleFactory = async (deployerAddress: SignerWithAddress) => (await ethers.getContractFactory(
+  "KannaPreSale",
+  deployerAddress
+)) as KannaPreSale__factory;
+
 export const getPreSaleParameters = (
   knnToken: KannaToken | MockContract,
   aggregatorAddress: string = process.env.PRICE_AGGREGATOR_ADDRESS!,
@@ -35,10 +40,8 @@ export const getKnnPreSale = async (
 
   const parameters = getPreSaleParameters(knnToken, aggregatorAddress, quotation);
 
-  const knnPreSaleFactory = (await ethers.getContractFactory(
-    "KannaPreSale",
-    knnDeployerAddress
-  )) as KannaPreSale__factory;
+  const knnPreSaleFactory = await getKnnPreSaleFactory(knnDeployerAddress);
+
   knnPreSale = await knnPreSaleFactory.deploy(...parameters);
 
   await knnPreSale.deployed();
