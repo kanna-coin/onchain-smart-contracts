@@ -3,7 +3,7 @@ import chai from "chai";
 import chaiAsPromised from "chai-as-promised";
 import { KannaToken } from "../../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { getKnnToken, getKnnTreasurer } from "../../src/infrastructure/factories";
+import { getKnnToken, getKnnTreasurer, getKnnTreasurerFactory } from "../../src/infrastructure/factories";
 
 chai.use(chaiAsPromised);
 const { expect } = chai;
@@ -69,38 +69,61 @@ describe("KNN Token", () => {
       await deployContracts();
     });
 
-    it("should initialize set and initialize amount to treasury (KannaTreasurer UC)", async () => {
+    it("should initialize and mint initial supply amount to treasury (KannaTreasurer UC)", async () => {
       const deployerWallet = await getDeployerWallet();
-      const knnTreasurer = await getKnnTreasurer(deployerWallet, knnToken);
+
+      const knnTreasurerFactory = await getKnnTreasurerFactory(deployerWallet);
+
+      const knnTreasurer = await knnTreasurerFactory.deploy(knnToken.address);
+
+      await knnTreasurer.deployed();
 
       const oldTreasury = await knnToken.treasury();
 
-      await expect(knnToken.updateTreasury(knnTreasurer.address))
+      const initialSupply = await knnToken.INITIAL_SUPPLY;
+
+      await expect(knnToken.initializeTreasury(knnTreasurer.address))
         .to.emit(knnToken, 'TreasuryUpdate').withArgs(
           deployerWallet.address,
           oldTreasury,
           knnTreasurer.address
+        )
+        .to.emit(knnToken, "Transfer").withArgs(
+          ethers.constants.AddressZero,
+          knnTreasurer.address,
+          initialSupply,
         );
     });
 
-    it("should NOT allow invalid address", async () => {
-      await expect(knnToken.updateTreasury(ethers.constants.AddressZero))
+    it("should update treasury", async () => {
+      const deployerWallet = await getDeployerWallet();
+      const [, userWallet] = await getUserSession();
+      const knnTreasurer = await getKnnTreasurer(deployerWallet, knnToken);
+
+      await expect(knnToken.updateTreasury(userWallet.address))
+        .to.emit(knnToken, 'TreasuryUpdate').withArgs(
+          deployerWallet.address,
+          knnTreasurer.address,
+          userWallet.address
+        )
+    });
+
+    it("should NOT allow invalid address on initialize", async () => {
+      await expect(knnToken.initializeTreasury(ethers.constants.AddressZero))
         .to.be.revertedWith("Invalid treasury address");
     });
 
-    it("should NOT allow initialization when treasury are no set", async () => {
-      await expect(knnToken.initializeTreasury()).to.rejectedWith("Treasury not set");
+    it("should NOT allow invalid address on update", async () => {
+      await expect(knnToken.updateTreasury(ethers.constants.AddressZero))
+        .to.be.revertedWith("Invalid treasury address");
     });
 
     it("should NOT allow initialization more than once", async () => {
       const deployerWallet = await getDeployerWallet();
 
-      await knnToken.updateTreasury(deployerWallet.address);
+      await knnToken.initializeTreasury(deployerWallet.address);
 
-      await expect(knnToken.initializeTreasury())
-        .to.emit(knnToken, "Transfer");
-
-      await expect(knnToken.initializeTreasury()).to.rejectedWith("Treasury already initialized");
+      await expect(knnToken.initializeTreasury(deployerWallet.address)).to.rejectedWith("Treasury already initialized");
     });
   });
 
@@ -117,10 +140,7 @@ describe("KNN Token", () => {
 
       const amount = ethers.utils.parseEther("2000.0");
 
-      await expect(knnToken.updateTreasury(deployerWallet.address))
-        .to.emit(knnToken, "TreasuryUpdate");
-
-      await knnToken.initializeTreasury();
+      await knnToken.initializeTreasury(deployerWallet.address);
 
       await minterSession.mint(amount);
       await knnToken.transfer(userWallet.address, amount);

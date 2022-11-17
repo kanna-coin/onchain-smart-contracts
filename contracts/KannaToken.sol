@@ -38,9 +38,9 @@ contract KannaToken is ERC20, Ownable, AccessControl {
      *
      * - the caller must have admin role
      */
-    function initializeTreasury() external onlyOwner {
-        require(treasury != address(0), "Treasury not set");
-        require(totalSupply() == 0, "Treasury already initialized");
+    function initializeTreasury(address newTreasury) external onlyOwner {
+        require(treasury == address(0), "Treasury already initialized");
+        _updateTreasury(newTreasury);
         _mint(treasury, INITIAL_SUPPLY);
     }
 
@@ -54,9 +54,7 @@ contract KannaToken is ERC20, Ownable, AccessControl {
      * - the caller must have admin role
      */
     function updateTreasury(address newTreasury) external onlyOwner {
-        require(newTreasury != address(0), "Invalid treasury address");
-        emit TreasuryUpdate(msg.sender, treasury, newTreasury);
-        treasury = newTreasury;
+        _updateTreasury(newTreasury);
     }
 
     /** @dev Creates `amount` tokens and assigns them to {treasury} account, increasing
@@ -103,5 +101,11 @@ contract KannaToken is ERC20, Ownable, AccessControl {
      */
     function removeMinter(address minter) external onlyOwner {
         _revokeRole(MINTER_ROLE, minter);
+    }
+
+    function _updateTreasury(address newTreasury) internal virtual {
+        require(newTreasury != address(0), "Invalid treasury address");
+        emit TreasuryUpdate(msg.sender, treasury, newTreasury);
+        treasury = newTreasury;
     }
 }

@@ -17,15 +17,13 @@ export const getKnnTreasurer = async (
   knnDeployerAddress: SignerWithAddress,
   knnToken: KannaToken | MockContract
 ): Promise<KannaTreasurer> => {
-  let knnTreasurer: KannaTreasurer;
-
   const knnTreasurerFactory = await getKnnTreasurerFactory(knnDeployerAddress);
-  knnTreasurer = await knnTreasurerFactory.deploy(knnToken.address);
+
+  const knnTreasurer = await knnTreasurerFactory.deploy(knnToken.address);
 
   await knnTreasurer.deployed();
 
-  await knnToken.updateTreasury(knnTreasurer.address);
-  await knnToken.initializeTreasury();
+  await knnToken.initializeTreasury(knnTreasurer.address);
 
   return knnTreasurer;
 };
