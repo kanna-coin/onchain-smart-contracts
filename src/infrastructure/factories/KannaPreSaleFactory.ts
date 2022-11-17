@@ -36,13 +36,11 @@ export const getKnnPreSale = async (
   aggregatorAddress: string = process.env.PRICE_AGGREGATOR_ADDRESS!,
   quotation: string = defaultQuotation,
 ): Promise<KannaPreSale> => {
-  let knnPreSale: KannaPreSale;
-
   const parameters = getPreSaleParameters(knnToken, aggregatorAddress, quotation);
 
   const knnPreSaleFactory = await getKnnPreSaleFactory(knnDeployerAddress);
 
-  knnPreSale = await knnPreSaleFactory.deploy(...parameters);
+  const knnPreSale = await knnPreSaleFactory.deploy(...parameters);
 
   await knnPreSale.deployed();
 

@@ -11,10 +11,9 @@ export const getKannaTokenFactory = async (deployerAddress: SignerWithAddress) =
 export const getKnnToken = async (
   knnDeployerAddress: SignerWithAddress
 ): Promise<KannaToken> => {
-  let KannaToken: KannaToken;
-
   const KannaTokenFactory = await getKannaTokenFactory(knnDeployerAddress);
-  KannaToken = await KannaTokenFactory.deploy();
+
+  const KannaToken = await KannaTokenFactory.deploy();
 
   await KannaToken.deployed();
 

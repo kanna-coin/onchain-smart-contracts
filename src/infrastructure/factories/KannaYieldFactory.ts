@@ -28,13 +28,11 @@ export const getKnnYield = async (
   knnToken: KannaToken | MockContract,
   knnTreasurer?: KannaTreasurer | MockContract
 ): Promise<KannaYield> => {
-  let knnYield: KannaYield;
-
   const parameters = getKnnYieldParameters(knnToken, knnDeployerAddress);
 
   const knnYieldFactory = await getKnnYieldFactory(knnDeployerAddress);
 
-  knnYield = await knnYieldFactory.deploy(...parameters);
+  const knnYield = await knnYieldFactory.deploy(...parameters);
 
   await knnYield.deployed();
 
