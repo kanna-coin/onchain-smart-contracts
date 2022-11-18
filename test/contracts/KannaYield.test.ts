@@ -3,7 +3,13 @@ import chai from "chai";
 import chaiAsPromised from "chai-as-promised";
 import { KannaYield, KannaToken } from "../../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { getKnnToken, getKnnTreasurer, getKnnYield, getKnnYieldFactory, releaseFromTreasury } from "../../src/infrastructure/factories";
+import {
+  getKnnToken,
+  getKnnTreasurer,
+  getKnnYield,
+  getKnnYieldFactory,
+  releaseFromTreasury,
+} from "../../src/infrastructure/factories";
 
 chai.use(chaiAsPromised);
 const { expect } = chai;
@@ -59,7 +65,7 @@ describe("KNN Yield⬆", async () => {
       await expect(
         knnYieldFactory.deploy(
           ethers.constants.AddressZero,
-          deployerWallet.address,
+          deployerWallet.address
         )
       ).to.be.revertedWith("Invalid token address");
     });
@@ -94,7 +100,11 @@ describe("KNN Yield⬆", async () => {
     it("should allow user to subscribe for 200.0 KNN", async () => {
       const subscriptionAmount = "200000000000000000000000";
 
-      await releaseFromTreasury(knnToken, anyHolder.address, subscriptionAmount);
+      await releaseFromTreasury(
+        knnToken,
+        anyHolder.address,
+        subscriptionAmount
+      );
 
       const tokenSession = await ethers.getContractAt(
         tokenContractName,
@@ -684,7 +694,11 @@ describe("KNN Yield⬆", async () => {
       const rewardAmount = parse1e18(1);
 
       await releaseFromTreasury(knnToken, knnYield.address, rewardAmount);
-      await releaseFromTreasury(knnToken, firstHolder.address, parse1e18(amount));
+      await releaseFromTreasury(
+        knnToken,
+        firstHolder.address,
+        parse1e18(amount)
+      );
 
       const firstHolderTokenSession = await ethers.getContractAt(
         tokenContractName,
@@ -814,7 +828,11 @@ describe("KNN Yield⬆", async () => {
       const rewardAmount = parse1e18(1);
 
       await releaseFromTreasury(knnToken, knnYield.address, rewardAmount);
-      await releaseFromTreasury(knnToken, firstHolder.address, parse1e18(amount));
+      await releaseFromTreasury(
+        knnToken,
+        firstHolder.address,
+        parse1e18(amount)
+      );
 
       const firstHolderTokenSession = await ethers.getContractAt(
         tokenContractName,
@@ -858,7 +876,11 @@ describe("KNN Yield⬆", async () => {
       const rewardAmount = parse1e18(1);
 
       await releaseFromTreasury(knnToken, knnYield.address, rewardAmount);
-      await releaseFromTreasury(knnToken, firstHolder.address, parse1e18(amount));
+      await releaseFromTreasury(
+        knnToken,
+        firstHolder.address,
+        parse1e18(amount)
+      );
 
       const firstHolderTokenSession = await ethers.getContractAt(
         tokenContractName,
@@ -902,7 +924,11 @@ describe("KNN Yield⬆", async () => {
       const rewardAmount = parse1e18(1);
 
       await releaseFromTreasury(knnToken, knnYield.address, rewardAmount);
-      await releaseFromTreasury(knnToken, firstHolder.address, parse1e18(amount));
+      await releaseFromTreasury(
+        knnToken,
+        firstHolder.address,
+        parse1e18(amount)
+      );
 
       const firstHolderTokenSession = await ethers.getContractAt(
         tokenContractName,
@@ -946,7 +972,11 @@ describe("KNN Yield⬆", async () => {
       const rewardAmount = parse1e18(1);
 
       await releaseFromTreasury(knnToken, knnYield.address, rewardAmount);
-      await releaseFromTreasury(knnToken, firstHolder.address, parse1e18(amount));
+      await releaseFromTreasury(
+        knnToken,
+        firstHolder.address,
+        parse1e18(amount)
+      );
 
       const firstHolderTokenSession = await ethers.getContractAt(
         tokenContractName,
@@ -990,7 +1020,6 @@ describe("KNN Yield⬆", async () => {
       const halfWithdrawAmount = "400000000000000000000000";
       const rewardAmount = "400000000000000000000000";
 
-      // await knnToken.mint("9000000000000000000000000");
       await releaseFromTreasury(knnToken, knnYield.address, rewardAmount);
       await releaseFromTreasury(knnToken, firstHolder.address, amount);
       await releaseFromTreasury(knnToken, secondHolder.address, amount);
@@ -1088,6 +1117,53 @@ describe("KNN Yield⬆", async () => {
         "\n| Collected =>",
         parseKNN(afterCollect) - parseKNN(beforeCollect)
       );
+    });
+
+    it("should renew previous subscriptions", async () => {
+      const rewardsDuration = 30 * 24 * 60 ** 2;
+
+      const amount = 100000;
+      const rewardAmount = parse1e18(1);
+
+      await releaseFromTreasury(knnToken, knnYield.address, amount);
+      await releaseFromTreasury(
+        knnToken,
+        firstHolder.address,
+        parse1e18(amount)
+      );
+
+      const firstHolderTokenSession = await ethers.getContractAt(
+        tokenContractName,
+        knnToken.address,
+        firstHolder
+      );
+
+      await firstHolderTokenSession.approve(
+        knnYield.address,
+        parse1e18(amount)
+      );
+
+      await knnYield.addReward(rewardAmount, rewardsDuration);
+      await network.provider.send("evm_mine");
+
+      const firstHolderYieldSession = await ethers.getContractAt(
+        yieldContractName,
+        knnYield.address,
+        firstHolder
+      );
+
+      await firstHolderYieldSession.subscribe(parse1e18(amount / 2));
+      await network.provider.send("evm_mine");
+      await network.provider.send("evm_increaseTime", [rewardsDuration * 2]);
+      await network.provider.send("evm_mine");
+      await knnYield.addReward(rewardAmount, rewardsDuration);
+      await network.provider.send("evm_mine");
+      await firstHolderYieldSession.subscribe(parse1e18(amount / 2));
+
+      const firstHolderBalance = await knnYield.balanceOf(firstHolder.address);
+      const balanceAmount = parseKNN(firstHolderBalance);
+
+      expect(balanceAmount).to.eq(amount);
     });
 
     it("should reproduce a 5-Holder serial distribution", async () => {
