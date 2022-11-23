@@ -1,7 +1,7 @@
 import { ethers, network } from "hardhat";
 import chai from "chai";
 import chaiAsPromised from "chai-as-promised";
-import { KannaYield, KannaToken } from "../../typechain";
+import { KannaYield, KannaToken } from "../../typechain-types";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import {
   getKnnToken,

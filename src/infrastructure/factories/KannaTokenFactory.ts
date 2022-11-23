@@ -4,7 +4,7 @@ import { BigNumberish, constants } from "ethers";
 import { MockContract } from "ethereum-waffle";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
-import { KannaToken__factory, KannaToken } from "../../../typechain";
+import { KannaToken__factory, KannaToken } from "../../../typechain-types";
 
 export const getKannaTokenFactory = async (deployerAddress: SignerWithAddress) => (await ethers.getContractFactory(
   "KannaToken",
