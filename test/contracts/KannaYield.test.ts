@@ -39,6 +39,16 @@ describe("KNN Yield⬆", async () => {
     treasuryWallet,
   ] = await ethers.getSigners();
 
+  const getUserSession = async (): Promise<[KannaYield, SignerWithAddress]> => {
+    const userSession = await ethers.getContractAt(
+      yieldContractName,
+      knnYield.address,
+      anyHolder
+    ) as KannaYield;
+
+    return [userSession, anyHolder];
+  };
+
   beforeEach(async () => {
     knnToken = await getKnnToken(deployerWallet, treasuryWallet);
 
@@ -48,6 +58,23 @@ describe("KNN Yield⬆", async () => {
   });
 
   describe("KANNA Yield Tests", () => {
+    it("should prevent not owner collect fees", async () => {
+      const [userSession] = await getUserSession();
+
+      await expect(userSession.collectFees())
+        .to.be.revertedWith("Ownable: caller is not the owner");
+    });
+
+    it("should prevent not owner add reward", async () => {
+      const [userSession] = await getUserSession();
+
+      const rewardsDuration = 365 * 24 * 60 ** 2;
+      const rewardAmount = "100000000000000000000000";
+
+      await expect(userSession.addReward(rewardAmount, rewardsDuration))
+        .to.be.revertedWith("Ownable: caller is not the owner");
+    });
+
     it("should start with a 400K balance", async () => {
       const yieldBalance = await knnToken.balanceOf(knnYield.address);
       const balance = parseInt(yieldBalance._hex, 16);

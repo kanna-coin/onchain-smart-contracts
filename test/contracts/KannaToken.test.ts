@@ -244,5 +244,41 @@ describe("KNN Token", () => {
       await expect(minterSession.mint(0))
         .to.be.revertedWith("Invalid Amount");
     });
+
+    describe("should prevent not owner", () => {
+      const revertWith = "Ownable: caller is not the owner";
+
+      it("initialize treasury", async () => {
+        const knnTreasurer = await getTreasuryWallet();
+        const [userSession] = await getUserSession();
+
+        await expect(userSession.initializeTreasury(knnTreasurer.address))
+          .to.be.revertedWith(revertWith);
+      });
+
+      it("update treasury", async () => {
+        const knnTreasurer = await getTreasuryWallet();
+        const [userSession] = await getUserSession();
+
+        await expect(userSession.updateTreasury(knnTreasurer.address))
+          .to.be.revertedWith(revertWith);
+      });
+
+      it("add minter", async () => {
+        const [userSession] = await getUserSession();
+        const [, user2Wallet] = await getUser2Session();
+
+        await expect(userSession.addMinter(user2Wallet.address))
+          .to.be.revertedWith(revertWith);
+      });
+
+      it("remove minter", async () => {
+        const [userSession] = await getUserSession();
+        const [, user2Wallet] = await getUser2Session();
+
+        await expect(userSession.removeMinter(user2Wallet.address))
+          .to.be.revertedWith(revertWith);
+      });
+    });
   });
 });
