@@ -7,7 +7,7 @@ import {
   KannaPreSale__factory,
   KannaPreSale,
   KannaToken,
-} from "../../../typechain";
+} from "../../../typechain-types";
 
 const parse1e18 = (integer: number): string => `${integer}000000000000000000`;
 

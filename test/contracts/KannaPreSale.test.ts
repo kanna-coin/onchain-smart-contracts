@@ -1,7 +1,7 @@
 import { ethers, network } from "hardhat";
 import chai from "chai";
 import chaiAsPromised from "chai-as-promised";
-import { KannaToken, KannaPreSale } from "../../typechain";
+import { KannaToken, KannaPreSale } from "../../typechain-types";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import {
   getKnnToken,
@@ -68,6 +68,20 @@ describe("KNN PreSale", () => {
     )) as KannaPreSale;
 
     return [managerWallet, managerSession];
+  };
+
+  const getUserSession = async (): Promise<
+    [SignerWithAddress, KannaPreSale]
+  > => {
+    const userWallet = await getUserWallet();
+
+    const managerSession = (await ethers.getContractAt(
+      "KannaPreSale",
+      knnPreSale.address,
+      userWallet
+    )) as KannaPreSale;
+
+    return [userWallet, managerSession];
   };
 
   describe("Setup", async () => {
@@ -605,6 +619,38 @@ describe("KNN PreSale", () => {
       const newUserBalance = await knnToken.balanceOf(userAccount.address);
 
       expect(newUserBalance).to.equal(userBalance);
+    });
+
+    describe("should prevent not owner", () => {
+      const revertWith = "Ownable: caller is not the owner";
+
+      it("add claim manager", async () => {
+        const [, userSession] = await getUserSession();
+
+        await expect(userSession.addClaimManager(ethers.constants.AddressZero))
+          .to.be.revertedWith(revertWith);
+      });
+
+      it("remove claim manager", async () => {
+        const [, userSession] = await getUserSession();
+
+        await expect(userSession.removeClaimManager(ethers.constants.AddressZero))
+          .to.be.revertedWith(revertWith);
+      });
+
+      it("withdraw contract ETH", async () => {
+        const [, userSession] = await getUserSession();
+
+        await expect(userSession.withdraw(ethers.constants.AddressZero))
+          .to.be.revertedWith(revertWith);
+      });
+
+      it("end contract", async () => {
+        const [, userSession] = await getUserSession();
+
+        await expect(userSession.end(ethers.constants.AddressZero))
+          .to.be.revertedWith(revertWith);
+      });
     });
   });
 });
