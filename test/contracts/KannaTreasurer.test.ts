@@ -1,0 +1,39 @@
+import { ethers } from "hardhat";
+import chai from "chai";
+import chaiAsPromised from "chai-as-promised";
+import { KannaTreasurer, KannaToken } from "../../typechain";
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import getKnnToken from "../../src/infrastructure/factories/KannaTokenFactory";
+import getKnnTreasurer from "../../src/infrastructure/factories/KannaTreasurerFactory";
+
+chai.use(chaiAsPromised);
+const { expect } = chai;
+
+describe("KNN Treasurer", () => {
+  let knnTreasurer: KannaTreasurer;
+  let signers: SignerWithAddress[];
+  let knnToken: KannaToken;
+
+  const deployContracts = async () => {
+    signers = await ethers.getSigners();
+
+    const [deployerWallet] = signers;
+
+    knnToken = await getKnnToken(deployerWallet);
+
+    knnTreasurer = await getKnnTreasurer(deployerWallet, knnToken);
+  };
+
+  describe("Setup", async () => {
+    beforeEach(async () => {
+      await deployContracts();
+    });
+
+    it("should initialize KNN Treasurer with initialSupply of 10MM", async () => {
+      const treasuryBalanceHex = await knnToken.balanceOf(knnTreasurer.address);
+      const balance = parseInt(treasuryBalanceHex._hex, 16);
+
+      expect(balance).to.greaterThanOrEqual(1e25);
+    });
+  });
+});

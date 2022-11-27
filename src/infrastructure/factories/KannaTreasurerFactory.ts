@@ -3,13 +3,13 @@ import { ethers } from "hardhat";
 import {
   KannaTreasurer__factory,
   KannaTreasurer,
-  ERC20KannaToken,
+  KannaToken,
 } from "../../../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
 const instance = async (
   knnDeployerAddress: SignerWithAddress,
-  knnToken: ERC20KannaToken
+  knnToken: KannaToken
 ): Promise<KannaTreasurer> => {
   let knnTreasurer: KannaTreasurer;
 
@@ -21,7 +21,8 @@ const instance = async (
 
   await knnTreasurer.deployed();
 
-  await knnToken.initializeTreasury(knnTreasurer.address);
+  await knnToken.updateTreasury(knnTreasurer.address);
+  await knnToken.initializeTreasury();
 
   return knnTreasurer;
 };

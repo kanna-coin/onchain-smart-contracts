@@ -1,24 +1,22 @@
 import "@nomiclabs/hardhat-waffle";
 import { ethers } from "hardhat";
-import { ERC20KannaToken__factory, ERC20KannaToken } from "../../../typechain";
+import { KannaToken__factory, KannaToken } from "../../../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
 const instance = async (
   knnDeployerAddress: SignerWithAddress
-): Promise<ERC20KannaToken> => {
-  let erc20KannaToken: ERC20KannaToken;
+): Promise<KannaToken> => {
+  let KannaToken: KannaToken;
 
-  const erc20kannaTokenFactory = (await ethers.getContractFactory(
-    "ERC20KannaToken",
+  const KannaTokenFactory = (await ethers.getContractFactory(
+    "KannaToken",
     knnDeployerAddress
-  )) as ERC20KannaToken__factory;
-  erc20KannaToken = await erc20kannaTokenFactory.deploy(
-    knnDeployerAddress.address
-  );
+  )) as KannaToken__factory;
+  KannaToken = await KannaTokenFactory.deploy();
 
-  await erc20KannaToken.deployed();
+  await KannaToken.deployed();
 
-  return erc20KannaToken;
+  return KannaToken;
 };
 
 export default instance;

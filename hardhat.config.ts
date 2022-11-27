@@ -25,6 +25,12 @@ const config: HardhatUserEtherscanConfig = {
   },
   networks: {
     hardhat: {
+      forking: {
+        // eslint-disable-next-line
+        enabled: true,
+        url: process.env.RPC_NODE_ENDPOINT || "",
+        blockNumber: 15704870,
+      },
       mining: {
         mempool: {
           order: "fifo",
