@@ -11,9 +11,8 @@
     "node": "npx hardhat node",
     "coverage": "npm run build && npx hardhat coverage --temp artifacts",
     "deploy:token": "npx hardhat run --network localhost deploy/1_KannaToken_deploy.ts",
-    "deploy:treasurer": "npx hardhat run --network localhost deploy/2_KannaTreasurer_deploy.ts",
-    "deploy:yield": "npx hardhat run --network localhost deploy/3_KannaYield_deploy.ts",
-    "deploy:presale": "npx hardhat run --network localhost deploy/4_KannaPreSale_deploy.ts",
+    "deploy:yield": "npx hardhat run --network localhost deploy/2_KannaYield_deploy.ts",
+    "deploy:presale": "npx hardhat run --network localhost deploy/3_KannaPreSale_deploy.ts",
     "deploy": "npx hardhat run --network localhost deploy/kanna-go-live-presale.ts"
   },
   "repository": {
