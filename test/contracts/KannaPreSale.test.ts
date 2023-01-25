@@ -414,15 +414,18 @@ describe("KNN PreSale", () => {
     });
 
     it("should allow claim locked", async () => {
-      const [, managerSession] = await getManagerSession();
-      const userAccount = await getUserWallet();
+      const [managerAccount, managerSession] = await getManagerSession();
+      const [userAccount, userSession] = await getUserSession();
 
       const amount = 1;
 
       await managerSession.lockSupply(amount, ref);
 
-      await expect(managerSession.claimLocked(userAccount.address, amount, ref))
-        .to.emit(managerSession, "Claim")
+      const [messageHash, nonce] = await managerSession.claimHash(userAccount.address, amount, ref);
+      const signature = await managerAccount.signMessage(ethers.utils.arrayify(messageHash));
+
+      await expect(userSession.claimLocked(userAccount.address, amount, ref, signature, nonce))
+        .to.emit(userSession, "Claim")
         .withArgs(userAccount.address, ref, amount);
 
       const balanceUint256 = await knnToken.balanceOf(userAccount.address);
@@ -459,14 +462,21 @@ describe("KNN PreSale", () => {
         ).to.be.revertedWith("Invalid address");
       });
 
-      it("when claimable amount greater than locked", async () => {
+      it("already claimed ref", async () => {
         const [, managerSession] = await getManagerSession();
         const userAccount = await getUserWallet();
+
         const amount = 1;
 
         await expect(
-          managerSession.claimLocked(userAccount.address, amount, ref)
-        ).to.be.revertedWith("Insufficient locked amount");
+          managerSession.claim(userAccount.address, amount, ref)
+        )
+          .to.emit(managerSession, "Claim")
+          .withArgs(userAccount.address, ref, amount);
+
+        await expect(
+          managerSession.claim(userAccount.address, amount, ref)
+        ).to.be.revertedWith("Already claimed");
       });
 
       it("when claimable amount greater available supply", async () => {
@@ -501,6 +511,111 @@ describe("KNN PreSale", () => {
 
         await expect(
           managerSession.claim(userAccount.address, amount, ref)
+        ).to.be.reverted;
+      });
+    });
+
+    describe("should not generate claim hash", async () => {
+      it("when invalid address", async () => {
+        const [, managerSession] = await getManagerSession();
+
+        await expect(managerSession.claimHash(ethers.constants.AddressZero, 1, ref))
+          .to.be.revertedWith('Invalid address');
+      });
+
+      it("when invalid amount", async () => {
+        const [, managerSession] = await getManagerSession();
+        const userAccount = await getUserWallet();
+
+        await expect(managerSession.claimHash(userAccount.address, 0, ref))
+          .to.be.revertedWith('Invalid amount');
+      });
+
+      it("when ref already claimed", async () => {
+        const [managerAccount, managerSession] = await getManagerSession();
+        const [userAccount, userSession] = await getUserSession();
+
+        const amount = 1;
+
+        await managerSession.lockSupply(amount, ref);
+
+        const [messageHash, nonce] = await managerSession.claimHash(userAccount.address, amount, ref);
+        const signature = await managerAccount.signMessage(ethers.utils.arrayify(messageHash));
+
+        await expect(userSession.claimLocked(userAccount.address, amount, ref, signature, nonce))
+          .to.emit(userSession, "Claim")
+          .withArgs(userAccount.address, ref, amount);
+
+        await expect(managerSession.claimHash(userAccount.address, amount, ref))
+          .to.be.revertedWith('Already claimed');
+      });
+    });
+
+    describe("should not claim locked", async () => {
+      it("when claimable amount greater than locked", async () => {
+        const [managerAccount, managerSession] = await getManagerSession();
+        const userAccount = await getUserWallet();
+        const amount = 1;
+
+        const [messageHash, nonce] = await managerSession.claimHash(userAccount.address, amount, ref);
+        const signature = await managerAccount.signMessage(ethers.utils.arrayify(messageHash));
+
+        await expect(
+          managerSession.claimLocked(userAccount.address, amount, ref, signature, nonce)
+        ).to.be.revertedWith("Insufficient locked amount");
+      });
+
+      it("when invalid CLAIM_MANAGER_ROLE", async () => {
+        const [managerAccount, managerSession] = await getManagerSession();
+        const userAccount = await getUserWallet();
+        const amount = 1;
+
+        await knnPreSale.removeClaimManager(managerAccount.address);
+
+        const [messageHash, nonce] = await managerSession.claimHash(userAccount.address, amount, ref);
+        const signature = await managerAccount.signMessage(ethers.utils.arrayify(messageHash));
+
+        await expect(
+          managerSession.claimLocked(userAccount.address, amount, ref, signature, nonce)
+        ).to.be.reverted;
+      });
+    });
+
+    describe("should not claim locked with signature", async () => {
+      it("when claimable amount greater than locked", async () => {
+        const [managerAccount, managerSession] = await getManagerSession();
+        const [userAccount, userSession] = await getUserSession();
+        const amount = 1;
+
+        const [messageHash, nonce] = await managerSession.claimHash(userAccount.address, amount, ref);
+        const signature = await managerAccount.signMessage(ethers.utils.arrayify(messageHash));
+
+        await expect(
+          userSession.claimLocked(userAccount.address, amount, ref, signature, nonce)
+        ).to.be.revertedWith("Insufficient locked amount");
+      });
+
+      it("when invalid signature length", async () => {
+        const [, managerSession] = await getManagerSession();
+        const [userAccount, userSession] = await getUserSession();
+        const amount = 1;
+
+        await managerSession.lockSupply(amount, ref);
+
+        await expect(
+          userSession.claimLocked(userAccount.address, amount, ref, "0x01", "1")
+        ).to.be.revertedWith("ECDSA: invalid signature length");
+      });
+
+      it("when invalid CLAIM_MANAGER_ROLE", async () => {
+        const [userAccount, userSession] = await getUserSession();
+        const amount = 1;
+
+        const [messageHash, nonce] = await userSession.claimHash(userAccount.address, amount, ref);
+        const signature = await userAccount.signMessage(ethers.utils.arrayify(messageHash));
+
+        await expect(
+          userSession.claimLocked(userAccount.address, amount, ref, signature, nonce)
         ).to.be.reverted;
       });
     });

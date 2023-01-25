@@ -3,6 +3,7 @@ pragma solidity ^0.8.17;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
+import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
@@ -28,10 +29,15 @@ contract KannaPreSale is Ownable, AccessControl {
 
     bytes32 public constant CLAIM_MANAGER_ROLE = keccak256("CLAIM_MANAGER_ROLE");
 
+    bytes32 private constant _CLAIM_TYPEHASH = keccak256("Claim(address recipient,uint256 amountInKNN,uint256 ref,uint256 nonce)");
+
     uint256 public constant USD_AGGREGATOR_DECIMALS = 1e8;
     uint256 public constant KNN_DECIMALS = 1e18;
     uint256 public immutable knnPriceInUSD;
     uint256 public knnLocked;
+
+    mapping(address => uint256) private nonces;
+    mapping(uint256 => bool) private claims;
 
     event Purchase(
         address indexed holder,
@@ -145,10 +151,29 @@ contract KannaPreSale is Ownable, AccessControl {
         address recipient,
         uint256 amountInKNN,
         uint256 ref
-    ) external {
+    ) external onlyRole(CLAIM_MANAGER_ROLE) {
         require(availableSupply() >= amountInKNN, "Insufficient available supply");
 
         _claim(recipient, amountInKNN, ref);
+    }
+
+    /**
+     * @dev claim message hash
+     */
+    function claimHash(
+        address recipient,
+        uint256 amountInKNN,
+        uint256 ref
+    ) public view returns (bytes32, uint256) {
+        require(address(recipient) != address(0), "Invalid address");
+        require(amountInKNN > 0, "Invalid amount");
+        require(claims[ref] == false, "Already claimed");
+
+        uint256 nonce = nonces[recipient];
+
+        bytes32 hash = keccak256(abi.encode(_CLAIM_TYPEHASH, recipient, amountInKNN, ref, nonce));
+
+        return (hash, nonce);
     }
 
     /**
@@ -157,13 +182,22 @@ contract KannaPreSale is Ownable, AccessControl {
     function claimLocked(
         address recipient,
         uint256 amountInKNN,
-        uint256 ref
+        uint256 ref,
+        bytes memory signature,
+        uint256 nonce
     ) external {
         require(knnLocked >= amountInKNN, "Insufficient locked amount");
+
+        bytes32 signedMessage = ECDSA.toEthSignedMessageHash(keccak256(abi.encode(_CLAIM_TYPEHASH, recipient, amountInKNN, ref, nonce)));
+
+        address signer = ECDSA.recover(signedMessage, signature);
+
+        _checkRole(CLAIM_MANAGER_ROLE, signer);
 
         _claim(recipient, amountInKNN, ref);
 
         knnLocked -= amountInKNN;
+        nonces[recipient] = nonce + 1;
     }
 
     /**
@@ -221,10 +255,13 @@ contract KannaPreSale is Ownable, AccessControl {
         address recipient,
         uint256 amountInKNN,
         uint256 ref
-    ) internal virtual onlyRole(CLAIM_MANAGER_ROLE) positiveAmount(amountInKNN) {
+    ) internal virtual positiveAmount(amountInKNN) {
         require(address(recipient) != address(0), "Invalid address");
+        require(claims[ref] == false, "Already claimed");
 
         knnToken.transfer(recipient, amountInKNN);
+
+        claims[ref] = true;
 
         emit Claim(recipient, ref, amountInKNN);
     }
