@@ -413,6 +413,39 @@ describe("KNN PreSale", () => {
         .reverted;
     });
 
+    it("should allow claim locked random nonce", async () => {
+      const [managerAccount, managerSession] = await getManagerSession();
+      const [userAccount, userSession] = await getUserSession();
+
+      const amount = 1;
+
+      await managerSession.lockSupply(amount, ref);
+
+      const nonce = ethers.BigNumber.from(ethers.utils.hexlify(ethers.utils.randomBytes(32))).sub(1);
+
+      const claimTypeHash = ethers.utils.keccak256(
+        ethers.utils.toUtf8Bytes("Claim(address recipient,uint256 amountInKNN,uint256 ref,uint256 nonce)")
+      );
+
+      const messageHash = ethers.utils.keccak256(
+        ethers.utils.defaultAbiCoder.encode(
+          ['bytes32', 'address', 'uint256', 'uint256', 'uint256'],
+          [claimTypeHash, userAccount.address, amount, ref, nonce]
+        )
+      );
+
+      const signature = await managerAccount.signMessage(ethers.utils.arrayify(messageHash));
+
+      await expect(userSession.claimLocked(userAccount.address, amount, ref, signature, nonce))
+        .to.emit(userSession, "Claim")
+        .withArgs(userAccount.address, ref, amount);
+
+      const balanceUint256 = await knnToken.balanceOf(userAccount.address);
+      const balance = parseInt(balanceUint256._hex, 16);
+
+      expect(balance).to.eq(amount);
+    });
+
     it("should allow claim locked", async () => {
       const [managerAccount, managerSession] = await getManagerSession();
       const [userAccount, userSession] = await getUserSession();
