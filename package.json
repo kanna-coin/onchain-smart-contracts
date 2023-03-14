@@ -13,7 +13,7 @@
     "deploy:token": "npx hardhat run --network localhost deploy/1_KannaToken_deploy.ts",
     "deploy:yield": "npx hardhat run --network localhost deploy/2_KannaYield_deploy.ts",
     "deploy:presale": "npx hardhat run --network localhost deploy/3_KannaPreSale_deploy.ts",
-    "deploy": "npx hardhat run --network localhost deploy/kanna-go-live-presale.ts"
+    "deploy": "npx hardhat run --network localhost deploy/kanna-go-live-sale.ts"
   },
   "repository": {
     "type": "git",

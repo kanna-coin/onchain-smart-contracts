@@ -2,5 +2,6 @@
 /* tslint:disable */
 /* eslint-disable */
 export type { KannaPreSale } from "./KannaPreSale";
+export type { KannaSale } from "./KannaSale";
 export type { KannaToken } from "./KannaToken";
 export type { KannaYield } from "./KannaYield";

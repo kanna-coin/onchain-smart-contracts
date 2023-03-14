@@ -2,7 +2,6 @@ import "@nomiclabs/hardhat-waffle";
 import { ethers, waffle } from "hardhat";
 import { MockContract } from "ethereum-waffle";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import AggregatorV3InterfaceAbi from "@chainlink/contracts/abi/v0.8/AggregatorV3Interface.json";
 import {
   KannaPreSale__factory,
   KannaPreSale,
@@ -48,14 +47,6 @@ export const getKnnPreSale = async (
   }
 
   return knnPreSale;
-};
-
-export const getAggregatorMock = async (
-  knnDeployerAddress: SignerWithAddress
-) => {
-  const priceAggregator = await waffle.deployMockContract(knnDeployerAddress, AggregatorV3InterfaceAbi);
-
-  return priceAggregator;
 };
 
 export const getKnnPreSaleMock = async (
