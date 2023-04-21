@@ -2,5 +2,6 @@
 /* tslint:disable */
 /* eslint-disable */
 export { KannaPreSale__factory } from "./KannaPreSale__factory";
+export { KannaSale__factory } from "./KannaSale__factory";
 export { KannaToken__factory } from "./KannaToken__factory";
 export { KannaYield__factory } from "./KannaYield__factory";
