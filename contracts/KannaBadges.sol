@@ -98,20 +98,6 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
         return balances;
     }
 
-    /* function balanceOf(address account) public view virtual returns (TokenBalance[] memory) {
-        require(account != address(0), "ERC1155: address zero is not a valid owner");
-
-        TokenBalance[] memory balances = new TokenBalance[](tokenIds.length);
-
-        for (uint i=0; i<tokenIds.length; i++) {
-            uint256 id = tokenIds[i];
-
-            balances[i] = TokenBalance(balanceOf(account, id), tokens[id]);
-        }
-
-        return balances;
-    } */
-
     /** @dev Register a new Token
      *
      * Emits a {TokenRegistered} event with `id`, `transferable` and `accumulative`.
