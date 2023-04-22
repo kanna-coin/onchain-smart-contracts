@@ -55,6 +55,7 @@ export interface KannaBadgesInterface extends utils.Interface {
   functions: {
     "DEFAULT_ADMIN_ROLE()": FunctionFragment;
     "MINTER_ROLE()": FunctionFragment;
+    "addMinter(address)": FunctionFragment;
     "balanceOf(address,uint256)": FunctionFragment;
     "balanceOf(address)": FunctionFragment;
     "balanceOfBatch(address[],uint256[])": FunctionFragment;
@@ -69,6 +70,7 @@ export interface KannaBadgesInterface extends utils.Interface {
     "mint(address,uint256)": FunctionFragment;
     "owner()": FunctionFragment;
     "register(uint256,bool,bool)": FunctionFragment;
+    "removeMinter(address)": FunctionFragment;
     "renounceOwnership()": FunctionFragment;
     "renounceRole(bytes32,address)": FunctionFragment;
     "revokeRole(bytes32,address)": FunctionFragment;
@@ -87,6 +89,7 @@ export interface KannaBadgesInterface extends utils.Interface {
     nameOrSignatureOrTopic:
       | "DEFAULT_ADMIN_ROLE"
       | "MINTER_ROLE"
+      | "addMinter"
       | "balanceOf(address,uint256)"
       | "balanceOf(address)"
       | "balanceOfBatch"
@@ -101,6 +104,7 @@ export interface KannaBadgesInterface extends utils.Interface {
       | "mint(address,uint256)"
       | "owner"
       | "register"
+      | "removeMinter"
       | "renounceOwnership"
       | "renounceRole"
       | "revokeRole"
@@ -122,6 +126,10 @@ export interface KannaBadgesInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "MINTER_ROLE",
     values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "addMinter",
+    values: [PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
     functionFragment: "balanceOf(address,uint256)",
@@ -196,6 +204,10 @@ export interface KannaBadgesInterface extends utils.Interface {
     ]
   ): string;
   encodeFunctionData(
+    functionFragment: "removeMinter",
+    values: [PromiseOrValue<string>]
+  ): string;
+  encodeFunctionData(
     functionFragment: "renounceOwnership",
     values?: undefined
   ): string;
@@ -264,6 +276,7 @@ export interface KannaBadgesInterface extends utils.Interface {
     functionFragment: "MINTER_ROLE",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "addMinter", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "balanceOf(address,uint256)",
     data: BytesLike
@@ -305,6 +318,10 @@ export interface KannaBadgesInterface extends utils.Interface {
   ): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "register", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "removeMinter",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "renounceOwnership",
     data: BytesLike
@@ -502,6 +519,11 @@ export interface KannaBadges extends BaseContract {
 
     MINTER_ROLE(overrides?: CallOverrides): Promise<[string]>;
 
+    addMinter(
+      newMinter: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
     "balanceOf(address,uint256)"(
       account: PromiseOrValue<string>,
       id: PromiseOrValue<BigNumberish>,
@@ -587,6 +609,11 @@ export interface KannaBadges extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
+    removeMinter(
+      minter: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
     renounceOwnership(
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
@@ -667,6 +694,11 @@ export interface KannaBadges extends BaseContract {
   DEFAULT_ADMIN_ROLE(overrides?: CallOverrides): Promise<string>;
 
   MINTER_ROLE(overrides?: CallOverrides): Promise<string>;
+
+  addMinter(
+    newMinter: PromiseOrValue<string>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
 
   "balanceOf(address,uint256)"(
     account: PromiseOrValue<string>,
@@ -753,6 +785,11 @@ export interface KannaBadges extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
+  removeMinter(
+    minter: PromiseOrValue<string>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
   renounceOwnership(
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
@@ -833,6 +870,11 @@ export interface KannaBadges extends BaseContract {
     DEFAULT_ADMIN_ROLE(overrides?: CallOverrides): Promise<string>;
 
     MINTER_ROLE(overrides?: CallOverrides): Promise<string>;
+
+    addMinter(
+      newMinter: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<void>;
 
     "balanceOf(address,uint256)"(
       account: PromiseOrValue<string>,
@@ -916,6 +958,11 @@ export interface KannaBadges extends BaseContract {
       id: PromiseOrValue<BigNumberish>,
       transferable: PromiseOrValue<boolean>,
       accumulative: PromiseOrValue<boolean>,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    removeMinter(
+      minter: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -1101,6 +1148,11 @@ export interface KannaBadges extends BaseContract {
 
     MINTER_ROLE(overrides?: CallOverrides): Promise<BigNumber>;
 
+    addMinter(
+      newMinter: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
     "balanceOf(address,uint256)"(
       account: PromiseOrValue<string>,
       id: PromiseOrValue<BigNumberish>,
@@ -1186,6 +1238,11 @@ export interface KannaBadges extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
+    removeMinter(
+      minter: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
     renounceOwnership(
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
@@ -1263,6 +1320,11 @@ export interface KannaBadges extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     MINTER_ROLE(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    addMinter(
+      newMinter: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
 
     "balanceOf(address,uint256)"(
       account: PromiseOrValue<string>,
@@ -1346,6 +1408,11 @@ export interface KannaBadges extends BaseContract {
       id: PromiseOrValue<BigNumberish>,
       transferable: PromiseOrValue<boolean>,
       accumulative: PromiseOrValue<boolean>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    removeMinter(
+      minter: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 

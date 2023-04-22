@@ -2,6 +2,7 @@
 pragma solidity ^0.8.17;
 
 import {ERC1155} from "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
+import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
@@ -60,6 +61,12 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
      */
     function setURI(string memory uri_) public onlyOwner {
         _setURI(uri_);
+
+        for (uint i=0; i<tokenIds.length; i++) {
+            uint256 id = tokenIds[i];
+
+            emit URI(uri_, id);
+        }
     }
 
     /** @dev Return all `TokenBalance` owned by `account`
