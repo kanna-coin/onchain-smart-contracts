@@ -196,6 +196,36 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
         return tokens[_id].id > 0;
     }
 
+    /**
+     * @dev Grants `MINTER_ROLE` to a `minter` account.
+     *
+     * If `minter` account had not been already granted `role`, emits a {RoleGranted}
+     * event.
+     *
+     * Requirements:
+     *
+     * - the caller must have admin role.
+     *
+     * May emit a {RoleGranted} event.
+     */
+    function addMinter(address newMinter) external onlyOwner {
+        _grantRole(MINTER_ROLE, newMinter);
+    }
+
+    /**
+     * @dev Removes `MINTER_ROLE` from a `minter` account.
+     *
+     * If `minter` had been granted `MINTER_ROLE`, emits a {RoleRevoked} event.
+     *
+     * Requirements:
+     *
+     * - the caller must have admin role.
+     *
+     * May emit a {RoleRevoked} event.
+     */
+    function removeMinter(address minter) external onlyOwner {
+        _revokeRole(MINTER_ROLE, minter);
+    }
     function supportsInterface(bytes4 interfaceId) public view virtual override(ERC1155, AccessControl) returns (bool) {
         return
             ERC1155.supportsInterface(interfaceId) ||
