@@ -25,7 +25,6 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
     using Strings for uint256;
 
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
-
     bytes32 private constant _MINT_TYPEHASH = keccak256("Mint(address to, uint256 id, uint256 nonce)");
 
     struct Token {
@@ -47,15 +46,28 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
     constructor (string memory uri_) ERC1155(uri_) {
     }
 
+    /**
+     * @dev Modifier to check if token ID is registered
+     */
     modifier tokenExists(uint256 id) {
         require(_exists(id), "Invalid Token");
         _;
     }
 
+    /**
+     * @dev Sets a new URI for all token types, by relying on the token type ID
+     * substitution mechanism
+     */
     function setURI(string memory uri_) public onlyOwner {
         _setURI(uri_);
     }
 
+    /** @dev Return all `TokenBalance` owned by `account`
+     *
+     * Requirements:
+     *
+     * - `account` cannot be the zero address.
+     */
     function balanceOf(address account) public view virtual returns (TokenBalance[] memory) {
         require(account != address(0), "ERC1155: address zero is not a valid owner");
 
@@ -100,6 +112,15 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
         return balances;
     } */
 
+    /** @dev Register a new Token
+     *
+     * Emits a {TokenRegistered} event with `id`, `transferable` and `accumulative`.
+     *
+     * Requirements:
+     *
+     * - the token `id` must not be registered.
+     * - the caller must be the owner.
+     */
     function register(
         uint id,
         bool transferable,
@@ -113,15 +134,15 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
         emit TokenRegistered(id, transferable, accumulative);
     }
 
-    function batchMint(
-        uint256 id,
-        address[] memory addresses
-    ) public onlyRole(MINTER_ROLE) tokenExists(id) {
-        for (uint i=0; i<addresses.length; i++) {
-            _mint(addresses[i], id, 1, "");
-        }
-    }
-
+    /** @dev Creates 1 tokens of token type `id`, and assigns them to `to`.
+     *
+     * Emits a {TransferSingle} event with `from` set to the zero address.
+     *
+     * Requirements:
+     *
+     * - the caller must have a minter role.
+     * - the token `id` must be registered.
+     */
     function mint(
         address to,
         uint256 id
@@ -129,6 +150,15 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
         _mint(to, id, 1, "");
     }
 
+    /** @dev Creates `amount` tokens of token type `id`, and assigns them to `to`.
+     *
+     * Emits a {TransferSingle} event with `from` set to the zero address.
+     *
+     * Requirements:
+     *
+     * - the caller must have a minter role.
+     * - the token `id` must be registered.
+     */
     function mint(
         address to,
         uint256 id,
@@ -137,6 +167,15 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
         _mint(to, id, amount, "");
     }
 
+    /** @dev Creates 1 tokens of token type `id`, and assigns them to `to`.
+     *
+     * Emits a {TransferSingle} event with `from` set to the zero address.
+     *
+     * Requirements:
+     *
+     * - the token `id` must be registered.
+     * - the signature signer must have a minter role.
+     */
     function mint(
         address to,
         uint256 id,
@@ -154,6 +193,15 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
         _mint(to, id, 1, "");
     }
 
+    /** @dev Creates `amount` tokens of token type `id`, and assigns them to `to`.
+     *
+     * Emits a {TransferSingle} event with `from` set to the zero address.
+     *
+     * Requirements:
+     *
+     * - the token `id` must be registered.
+     * - the signature signer must have a minter role.
+     */
     function mint(
         address to,
         uint256 id,
@@ -172,6 +220,39 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
         _mint(to, id, amount, "");
     }
 
+    /** @dev Creates 1 tokens of token type `id` for each `addresses` and
+     * assigns them.
+     *
+     * Emits a {TransferSingle} event with `from` set to the zero address
+     * for each `addresses`.
+     *
+     * Requirements:
+     *
+     * - the caller must have a minter role.
+     * - the token `id` must be registered.
+     */
+    function batchMint(
+        uint256 id,
+        address[] memory addresses
+    ) public onlyRole(MINTER_ROLE) tokenExists(id) {
+        for (uint i=0; i<addresses.length; i++) {
+            _mint(addresses[i], id, 1, "");
+        }
+    }
+
+    /**
+     * @dev See {IERC1155-_beforeTokenTransfer}
+     *
+     * Check if the transferred tokens are elegible to transfer.
+     *
+     * Calling conditions (for each `id` and `amount` pair):
+     *
+     * - When token `transferable` is set to `false` transfer will be blocked,
+     * except at minting.
+     * - When token `accumulative` is set to `false` transfer will be blocked
+     * if amount is greater than `1`, or if the reaceiver already has this
+     * token ID.
+     */
     function _beforeTokenTransfer(
         address,
         address from,
@@ -190,6 +271,9 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
         }
     }
 
+    /**
+     * @dev Check if token ID is registered
+     */
     function _exists(
         uint256 _id
     ) internal view returns (bool) {
@@ -226,6 +310,10 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
     function removeMinter(address minter) external onlyOwner {
         _revokeRole(MINTER_ROLE, minter);
     }
+
+    /**
+     * @dev See {IERC165-supportsInterface}.
+     */
     function supportsInterface(bytes4 interfaceId) public view virtual override(ERC1155, AccessControl) returns (bool) {
         return
             ERC1155.supportsInterface(interfaceId) ||
