@@ -63,6 +63,7 @@ export interface KannaBadgesInterface extends utils.Interface {
     "grantRole(bytes32,address)": FunctionFragment;
     "hasRole(bytes32,address)": FunctionFragment;
     "isApprovedForAll(address,address)": FunctionFragment;
+    "knnToken()": FunctionFragment;
     "mint(address,uint256,uint256)": FunctionFragment;
     "mint(address,uint256,uint256,bytes,uint256)": FunctionFragment;
     "mint(address,uint256,bytes,uint256)": FunctionFragment;
@@ -95,6 +96,7 @@ export interface KannaBadgesInterface extends utils.Interface {
       | "grantRole"
       | "hasRole"
       | "isApprovedForAll"
+      | "knnToken"
       | "mint(address,uint256,uint256)"
       | "mint(address,uint256,uint256,bytes,uint256)"
       | "mint(address,uint256,bytes,uint256)"
@@ -155,6 +157,7 @@ export interface KannaBadgesInterface extends utils.Interface {
     functionFragment: "isApprovedForAll",
     values: [PromiseOrValue<string>, PromiseOrValue<string>]
   ): string;
+  encodeFunctionData(functionFragment: "knnToken", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "mint(address,uint256,uint256)",
     values: [
@@ -287,6 +290,7 @@ export interface KannaBadgesInterface extends utils.Interface {
     functionFragment: "isApprovedForAll",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "knnToken", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "mint(address,uint256,uint256)",
     data: BytesLike
@@ -548,6 +552,8 @@ export interface KannaBadges extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[boolean]>;
 
+    knnToken(overrides?: CallOverrides): Promise<[string]>;
+
     "mint(address,uint256,uint256)"(
       to: PromiseOrValue<string>,
       id: PromiseOrValue<BigNumberish>,
@@ -714,6 +720,8 @@ export interface KannaBadges extends BaseContract {
     overrides?: CallOverrides
   ): Promise<boolean>;
 
+  knnToken(overrides?: CallOverrides): Promise<string>;
+
   "mint(address,uint256,uint256)"(
     to: PromiseOrValue<string>,
     id: PromiseOrValue<BigNumberish>,
@@ -879,6 +887,8 @@ export interface KannaBadges extends BaseContract {
       operator: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<boolean>;
+
+    knnToken(overrides?: CallOverrides): Promise<string>;
 
     "mint(address,uint256,uint256)"(
       to: PromiseOrValue<string>,
@@ -1147,6 +1157,8 @@ export interface KannaBadges extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
+    knnToken(overrides?: CallOverrides): Promise<BigNumber>;
+
     "mint(address,uint256,uint256)"(
       to: PromiseOrValue<string>,
       id: PromiseOrValue<BigNumberish>,
@@ -1309,6 +1321,8 @@ export interface KannaBadges extends BaseContract {
       operator: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
+
+    knnToken(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     "mint(address,uint256,uint256)"(
       to: PromiseOrValue<string>,

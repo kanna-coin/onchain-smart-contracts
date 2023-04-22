@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.17;
 
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ERC1155} from "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
@@ -24,6 +25,8 @@ import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 contract KannaBadges is ERC1155, Ownable, AccessControl {
     using Strings for uint256;
 
+    IERC20 public immutable knnToken;
+
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
     bytes32 private constant _MINT_TYPEHASH = keccak256("Mint(address to, uint256 id, uint256 nonce)");
@@ -44,7 +47,12 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
 
     event TokenRegistered(uint256 indexed id, bool transferable, bool accumulative);
 
-    constructor (string memory uri_) ERC1155(uri_) {
+    constructor (address _knnToken, string memory uri_) ERC1155(uri_) {
+        require(address(_knnToken) != address(0), "Invalid token address");
+
+        knnToken = IERC20(_knnToken);
+
+        register(1, false, false);
     }
 
     modifier tokenExists(uint256 id) {
@@ -54,6 +62,16 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
 
     function setURI(string memory uri_) public onlyOwner {
         _setURI(uri_);
+    }
+
+    function balanceOf(address account, uint256 id) public view virtual override(ERC1155) returns (uint256) {
+        uint256 balance = super.balanceOf(account, id);
+
+        if (id == 1) {
+            return knnToken.balanceOf(account) > 0 ? 1 : 0;
+        }
+
+        return balance;
     }
 
     function balanceOf(address account) public view virtual returns (TokenBalance[] memory) {
@@ -85,20 +103,6 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
 
         return balances;
     }
-
-    /* function balanceOf(address account) public view virtual returns (TokenBalance[] memory) {
-        require(account != address(0), "ERC1155: address zero is not a valid owner");
-
-        TokenBalance[] memory balances = new TokenBalance[](tokenIds.length);
-
-        for (uint i=0; i<tokenIds.length; i++) {
-            uint256 id = tokenIds[i];
-
-            balances[i] = TokenBalance(balanceOf(account, id), tokens[id]);
-        }
-
-        return balances;
-    } */
 
     function register(
         uint id,
