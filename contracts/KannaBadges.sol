@@ -5,6 +5,7 @@ import {ERC1155} from "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 
 /**
  *  __                                  ___.               .___
@@ -21,6 +22,8 @@ import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
  *  @custom:discord https://discord.kannacoin.io
  */
 contract KannaBadges is ERC1155, Ownable, AccessControl {
+    using Strings for uint256;
+
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
     bytes32 private constant _MINT_TYPEHASH = keccak256("Mint(address to, uint256 id, uint256 nonce)");
@@ -31,6 +34,12 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
         bool accumulative;
     }
 
+    struct TokenBalance {
+        uint256 balance;
+        Token token;
+    }
+
+    uint256[] public tokenIds;
     mapping(uint256 => Token) public tokens;
 
     event TokenRegistered(uint256 indexed id, bool transferable, bool accumulative);
@@ -47,6 +56,50 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
         _setURI(uri_);
     }
 
+    function balanceOf(address account) public view virtual returns (TokenBalance[] memory) {
+        require(account != address(0), "ERC1155: address zero is not a valid owner");
+
+        uint length;
+
+        for (uint i=0; i<tokenIds.length; i++) {
+            uint256 id = tokenIds[i];
+
+            if (balanceOf(account, id) > 0) {
+                length++;
+            }
+        }
+
+        TokenBalance[] memory balances = new TokenBalance[](length);
+
+        if (length == 0) {
+            return balances;
+        }
+
+        for (uint i=0; i<tokenIds.length; i++) {
+            uint256 id = tokenIds[i];
+
+            if (balanceOf(account, id) > 0) {
+                balances[i] = TokenBalance(balanceOf(account, id), tokens[id]);
+            }
+        }
+
+        return balances;
+    }
+
+    /* function balanceOf(address account) public view virtual returns (TokenBalance[] memory) {
+        require(account != address(0), "ERC1155: address zero is not a valid owner");
+
+        TokenBalance[] memory balances = new TokenBalance[](tokenIds.length);
+
+        for (uint i=0; i<tokenIds.length; i++) {
+            uint256 id = tokenIds[i];
+
+            balances[i] = TokenBalance(balanceOf(account, id), tokens[id]);
+        }
+
+        return balances;
+    } */
+
     function register(
         uint id,
         bool transferable,
@@ -55,6 +108,7 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
         require(!_exists(id), "Token already exists");
 
         tokens[id] = Token(id, transferable, accumulative);
+        tokenIds.push(id);
 
         emit TokenRegistered(id, transferable, accumulative);
     }
@@ -123,15 +177,16 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
         address from,
         address to,
         uint256[] memory ids,
-        uint256[] memory,
+        uint256[] memory amounts,
         bytes memory
     ) internal virtual override {
-        if (from == address(0) || to == address(0)) {
-            return;
-        }
-
         for (uint i=0; i<ids.length; i++) {
-            require(tokens[ids[i]].transferable, "Token not transferable");
+            uint256 id = ids[i];
+            uint256 amount = amounts[i];
+            Token memory token = tokens[id];
+
+            require(from == address(0) || token.transferable, string(abi.encodePacked("Token ", id.toString(), " is not transferable")));
+            require(token.accumulative || (balanceOf(to, id) == 0 && amount == 1), string(abi.encodePacked("Token ", id.toString(), " is not accumulative")));
         }
     }
 

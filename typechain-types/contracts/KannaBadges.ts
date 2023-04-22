@@ -27,11 +27,36 @@ import type {
   PromiseOrValue,
 } from "../common";
 
+export declare namespace KannaBadges {
+  export type TokenStruct = {
+    id: PromiseOrValue<BigNumberish>;
+    transferable: PromiseOrValue<boolean>;
+    accumulative: PromiseOrValue<boolean>;
+  };
+
+  export type TokenStructOutput = [BigNumber, boolean, boolean] & {
+    id: BigNumber;
+    transferable: boolean;
+    accumulative: boolean;
+  };
+
+  export type TokenBalanceStruct = {
+    balance: PromiseOrValue<BigNumberish>;
+    token: KannaBadges.TokenStruct;
+  };
+
+  export type TokenBalanceStructOutput = [
+    BigNumber,
+    KannaBadges.TokenStructOutput
+  ] & { balance: BigNumber; token: KannaBadges.TokenStructOutput };
+}
+
 export interface KannaBadgesInterface extends utils.Interface {
   functions: {
     "DEFAULT_ADMIN_ROLE()": FunctionFragment;
     "MINTER_ROLE()": FunctionFragment;
     "balanceOf(address,uint256)": FunctionFragment;
+    "balanceOf(address)": FunctionFragment;
     "balanceOfBatch(address[],uint256[])": FunctionFragment;
     "batchMint(uint256,address[])": FunctionFragment;
     "getRoleAdmin(bytes32)": FunctionFragment;
@@ -52,6 +77,7 @@ export interface KannaBadgesInterface extends utils.Interface {
     "setApprovalForAll(address,bool)": FunctionFragment;
     "setURI(string)": FunctionFragment;
     "supportsInterface(bytes4)": FunctionFragment;
+    "tokenIds(uint256)": FunctionFragment;
     "tokens(uint256)": FunctionFragment;
     "transferOwnership(address)": FunctionFragment;
     "uri(uint256)": FunctionFragment;
@@ -61,7 +87,8 @@ export interface KannaBadgesInterface extends utils.Interface {
     nameOrSignatureOrTopic:
       | "DEFAULT_ADMIN_ROLE"
       | "MINTER_ROLE"
-      | "balanceOf"
+      | "balanceOf(address,uint256)"
+      | "balanceOf(address)"
       | "balanceOfBatch"
       | "batchMint"
       | "getRoleAdmin"
@@ -82,6 +109,7 @@ export interface KannaBadgesInterface extends utils.Interface {
       | "setApprovalForAll"
       | "setURI"
       | "supportsInterface"
+      | "tokenIds"
       | "tokens"
       | "transferOwnership"
       | "uri"
@@ -96,8 +124,12 @@ export interface KannaBadgesInterface extends utils.Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "balanceOf",
+    functionFragment: "balanceOf(address,uint256)",
     values: [PromiseOrValue<string>, PromiseOrValue<BigNumberish>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "balanceOf(address)",
+    values: [PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
     functionFragment: "balanceOfBatch",
@@ -208,6 +240,10 @@ export interface KannaBadgesInterface extends utils.Interface {
     values: [PromiseOrValue<BytesLike>]
   ): string;
   encodeFunctionData(
+    functionFragment: "tokenIds",
+    values: [PromiseOrValue<BigNumberish>]
+  ): string;
+  encodeFunctionData(
     functionFragment: "tokens",
     values: [PromiseOrValue<BigNumberish>]
   ): string;
@@ -228,7 +264,14 @@ export interface KannaBadgesInterface extends utils.Interface {
     functionFragment: "MINTER_ROLE",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "balanceOf", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "balanceOf(address,uint256)",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "balanceOf(address)",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "balanceOfBatch",
     data: BytesLike
@@ -288,6 +331,7 @@ export interface KannaBadgesInterface extends utils.Interface {
     functionFragment: "supportsInterface",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "tokenIds", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "tokens", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "transferOwnership",
@@ -458,11 +502,16 @@ export interface KannaBadges extends BaseContract {
 
     MINTER_ROLE(overrides?: CallOverrides): Promise<[string]>;
 
-    balanceOf(
+    "balanceOf(address,uint256)"(
       account: PromiseOrValue<string>,
       id: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<[BigNumber]>;
+
+    "balanceOf(address)"(
+      account: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<[KannaBadges.TokenBalanceStructOutput[]]>;
 
     balanceOfBatch(
       accounts: PromiseOrValue<string>[],
@@ -588,6 +637,11 @@ export interface KannaBadges extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[boolean]>;
 
+    tokenIds(
+      arg0: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<[BigNumber]>;
+
     tokens(
       arg0: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
@@ -614,11 +668,16 @@ export interface KannaBadges extends BaseContract {
 
   MINTER_ROLE(overrides?: CallOverrides): Promise<string>;
 
-  balanceOf(
+  "balanceOf(address,uint256)"(
     account: PromiseOrValue<string>,
     id: PromiseOrValue<BigNumberish>,
     overrides?: CallOverrides
   ): Promise<BigNumber>;
+
+  "balanceOf(address)"(
+    account: PromiseOrValue<string>,
+    overrides?: CallOverrides
+  ): Promise<KannaBadges.TokenBalanceStructOutput[]>;
 
   balanceOfBatch(
     accounts: PromiseOrValue<string>[],
@@ -744,6 +803,11 @@ export interface KannaBadges extends BaseContract {
     overrides?: CallOverrides
   ): Promise<boolean>;
 
+  tokenIds(
+    arg0: PromiseOrValue<BigNumberish>,
+    overrides?: CallOverrides
+  ): Promise<BigNumber>;
+
   tokens(
     arg0: PromiseOrValue<BigNumberish>,
     overrides?: CallOverrides
@@ -770,11 +834,16 @@ export interface KannaBadges extends BaseContract {
 
     MINTER_ROLE(overrides?: CallOverrides): Promise<string>;
 
-    balanceOf(
+    "balanceOf(address,uint256)"(
       account: PromiseOrValue<string>,
       id: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
+
+    "balanceOf(address)"(
+      account: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<KannaBadges.TokenBalanceStructOutput[]>;
 
     balanceOfBatch(
       accounts: PromiseOrValue<string>[],
@@ -897,6 +966,11 @@ export interface KannaBadges extends BaseContract {
       interfaceId: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<boolean>;
+
+    tokenIds(
+      arg0: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
 
     tokens(
       arg0: PromiseOrValue<BigNumberish>,
@@ -1027,9 +1101,14 @@ export interface KannaBadges extends BaseContract {
 
     MINTER_ROLE(overrides?: CallOverrides): Promise<BigNumber>;
 
-    balanceOf(
+    "balanceOf(address,uint256)"(
       account: PromiseOrValue<string>,
       id: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    "balanceOf(address)"(
+      account: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
@@ -1157,6 +1236,11 @@ export interface KannaBadges extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
+    tokenIds(
+      arg0: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
     tokens(
       arg0: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
@@ -1180,9 +1264,14 @@ export interface KannaBadges extends BaseContract {
 
     MINTER_ROLE(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    balanceOf(
+    "balanceOf(address,uint256)"(
       account: PromiseOrValue<string>,
       id: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    "balanceOf(address)"(
+      account: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
@@ -1307,6 +1396,11 @@ export interface KannaBadges extends BaseContract {
 
     supportsInterface(
       interfaceId: PromiseOrValue<BytesLike>,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    tokenIds(
+      arg0: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
