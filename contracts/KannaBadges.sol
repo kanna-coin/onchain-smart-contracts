@@ -26,7 +26,7 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
     using Strings for uint256;
 
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
-    bytes32 private constant _MINT_TYPEHASH = keccak256("Mint(address to, uint256 id, uint256 nonce)");
+    bytes32 private constant _MINT_TYPEHASH = keccak256("Mint(address to, uint256 id, uint256 amount, uint256 nonce)");
 
     struct Token {
         uint256 id;
@@ -160,32 +160,6 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
         _mint(to, id, amount, "");
     }
 
-    /** @dev Creates 1 tokens of token type `id`, and assigns them to `to`.
-     *
-     * Emits a {TransferSingle} event with `from` set to the zero address.
-     *
-     * Requirements:
-     *
-     * - the token `id` must be registered.
-     * - the signature signer must have a minter role.
-     */
-    function mint(
-        address to,
-        uint256 id,
-        bytes memory signature,
-        uint256 nonce
-    ) external tokenExists(id) {
-        bytes32 signedMessage = ECDSA.toEthSignedMessageHash(
-            keccak256(abi.encode(_MINT_TYPEHASH, to, id, nonce))
-        );
-
-        address signer = ECDSA.recover(signedMessage, signature);
-
-        _checkRole(MINTER_ROLE, signer);
-
-        _mint(to, id, 1, "");
-    }
-
     /** @dev Creates `amount` tokens of token type `id`, and assigns them to `to`.
      *
      * Emits a {TransferSingle} event with `from` set to the zero address.
@@ -203,7 +177,7 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
         uint256 nonce
     ) external tokenExists(id) {
         bytes32 signedMessage = ECDSA.toEthSignedMessageHash(
-            keccak256(abi.encode(_MINT_TYPEHASH, to, id, nonce))
+            keccak256(abi.encode(_MINT_TYPEHASH, to, id, amount, nonce))
         );
 
         address signer = ECDSA.recover(signedMessage, signature);
@@ -231,6 +205,46 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
         for (uint i=0; i<addresses.length; i++) {
             _mint(addresses[i], id, 1, "");
         }
+    }
+
+    /**
+     * @dev Grants `MINTER_ROLE` to a `minter` account.
+     *
+     * If `minter` account had not been already granted `role`, emits a {RoleGranted}
+     * event.
+     *
+     * Requirements:
+     *
+     * - the caller must have admin role.
+     *
+     * May emit a {RoleGranted} event.
+     */
+    function addMinter(address newMinter) external onlyOwner {
+        _grantRole(MINTER_ROLE, newMinter);
+    }
+
+    /**
+     * @dev Removes `MINTER_ROLE` from a `minter` account.
+     *
+     * If `minter` had been granted `MINTER_ROLE`, emits a {RoleRevoked} event.
+     *
+     * Requirements:
+     *
+     * - the caller must have admin role.
+     *
+     * May emit a {RoleRevoked} event.
+     */
+    function removeMinter(address minter) external onlyOwner {
+        _revokeRole(MINTER_ROLE, minter);
+    }
+
+    /**
+     * @dev See {IERC165-supportsInterface}.
+     */
+    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC1155, AccessControl) returns (bool) {
+        return
+            ERC1155.supportsInterface(interfaceId) ||
+            AccessControl.supportsInterface(interfaceId);
     }
 
     /**
@@ -271,46 +285,5 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
         uint256 _id
     ) internal view returns (bool) {
         return tokens[_id].id > 0;
-    }
-
-    /**
-     * @dev Grants `MINTER_ROLE` to a `minter` account.
-     *
-     * If `minter` account had not been already granted `role`, emits a {RoleGranted}
-     * event.
-     *
-     * Requirements:
-     *
-     * - the caller must have admin role.
-     *
-     * May emit a {RoleGranted} event.
-     */
-    function addMinter(address newMinter) external onlyOwner {
-        _grantRole(MINTER_ROLE, newMinter);
-    }
-
-    /**
-     * @dev Removes `MINTER_ROLE` from a `minter` account.
-     *
-     * If `minter` had been granted `MINTER_ROLE`, emits a {RoleRevoked} event.
-     *
-     * Requirements:
-     *
-     * - the caller must have admin role.
-     *
-     * May emit a {RoleRevoked} event.
-     */
-    function removeMinter(address minter) external onlyOwner {
-        _revokeRole(MINTER_ROLE, minter);
-    }
-
-    /**
-     * @dev See {IERC165-supportsInterface}.
-     */
-    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC1155, AccessControl) returns (bool) {
-        return
-            ERC1155.supportsInterface(interfaceId) ||
-            AccessControl.supportsInterface(interfaceId) ||
-            super.supportsInterface(interfaceId);
     }
 }

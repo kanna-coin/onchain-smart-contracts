@@ -9,7 +9,7 @@
     "compile": "npx hardhat compile",
     "test": "npx hardhat test --network hardhat",
     "node": "npx hardhat node",
-    "coverage": "npm run build && npx hardhat coverage --temp artifacts",
+    "coverage": "npm run build && npx hardhat coverage --temp artifacts && npm run build",
     "deploy:token": "npx hardhat run --network localhost deploy/1_KannaToken_deploy.ts",
     "deploy:yield": "npx hardhat run --network localhost deploy/2_KannaYield_deploy.ts",
     "deploy:presale": "npx hardhat run --network localhost deploy/3_KannaPreSale_deploy.ts",

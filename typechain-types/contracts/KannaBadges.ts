@@ -66,7 +66,6 @@ export interface KannaBadgesInterface extends utils.Interface {
     "isApprovedForAll(address,address)": FunctionFragment;
     "mint(address,uint256,uint256)": FunctionFragment;
     "mint(address,uint256,uint256,bytes,uint256)": FunctionFragment;
-    "mint(address,uint256,bytes,uint256)": FunctionFragment;
     "mint(address,uint256)": FunctionFragment;
     "owner()": FunctionFragment;
     "register(uint256,bool,bool)": FunctionFragment;
@@ -100,7 +99,6 @@ export interface KannaBadgesInterface extends utils.Interface {
       | "isApprovedForAll"
       | "mint(address,uint256,uint256)"
       | "mint(address,uint256,uint256,bytes,uint256)"
-      | "mint(address,uint256,bytes,uint256)"
       | "mint(address,uint256)"
       | "owner"
       | "register"
@@ -176,15 +174,6 @@ export interface KannaBadgesInterface extends utils.Interface {
     values: [
       PromiseOrValue<string>,
       PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BytesLike>,
-      PromiseOrValue<BigNumberish>
-    ]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "mint(address,uint256,bytes,uint256)",
-    values: [
-      PromiseOrValue<string>,
       PromiseOrValue<BigNumberish>,
       PromiseOrValue<BytesLike>,
       PromiseOrValue<BigNumberish>
@@ -306,10 +295,6 @@ export interface KannaBadgesInterface extends utils.Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "mint(address,uint256,uint256,bytes,uint256)",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "mint(address,uint256,bytes,uint256)",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -586,14 +571,6 @@ export interface KannaBadges extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
-    "mint(address,uint256,bytes,uint256)"(
-      to: PromiseOrValue<string>,
-      id: PromiseOrValue<BigNumberish>,
-      signature: PromiseOrValue<BytesLike>,
-      nonce: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
-
     "mint(address,uint256)"(
       to: PromiseOrValue<string>,
       id: PromiseOrValue<BigNumberish>,
@@ -762,14 +739,6 @@ export interface KannaBadges extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
-  "mint(address,uint256,bytes,uint256)"(
-    to: PromiseOrValue<string>,
-    id: PromiseOrValue<BigNumberish>,
-    signature: PromiseOrValue<BytesLike>,
-    nonce: PromiseOrValue<BigNumberish>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
-
   "mint(address,uint256)"(
     to: PromiseOrValue<string>,
     id: PromiseOrValue<BigNumberish>,
@@ -933,14 +902,6 @@ export interface KannaBadges extends BaseContract {
       to: PromiseOrValue<string>,
       id: PromiseOrValue<BigNumberish>,
       amount: PromiseOrValue<BigNumberish>,
-      signature: PromiseOrValue<BytesLike>,
-      nonce: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    "mint(address,uint256,bytes,uint256)"(
-      to: PromiseOrValue<string>,
-      id: PromiseOrValue<BigNumberish>,
       signature: PromiseOrValue<BytesLike>,
       nonce: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
@@ -1215,14 +1176,6 @@ export interface KannaBadges extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
-    "mint(address,uint256,bytes,uint256)"(
-      to: PromiseOrValue<string>,
-      id: PromiseOrValue<BigNumberish>,
-      signature: PromiseOrValue<BytesLike>,
-      nonce: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
     "mint(address,uint256)"(
       to: PromiseOrValue<string>,
       id: PromiseOrValue<BigNumberish>,
@@ -1383,14 +1336,6 @@ export interface KannaBadges extends BaseContract {
       to: PromiseOrValue<string>,
       id: PromiseOrValue<BigNumberish>,
       amount: PromiseOrValue<BigNumberish>,
-      signature: PromiseOrValue<BytesLike>,
-      nonce: PromiseOrValue<BigNumberish>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    "mint(address,uint256,bytes,uint256)"(
-      to: PromiseOrValue<string>,
-      id: PromiseOrValue<BigNumberish>,
       signature: PromiseOrValue<BytesLike>,
       nonce: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
