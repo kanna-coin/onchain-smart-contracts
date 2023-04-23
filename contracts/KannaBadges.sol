@@ -26,7 +26,7 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
     using Strings for uint256;
 
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
-    bytes32 private constant _MINT_TYPEHASH = keccak256("Mint(address to, uint256 id, uint256 amount, uint256 nonce)");
+    bytes32 private constant _MINT_TYPEHASH = keccak256("Mint(address to, uint256 id, uint256 amount, uint256 nonce, uint256 incremental)");
 
     struct Token {
         uint256 id;
@@ -42,7 +42,11 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
     uint256[] public tokenIds;
     mapping(uint256 => Token) public tokens;
 
+    mapping(uint256 => mapping(address => uint256)) private mintIncrementalNonces;
+
     event TokenRegistered(uint256 indexed id, bool transferable, bool accumulative);
+
+    event Mint(address indexed to, uint256 indexed id, uint256 amount, uint256 nonce);
 
     constructor (string memory uri_) ERC1155(uri_) {
     }
@@ -174,10 +178,13 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
         uint256 id,
         uint256 amount,
         bytes memory signature,
-        uint256 nonce
+        uint256 nonce,
+        uint256 incremental
     ) external tokenExists(id) {
+        require(incremental == mintIncrementalNonces[id][to] + 1, "Invalid Nonce");
+
         bytes32 signedMessage = ECDSA.toEthSignedMessageHash(
-            keccak256(abi.encode(_MINT_TYPEHASH, to, id, amount, nonce))
+            keccak256(abi.encode(_MINT_TYPEHASH, to, id, amount, nonce, incremental))
         );
 
         address signer = ECDSA.recover(signedMessage, signature);
@@ -275,6 +282,29 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
 
             require(from == address(0) || token.transferable, string(abi.encodePacked("Token ", id.toString(), " is not transferable")));
             require(token.accumulative || (balanceOf(to, id) == 0 && amount == 1), string(abi.encodePacked("Token ", id.toString(), " is not accumulative")));
+        }
+    }
+
+    /**
+     * @dev See {IERC1155-_beforeTokenTransfer}
+     */
+    function _afterTokenTransfer(
+        address,
+        address from,
+        address to,
+        uint256[] memory ids,
+        uint256[] memory amounts,
+        bytes memory
+    ) internal virtual override {
+        if (from == address(0)) {
+            for (uint i=0; i<ids.length; i++) {
+                uint256 id = ids[i];
+                uint256 amount = amounts[i];
+
+                mintIncrementalNonces[id][to]++;
+
+                emit Mint(to, id, amount, mintIncrementalNonces[id][to]);
+            }
         }
     }
 

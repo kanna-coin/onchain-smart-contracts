@@ -218,6 +218,13 @@ describe("Kanna Badges", () => {
             userWallet.address,
             tokenId,
             1
+          )
+          .to.emit(kannaBadges, "Mint")
+          .withArgs(
+            userWallet.address,
+            tokenId,
+            1,
+            1
           );
 
         const balance = await kannaBadges["balanceOf(address,uint256)"](userWallet.address, tokenId);
@@ -240,6 +247,13 @@ describe("Kanna Badges", () => {
             userWallet.address,
             tokenId,
             amount
+          )
+          .to.emit(kannaBadges, "Mint")
+          .withArgs(
+            userWallet.address,
+            tokenId,
+            amount,
+            1
           );
 
         const balance = await kannaBadges["balanceOf(address,uint256)"](userWallet.address, tokenId);
@@ -254,12 +268,10 @@ describe("Kanna Badges", () => {
 
         const tokenId = 2;
 
-        const tx = minterSession.batchMint(tokenId, [
+        await expect(minterSession.batchMint(tokenId, [
           userWallet.address,
           user2Wallet.address,
-        ]);
-
-        await expect(tx)
+        ]))
           .to.emit(kannaBadges, "TransferSingle")
           .withArgs(
             minterWallet.address,
@@ -267,13 +279,7 @@ describe("Kanna Badges", () => {
             userWallet.address,
             tokenId,
             1
-          );
-
-        const balance = await kannaBadges["balanceOf(address,uint256)"](userWallet.address, tokenId);
-
-        expect(balance).to.eq(1);
-
-        await expect(tx)
+          )
           .to.emit(kannaBadges, "TransferSingle")
           .withArgs(
             minterWallet.address,
@@ -281,7 +287,25 @@ describe("Kanna Badges", () => {
             user2Wallet.address,
             tokenId,
             1
+          )
+          .to.emit(kannaBadges, "Mint")
+          .withArgs(
+            userWallet.address,
+            tokenId,
+            1,
+            1
+          )
+          .to.emit(kannaBadges, "Mint")
+          .withArgs(
+            user2Wallet.address,
+            tokenId,
+            1,
+            1
           );
+
+        const balance = await kannaBadges["balanceOf(address,uint256)"](userWallet.address, tokenId);
+
+        expect(balance).to.eq(1);
 
         const balance2 = await kannaBadges["balanceOf(address,uint256)"](user2Wallet.address, tokenId);
 
@@ -294,28 +318,30 @@ describe("Kanna Badges", () => {
 
         const tokenId = 3;
         const amount = 5;
+        const incremental = 1;
 
         const nonce = ethers.BigNumber.from(ethers.utils.hexlify(ethers.utils.randomBytes(32))).sub(1);
 
         const mintTypeHash = ethers.utils.keccak256(
-          ethers.utils.toUtf8Bytes("Mint(address to, uint256 id, uint256 amount, uint256 nonce)")
+          ethers.utils.toUtf8Bytes("Mint(address to, uint256 id, uint256 amount, uint256 nonce, uint256 incremental)")
         );
 
         const messageHash = ethers.utils.keccak256(
           ethers.utils.defaultAbiCoder.encode(
-            ['bytes32', 'address', 'uint256', 'uint256', 'uint256'],
-            [mintTypeHash, userWallet.address, tokenId, amount, nonce]
+            ['bytes32', 'address', 'uint256', 'uint256', 'uint256', 'uint256'],
+            [mintTypeHash, userWallet.address, tokenId, amount, nonce, incremental]
           )
         );
 
         const signature = await minterWallet.signMessage(ethers.utils.arrayify(messageHash));
 
-        await expect(userSession["mint(address,uint256,uint256,bytes,uint256)"](
+        await expect(userSession["mint(address,uint256,uint256,bytes,uint256,uint256)"](
           userWallet.address,
           tokenId,
           amount,
           signature,
-          nonce
+          nonce,
+          incremental
         ))
           .to.emit(kannaBadges, "TransferSingle")
           .withArgs(
@@ -324,11 +350,44 @@ describe("Kanna Badges", () => {
             userWallet.address,
             tokenId,
             amount
+          )
+          .to.emit(kannaBadges, "Mint")
+          .withArgs(
+            userWallet.address,
+            tokenId,
+            amount,
+            incremental,
           );
 
         const balance = await kannaBadges["balanceOf(address,uint256)"](userWallet.address, tokenId);
 
         expect(balance).to.eq(amount);
+      });
+
+      it("should increase mint nonce", async () => {
+        const [minterWallet, minterSession] = await getMinterSession();
+        const userWallet = await getUserWallet();
+
+        const tokenId = 3;
+
+        for (let i = 1; i < 5; i++) {
+          await expect(minterSession["mint(address,uint256)"](userWallet.address, tokenId))
+            .to.emit(kannaBadges, "TransferSingle")
+            .withArgs(
+              minterWallet.address,
+              ethers.constants.AddressZero,
+              userWallet.address,
+              tokenId,
+              1
+            )
+            .to.emit(kannaBadges, "Mint")
+            .withArgs(
+              userWallet.address,
+              tokenId,
+              1,
+              i
+            );
+        }
       });
 
       describe("should not", async () => {
@@ -363,28 +422,30 @@ describe("Kanna Badges", () => {
 
             const tokenId = 3;
             const amount = 5;
+            const incremental = 1;
 
             const nonce = ethers.BigNumber.from(ethers.utils.hexlify(ethers.utils.randomBytes(32))).sub(1);
 
             const mintTypeHash = ethers.utils.keccak256(
-              ethers.utils.toUtf8Bytes("Mint(address to, uint256 id, uint256 amount, uint256 nonce)")
+              ethers.utils.toUtf8Bytes("Mint(address to, uint256 id, uint256 amount, uint256 nonce, uint256 incremental)")
             );
 
             const messageHash = ethers.utils.keccak256(
               ethers.utils.defaultAbiCoder.encode(
-                ['bytes32', 'address', 'uint256', 'uint256', 'uint256'],
-                [mintTypeHash, user2Wallet.address, tokenId, amount, nonce]
+                ['bytes32', 'address', 'uint256', 'uint256', 'uint256', 'uint256'],
+                [mintTypeHash, user2Wallet.address, tokenId, amount, nonce, incremental]
               )
             );
 
             const signature = await userWallet.signMessage(ethers.utils.arrayify(messageHash));
 
-            await expect(userSession["mint(address,uint256,uint256,bytes,uint256)"](
+            await expect(userSession["mint(address,uint256,uint256,bytes,uint256,uint256)"](
               user2Wallet.address,
               tokenId,
               amount,
               signature,
-              nonce
+              nonce,
+              incremental
             )).to.reverted;
           });
         });
@@ -412,18 +473,16 @@ describe("Kanna Badges", () => {
           });
 
           it("batch mint", async () => {
-            const [minterWallet, minterSession] = await getMinterSession();
+            const [, minterSession] = await getMinterSession();
             const userWallet = await getUserWallet();
             const user2Wallet = await getUser2Wallet();
 
             const tokenId = 99;
 
-            const tx = minterSession.batchMint(tokenId, [
+            await expect(minterSession.batchMint(tokenId, [
               userWallet.address,
               user2Wallet.address,
-            ]);
-
-            await expect(tx)
+            ]))
               .to.revertedWith('Invalid Token');
           });
 
@@ -433,28 +492,30 @@ describe("Kanna Badges", () => {
 
             const tokenId = 99;
             const amount = 5;
+            const incremental = 1;
 
             const nonce = ethers.BigNumber.from(ethers.utils.hexlify(ethers.utils.randomBytes(32))).sub(1);
 
             const mintTypeHash = ethers.utils.keccak256(
-              ethers.utils.toUtf8Bytes("Mint(address to, uint256 id, uint256 amount, uint256 nonce)")
+              ethers.utils.toUtf8Bytes("Mint(address to, uint256 id, uint256 amount, uint256 nonce, uint256 incremental)")
             );
 
             const messageHash = ethers.utils.keccak256(
               ethers.utils.defaultAbiCoder.encode(
-                ['bytes32', 'address', 'uint256', 'uint256', 'uint256'],
-                [mintTypeHash, userWallet.address, tokenId, amount, nonce]
+                ['bytes32', 'address', 'uint256', 'uint256', 'uint256', 'uint256'],
+                [mintTypeHash, userWallet.address, tokenId, amount, nonce, incremental]
               )
             );
 
             const signature = await minterWallet.signMessage(ethers.utils.arrayify(messageHash));
 
-            await expect(userSession["mint(address,uint256,uint256,bytes,uint256)"](
+            await expect(userSession["mint(address,uint256,uint256,bytes,uint256,uint256)"](
               userWallet.address,
               tokenId,
               amount,
               signature,
-              nonce
+              nonce,
+              incremental
             ))
               .to.revertedWith('Invalid Token');
           });
@@ -484,6 +545,99 @@ describe("Kanna Badges", () => {
           });
         });
 
+        describe("invalid incremental mint nonce", () => {
+          it("wrong nonce", async () => {
+            const [minterWallet] = await getMinterSession();
+            const [userWallet, userSession] = await getUserSession();
+
+            const tokenId = 3;
+            const amount = 5;
+            const incremental = 2;
+
+            const nonce = ethers.BigNumber.from(ethers.utils.hexlify(ethers.utils.randomBytes(32))).sub(1);
+
+            const mintTypeHash = ethers.utils.keccak256(
+              ethers.utils.toUtf8Bytes("Mint(address to, uint256 id, uint256 amount, uint256 nonce, uint256 incremental)")
+            );
+
+            const messageHash = ethers.utils.keccak256(
+              ethers.utils.defaultAbiCoder.encode(
+                ['bytes32', 'address', 'uint256', 'uint256', 'uint256', 'uint256'],
+                [mintTypeHash, userWallet.address, tokenId, amount, nonce, incremental]
+              )
+            );
+
+            const signature = await minterWallet.signMessage(ethers.utils.arrayify(messageHash));
+
+            await expect(userSession["mint(address,uint256,uint256,bytes,uint256,uint256)"](
+              userWallet.address,
+              tokenId,
+              amount,
+              signature,
+              nonce,
+              incremental
+            ))
+              .to.revertedWith('Invalid Nonce');
+          });
+
+          it("using same signature", async () => {
+            const [minterWallet] = await getMinterSession();
+            const [userWallet, userSession] = await getUserSession();
+
+            const tokenId = 3;
+            const amount = 5;
+            const incremental = 1;
+
+            const nonce = ethers.BigNumber.from(ethers.utils.hexlify(ethers.utils.randomBytes(32))).sub(1);
+
+            const mintTypeHash = ethers.utils.keccak256(
+              ethers.utils.toUtf8Bytes("Mint(address to, uint256 id, uint256 amount, uint256 nonce, uint256 incremental)")
+            );
+
+            const messageHash = ethers.utils.keccak256(
+              ethers.utils.defaultAbiCoder.encode(
+                ['bytes32', 'address', 'uint256', 'uint256', 'uint256', 'uint256'],
+                [mintTypeHash, userWallet.address, tokenId, amount, nonce, incremental]
+              )
+            );
+
+            const signature = await minterWallet.signMessage(ethers.utils.arrayify(messageHash));
+
+            await expect(userSession["mint(address,uint256,uint256,bytes,uint256,uint256)"](
+              userWallet.address,
+              tokenId,
+              amount,
+              signature,
+              nonce,
+              incremental
+            ))
+              .to.emit(kannaBadges, "TransferSingle")
+              .withArgs(
+                userWallet.address,
+                ethers.constants.AddressZero,
+                userWallet.address,
+                tokenId,
+                amount
+              )
+              .to.emit(kannaBadges, "Mint")
+              .withArgs(
+                userWallet.address,
+                tokenId,
+                amount,
+                incremental,
+              )
+
+            await expect(userSession["mint(address,uint256,uint256,bytes,uint256,uint256)"](
+              userWallet.address,
+              tokenId,
+              amount,
+              signature,
+              nonce,
+              incremental
+            ))
+              .to.revertedWith('Invalid Nonce');
+          });
+        });
       });
     });
 
