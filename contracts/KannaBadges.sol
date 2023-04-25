@@ -23,13 +23,13 @@ import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
  *  @custom:discord https://discord.kannacoin.io
  */
 contract KannaBadges is ERC1155, Ownable, AccessControl {
-    using Strings for uint256;
+    using Strings for uint16;
 
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
-    bytes32 private constant _MINT_TYPEHASH = keccak256("Mint(address to, uint256 id, uint256 amount, uint256 nonce, uint256 incremental)");
+    bytes32 private constant _MINT_TYPEHASH = keccak256("Mint(address to, uint16 id, uint256 amount, uint16 incremental, uint256 nonce)");
 
     struct Token {
-        uint256 id;
+        uint16 id;
         bool transferable;
         bool accumulative;
     }
@@ -39,14 +39,14 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
         Token token;
     }
 
-    uint256[] public tokenIds;
-    mapping(uint256 => Token) public tokens;
+    uint16[] public tokenIds;
+    mapping(uint16 => Token) public tokens;
 
-    mapping(uint256 => mapping(address => uint256)) private mintIncrementalNonces;
+    mapping(uint16 => mapping(address => uint16)) private mintIncrementalNonces;
 
-    event TokenRegistered(uint256 indexed id, bool transferable, bool accumulative);
+    event TokenRegistered(uint16 indexed id, bool transferable, bool accumulative);
 
-    event Mint(address indexed to, uint256 indexed id, uint256 amount, uint256 nonce);
+    event Mint(address indexed to, uint16 indexed id, uint256 amount, uint16 nonce);
 
     constructor (string memory uri_) ERC1155(uri_) {
     }
@@ -54,7 +54,7 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
     /**
      * @dev Modifier to check if token ID is registered
      */
-    modifier tokenExists(uint256 id) {
+    modifier tokenExists(uint16 id) {
         require(_exists(id), "Invalid Token");
         _;
     }
@@ -82,10 +82,10 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
     function balanceOf(address account) public view virtual returns (TokenBalance[] memory) {
         require(account != address(0), "ERC1155: address zero is not a valid owner");
 
-        uint length;
+        uint16 length;
 
         for (uint i=0; i<tokenIds.length; i++) {
-            uint256 id = tokenIds[i];
+            uint16 id = tokenIds[i];
 
             if (balanceOf(account, id) > 0) {
                 length++;
@@ -99,7 +99,7 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
         }
 
         for (uint i=0; i<tokenIds.length; i++) {
-            uint256 id = tokenIds[i];
+            uint16 id = tokenIds[i];
 
             if (balanceOf(account, id) > 0) {
                 balances[i] = TokenBalance(balanceOf(account, id), tokens[id]);
@@ -119,7 +119,7 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
      * - the caller must be the owner.
      */
     function register(
-        uint id,
+        uint16 id,
         bool transferable,
         bool accumulative
     ) public onlyOwner {
@@ -142,7 +142,7 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
      */
     function mint(
         address to,
-        uint256 id
+        uint16 id
     ) public onlyRole(MINTER_ROLE) tokenExists(id) {
         _mint(to, id, 1, "");
     }
@@ -158,7 +158,7 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
      */
     function mint(
         address to,
-        uint256 id,
+        uint16 id,
         uint256 amount
     ) public onlyRole(MINTER_ROLE) tokenExists(id) {
         _mint(to, id, amount, "");
@@ -175,16 +175,16 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
      */
     function mint(
         address to,
-        uint256 id,
+        uint16 id,
         uint256 amount,
         bytes memory signature,
-        uint256 nonce,
-        uint256 incremental
+        uint16 incremental,
+        uint256 nonce
     ) external tokenExists(id) {
         require(incremental == mintIncrementalNonces[id][to] + 1, "Invalid Nonce");
 
         bytes32 signedMessage = ECDSA.toEthSignedMessageHash(
-            keccak256(abi.encode(_MINT_TYPEHASH, to, id, amount, nonce, incremental))
+            keccak256(abi.encode(_MINT_TYPEHASH, to, id, amount, incremental, nonce))
         );
 
         address signer = ECDSA.recover(signedMessage, signature);
@@ -206,10 +206,10 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
      * - the token `id` must be registered.
      */
     function batchMint(
-        uint256 id,
+        uint16 id,
         address[] memory addresses
     ) public onlyRole(MINTER_ROLE) tokenExists(id) {
-        for (uint i=0; i<addresses.length; i++) {
+        for (uint256 i=0; i<addresses.length; i++) {
             _mint(addresses[i], id, 1, "");
         }
     }
@@ -276,7 +276,7 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
         bytes memory
     ) internal virtual override {
         for (uint i=0; i<ids.length; i++) {
-            uint256 id = ids[i];
+            uint16 id = uint16(ids[i]);
             uint256 amount = amounts[i];
             Token memory token = tokens[id];
 
@@ -298,7 +298,7 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
     ) internal virtual override {
         if (from == address(0)) {
             for (uint i=0; i<ids.length; i++) {
-                uint256 id = ids[i];
+                uint16 id = uint16(ids[i]);
                 uint256 amount = amounts[i];
 
                 mintIncrementalNonces[id][to]++;
@@ -312,7 +312,7 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
      * @dev Check if token ID is registered
      */
     function _exists(
-        uint256 _id
+        uint16 _id
     ) internal view returns (bool) {
         return tokens[_id].id > 0;
     }
