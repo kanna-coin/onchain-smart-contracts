@@ -34,7 +34,7 @@ export const getKannaBadgesMock = async (
   knnDeployerAddress: SignerWithAddress,
   uri: string = 'https://nft.kannacoin.io/{id}.json',
 ) => {
-  const KannaBadges = await waffle.deployMockContract(knnDeployerAddress, KannaBadges__factory.abi);
+  const KannaBadges = await waffle.deployMockContract(knnDeployerAddress, [...KannaBadges__factory.abi]);
 
 
   await KannaBadges.mock.uri.returns(uri);

@@ -71,6 +71,7 @@ export interface KannaBadgesInterface extends utils.Interface {
     "mint(address,uint16,uint256)": FunctionFragment;
     "owner()": FunctionFragment;
     "register(uint16,bool,bool)": FunctionFragment;
+    "register(uint16,address)": FunctionFragment;
     "removeManager(address)": FunctionFragment;
     "removeMinter(address)": FunctionFragment;
     "renounceOwnership()": FunctionFragment;
@@ -106,7 +107,8 @@ export interface KannaBadgesInterface extends utils.Interface {
       | "mint(address,uint16)"
       | "mint(address,uint16,uint256)"
       | "owner"
-      | "register"
+      | "register(uint16,bool,bool)"
+      | "register(uint16,address)"
       | "removeManager"
       | "removeMinter"
       | "renounceOwnership"
@@ -200,12 +202,16 @@ export interface KannaBadgesInterface extends utils.Interface {
   ): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
   encodeFunctionData(
-    functionFragment: "register",
+    functionFragment: "register(uint16,bool,bool)",
     values: [
       PromiseOrValue<BigNumberish>,
       PromiseOrValue<boolean>,
       PromiseOrValue<boolean>
     ]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "register(uint16,address)",
+    values: [PromiseOrValue<BigNumberish>, PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
     functionFragment: "removeManager",
@@ -326,7 +332,14 @@ export interface KannaBadgesInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "register", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "register(uint16,bool,bool)",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "register(uint16,address)",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "removeManager",
     data: BytesLike
@@ -630,10 +643,16 @@ export interface KannaBadges extends BaseContract {
 
     owner(overrides?: CallOverrides): Promise<[string]>;
 
-    register(
+    "register(uint16,bool,bool)"(
       id: PromiseOrValue<BigNumberish>,
       transferable: PromiseOrValue<boolean>,
       accumulative: PromiseOrValue<boolean>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
+    "register(uint16,address)"(
+      id: PromiseOrValue<BigNumberish>,
+      checkerAddress: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -811,10 +830,16 @@ export interface KannaBadges extends BaseContract {
 
   owner(overrides?: CallOverrides): Promise<string>;
 
-  register(
+  "register(uint16,bool,bool)"(
     id: PromiseOrValue<BigNumberish>,
     transferable: PromiseOrValue<boolean>,
     accumulative: PromiseOrValue<boolean>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
+  "register(uint16,address)"(
+    id: PromiseOrValue<BigNumberish>,
+    checkerAddress: PromiseOrValue<string>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -992,10 +1017,16 @@ export interface KannaBadges extends BaseContract {
 
     owner(overrides?: CallOverrides): Promise<string>;
 
-    register(
+    "register(uint16,bool,bool)"(
       id: PromiseOrValue<BigNumberish>,
       transferable: PromiseOrValue<boolean>,
       accumulative: PromiseOrValue<boolean>,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    "register(uint16,address)"(
+      id: PromiseOrValue<BigNumberish>,
+      checkerAddress: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -1287,10 +1318,16 @@ export interface KannaBadges extends BaseContract {
 
     owner(overrides?: CallOverrides): Promise<BigNumber>;
 
-    register(
+    "register(uint16,bool,bool)"(
       id: PromiseOrValue<BigNumberish>,
       transferable: PromiseOrValue<boolean>,
       accumulative: PromiseOrValue<boolean>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    "register(uint16,address)"(
+      id: PromiseOrValue<BigNumberish>,
+      checkerAddress: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -1465,10 +1502,16 @@ export interface KannaBadges extends BaseContract {
 
     owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    register(
+    "register(uint16,bool,bool)"(
       id: PromiseOrValue<BigNumberish>,
       transferable: PromiseOrValue<boolean>,
       accumulative: PromiseOrValue<boolean>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    "register(uint16,address)"(
+      id: PromiseOrValue<BigNumberish>,
+      checkerAddress: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 

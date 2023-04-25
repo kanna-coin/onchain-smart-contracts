@@ -1,10 +1,16 @@
-import { ethers, network } from "hardhat";
+import { ethers } from "hardhat";
 import { utils } from "ethers";
 import chai from "chai";
 import chaiAsPromised from "chai-as-promised";
-import { KannaBadges, IAccessControl__factory, IERC1155__factory, IERC1155MetadataURI__factory, IERC165__factory } from "../../typechain-types";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { getKannaBadges } from "../../src/infrastructure/factories";
+import {
+  KannaBadges,
+  IAccessControl__factory,
+  IERC1155__factory,
+  IERC1155MetadataURI__factory,
+  IERC165__factory,
+} from "../../typechain-types";
+import { getKannaBadges, getDynamicBadgeCheckerMock } from "../../src/infrastructure/factories";
 
 chai.use(chaiAsPromised);
 const { expect } = chai;
@@ -124,7 +130,7 @@ describe("Kanna Badges", () => {
     const [, managerSession] = await getManagerSession();
 
     for await (const token of tokens) {
-      await managerSession.register(token.id, token.transferable, token.accumulative);
+      await managerSession["register(uint16,bool,bool)"](token.id, token.transferable, token.accumulative);
     }
   }
 
@@ -169,7 +175,7 @@ describe("Kanna Badges", () => {
         const [, managerSession] = await getManagerSession();
 
         for await (const token of tokens) {
-          await expect(managerSession.register(token.id, token.transferable, token.accumulative))
+          await expect(managerSession["register(uint16,bool,bool)"](token.id, token.transferable, token.accumulative))
             .to.emit(kannaBadges, "TokenRegistered")
             .withArgs(
               token.id,
@@ -179,11 +185,38 @@ describe("Kanna Badges", () => {
         }
       });
 
+      it("should register dynamic token", async () => {
+        const deployerWallet = await getDeployerWallet();
+        const [, managerSession] = await getManagerSession();
+
+        const dynamicChecker = await getDynamicBadgeCheckerMock(deployerWallet);
+
+        await dynamicChecker.mock.isAccumulative.returns(true);
+
+        await expect(managerSession["register(uint16,address)"](1, dynamicChecker.address))
+          .to.emit(kannaBadges, "TokenRegistered")
+          .withArgs(
+            1,
+            false,
+            true
+          );
+
+        await dynamicChecker.mock.isAccumulative.returns(false);
+
+        await expect(managerSession["register(uint16,address)"](2, dynamicChecker.address))
+          .to.emit(kannaBadges, "TokenRegistered")
+          .withArgs(
+            2,
+            false,
+            false
+          );
+      });
+
       describe("should not", async () => {
         it("register `id` already registered", async () => {
           const [, managerSession] = await getManagerSession();
 
-          await expect(managerSession.register(1, false, false))
+          await expect(managerSession["register(uint16,bool,bool)"](1, false, false))
             .to.emit(kannaBadges, "TokenRegistered")
             .withArgs(
               1,
@@ -191,15 +224,37 @@ describe("Kanna Badges", () => {
               false
             );
 
-          await expect(managerSession.register(1, false, false))
+          await expect(managerSession["register(uint16,bool,bool)"](1, false, false))
             .to.revertedWith("Token already exists")
+        });
+
+        it("register invalid dynamic badge checker", async () => {
+          const deployerWallet = await getDeployerWallet();
+          const [, managerSession] = await getManagerSession();
+
+          const dynamicChecker = await getDynamicBadgeCheckerMock(deployerWallet);
+
+          await dynamicChecker.mock.supportsInterface.returns(false);
+
+          await expect(managerSession["register(uint16,address)"](1, dynamicChecker.address))
+            .to.revertedWith('`checkerAddress` needs to implement `IDynamicBadgeChecker` interface');
         });
 
         describe("without MANAGER_ROLE", async () => {
           it("register", async () => {
             const [, userSession] = await getUserSession();
 
-            await expect(userSession.register(1, false, false))
+            await expect(userSession["register(uint16,bool,bool)"](1, false, false))
+              .to.reverted;
+          });
+
+          it("register dynamic token", async () => {
+            const deployerWallet = await getDeployerWallet();
+            const [, userSession] = await getUserSession();
+
+            const dynamicChecker = await getDynamicBadgeCheckerMock(deployerWallet);
+
+            await expect(userSession["register(uint16,address)"](1, dynamicChecker.address))
               .to.reverted;
           });
         });
@@ -214,7 +269,7 @@ describe("Kanna Badges", () => {
 
         const newUri = await kannaBadges.uri(1);
 
-        expect(newUri).to.eq(uri);
+        expect(newUri).eq(uri);
       });
 
       it("should emit URI event for each registered Token", async () => {
@@ -295,7 +350,7 @@ describe("Kanna Badges", () => {
 
         const balance = await kannaBadges["balanceOf(address,uint256)"](userWallet.address, tokenId);
 
-        expect(balance).to.eq(1);
+        expect(balance).eq(1);
       });
 
       it("should mint with amount", async () => {
@@ -324,7 +379,7 @@ describe("Kanna Badges", () => {
 
         const balance = await kannaBadges["balanceOf(address,uint256)"](userWallet.address, tokenId);
 
-        expect(balance).to.eq(amount);
+        expect(balance).eq(amount);
       });
 
       it("should batch mint", async () => {
@@ -371,11 +426,11 @@ describe("Kanna Badges", () => {
 
         const balance = await kannaBadges["balanceOf(address,uint256)"](userWallet.address, tokenId);
 
-        expect(balance).to.eq(1);
+        expect(balance).eq(1);
 
         const balance2 = await kannaBadges["balanceOf(address,uint256)"](user2Wallet.address, tokenId);
 
-        expect(balance2).to.eq(1);
+        expect(balance2).eq(1);
       });
 
       it("should mint with signature", async () => {
@@ -427,7 +482,7 @@ describe("Kanna Badges", () => {
 
         const balance = await kannaBadges["balanceOf(address,uint256)"](userWallet.address, tokenId);
 
-        expect(balance).to.eq(amount);
+        expect(balance).eq(amount);
       });
 
       it("should increase mint nonce", async () => {
@@ -457,6 +512,25 @@ describe("Kanna Badges", () => {
       });
 
       describe("should not", async () => {
+        it("dynamic token", async () => {
+          const deployerWallet = await getDeployerWallet();
+          const [, managerSession] = await getManagerSession();
+          const [, minterSession] = await getMinterSession();
+          const userWallet = await getUserWallet();
+
+          const tokenId = 1;
+
+          const dynamicChecker = await getDynamicBadgeCheckerMock(deployerWallet);
+
+          await dynamicChecker.mock.isAccumulative.returns(false);
+          await dynamicChecker.mock.balanceOf.withArgs(userWallet.address, tokenId).returns(0);
+
+          await managerSession["register(uint16,address)"](tokenId, dynamicChecker.address);
+
+          await expect(minterSession["mint(address,uint16)"](userWallet.address, tokenId))
+            .to.revertedWith('Token is not mintable');
+        });
+
         describe("without MINTER_ROLE", async () => {
           it("mint", async () => {
             const [, userSession] = await getUserSession();
@@ -597,7 +671,7 @@ describe("Kanna Badges", () => {
             await minterSession["mint(address,uint16)"](userWallet.address, tokenId);
 
             await expect(minterSession["mint(address,uint16)"](userWallet.address, tokenId))
-              .to.revertedWith(`Token ${tokenId} is not accumulative`);
+              .to.revertedWith(`Token is not accumulative`);
           });
 
           it("amount greater than 1", async () => {
@@ -607,7 +681,7 @@ describe("Kanna Badges", () => {
             const tokenId = 2;
 
             await expect(minterSession["mint(address,uint16,uint256)"](userWallet.address, tokenId, 2))
-              .to.revertedWith(`Token ${tokenId} is not accumulative`);
+              .to.revertedWith(`Token is not accumulative`);
           });
         });
 
@@ -724,8 +798,8 @@ describe("Kanna Badges", () => {
         const token2Balance = balances.find(b => b.token.id === 2);
         const token3Balance = balances.find(b => b.token.id === 3);
 
-        expect(token2Balance?.balance).to.eq(1);
-        expect(token3Balance?.balance).to.eq(5);
+        expect(token2Balance?.balance).eq(1);
+        expect(token3Balance?.balance).eq(5);
       });
 
       it("should get empty array", async () => {
@@ -733,8 +807,28 @@ describe("Kanna Badges", () => {
 
         const balances = await kannaBadges["balanceOf(address)"](userWallet.address);
 
-        expect(balances.length).to.eq(0);
+        expect(balances.length).eq(0);
       });
+
+      it("should get dynamic token balance", async () => {
+        const deployerWallet = await getDeployerWallet();
+        const [, managerSession] = await getManagerSession();
+        const userWallet = await getUserWallet();
+
+        const tokenId = 1;
+
+        const dynamicChecker = await getDynamicBadgeCheckerMock(deployerWallet);
+
+        await dynamicChecker.mock.isAccumulative.returns(true);
+        await dynamicChecker.mock.balanceOf.withArgs(userWallet.address, tokenId).returns(5);
+
+        await managerSession["register(uint16,address)"](1, dynamicChecker.address);
+
+        const balance = await kannaBadges["balanceOf(address,uint256)"](userWallet.address, tokenId);
+
+        expect(balance).eq(5);
+      })
+
 
       it("should prevent empty address", async () => {
         await expect(kannaBadges["balanceOf(address)"](ethers.constants.AddressZero))
@@ -779,7 +873,7 @@ describe("Kanna Badges", () => {
         await minterSession["mint(address,uint16)"](userWallet.address, tokenId);
 
         await expect(userSession.safeTransferFrom(userWallet.address, user2Wallet.address, tokenId, amount, []))
-          .to.revertedWith(`Token ${tokenId} is not transferable`);
+          .to.revertedWith(`Token is not transferable`);
       });
     });
 
@@ -791,7 +885,7 @@ describe("Kanna Badges", () => {
 
         const supportsInterface = await kannaBadges.supportsInterface(interfaceId);
 
-        expect(supportsInterface).to.eq(true);
+        expect(supportsInterface).eq(true);
       });
 
       it("ERC1155 interface", async () => {
@@ -805,7 +899,7 @@ describe("Kanna Badges", () => {
 
         const supportsInterface = await kannaBadges.supportsInterface(interfaceId);
 
-        expect(supportsInterface).to.eq(true);
+        expect(supportsInterface).eq(true);
       });
 
       it("ERC1155 Metadata interface", async () => {
@@ -819,7 +913,7 @@ describe("Kanna Badges", () => {
 
         const supportsInterface = await kannaBadges.supportsInterface(interfaceId);
 
-        expect(supportsInterface).to.eq(true);
+        expect(supportsInterface).eq(true);
       });
     });
 

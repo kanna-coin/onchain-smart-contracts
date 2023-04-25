@@ -34,6 +34,10 @@ export type { ERC165 } from "./@openzeppelin/contracts/utils/introspection/ERC16
 export { ERC165__factory } from "./factories/@openzeppelin/contracts/utils/introspection/ERC165__factory";
 export type { IERC165 } from "./@openzeppelin/contracts/utils/introspection/IERC165";
 export { IERC165__factory } from "./factories/@openzeppelin/contracts/utils/introspection/IERC165__factory";
+export type { DynamicBadgeChecker } from "./contracts/DynamicBadgeChecker";
+export { DynamicBadgeChecker__factory } from "./factories/contracts/DynamicBadgeChecker__factory";
+export type { IDynamicBadgeChecker } from "./contracts/interfaces/IDynamicBadgeChecker";
+export { IDynamicBadgeChecker__factory } from "./factories/contracts/interfaces/IDynamicBadgeChecker__factory";
 export type { KannaBadges } from "./contracts/KannaBadges";
 export { KannaBadges__factory } from "./factories/contracts/KannaBadges__factory";
 export type { KannaPreSale } from "./contracts/KannaPreSale";
@@ -44,3 +48,5 @@ export type { KannaToken } from "./contracts/KannaToken";
 export { KannaToken__factory } from "./factories/contracts/KannaToken__factory";
 export type { KannaYield } from "./contracts/KannaYield";
 export { KannaYield__factory } from "./factories/contracts/KannaYield__factory";
+export type { KnnHolderBadgeChecker } from "./contracts/KnnHolderBadgeChecker";
+export { KnnHolderBadgeChecker__factory } from "./factories/contracts/KnnHolderBadgeChecker__factory";

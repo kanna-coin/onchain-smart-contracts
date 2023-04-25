@@ -52,7 +52,7 @@ export const getKnnPreSale = async (
 export const getKnnPreSaleMock = async (
   knnDeployerAddress: SignerWithAddress
 ) => {
-  const knnPreSale = await waffle.deployMockContract(knnDeployerAddress, KannaPreSale__factory.abi);
+  const knnPreSale = await waffle.deployMockContract(knnDeployerAddress, [...KannaPreSale__factory.abi]);
 
   return knnPreSale;
 };

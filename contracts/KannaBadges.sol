@@ -6,8 +6,7 @@ import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
-
+import {IDynamicBadgeChecker} from './interfaces/IDynamicBadgeChecker.sol';
 /**
  *  __                                  ___.               .___
  * |  | ___\|/_    ____   ____ _\|/_    \_ |__ _\|/_     __| _/ ____   ____   ______
@@ -23,7 +22,6 @@ import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
  *  @custom:discord https://discord.kannacoin.io
  */
 contract KannaBadges is ERC1155, Ownable, AccessControl {
-    using Strings for uint16;
 
     bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
@@ -42,6 +40,7 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
 
     uint16[] public tokenIds;
     mapping(uint16 => Token) public tokens;
+    mapping(uint16 => address) private dynamicCheckers;
 
     mapping(uint16 => mapping(address => uint16)) private mintIncrementalNonces;
 
@@ -110,6 +109,21 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
         return balances;
     }
 
+    /**
+     * @dev See {IERC1155-balanceOf}
+     *
+     * Check if token has a dynamic checker.
+     */
+    function balanceOf(address account, uint256 id) public view virtual override(ERC1155) returns (uint256) {
+        uint16 _id = uint16(id);
+
+        if (dynamicCheckers[_id] != address(0)) {
+            return IDynamicBadgeChecker(dynamicCheckers[_id]).balanceOf(account, _id);
+        }
+
+        return super.balanceOf(account, id);
+    }
+
     /** @dev Register a new Token
      *
      * Emits a {TokenRegistered} event with `id`, `transferable` and `accumulative`.
@@ -117,7 +131,7 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
      * Requirements:
      *
      * - the token `id` must not be registered.
-     * - the caller must be the owner.
+     * - the caller must have MANAGER_ROLE.
      */
     function register(
         uint16 id,
@@ -130,6 +144,31 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
         tokenIds.push(id);
 
         emit TokenRegistered(id, transferable, accumulative);
+    }
+
+    /** @dev Register a dynamic Token with a dynamic checker
+     *
+     * Emits a {TokenRegistered} event with `id`, `transferable` and `accumulative`.
+     *
+     * Requirements:
+     *
+     * - the token `id` must not be registered.
+     * - the caller must have MANAGER_ROLE.
+     */
+    function register(
+        uint16 id,
+        address checkerAddress
+    ) public onlyRole(MANAGER_ROLE) {
+        IDynamicBadgeChecker dynamicChecker = IDynamicBadgeChecker(checkerAddress);
+
+        require(
+            dynamicChecker.supportsInterface(type(IDynamicBadgeChecker).interfaceId),
+            "`checkerAddress` needs to implement `IDynamicBadgeChecker` interface"
+        );
+
+        register(id, false, dynamicChecker.isAccumulative());
+
+        dynamicCheckers[id] = checkerAddress;
     }
 
     /** @dev Creates 1 tokens of token type `id`, and assigns them to `to`.
@@ -312,8 +351,9 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
             uint256 amount = amounts[i];
             Token memory token = tokens[id];
 
-            require(from == address(0) || token.transferable, string(abi.encodePacked("Token ", id.toString(), " is not transferable")));
-            require(token.accumulative || (balanceOf(to, id) == 0 && amount == 1), string(abi.encodePacked("Token ", id.toString(), " is not accumulative")));
+            require(from == address(0) || token.transferable, "Token is not transferable");
+            require(token.accumulative || (balanceOf(to, id) == 0 && amount == 1), "Token is not accumulative");
+            require(from != address(0) || dynamicCheckers[id] == address(0), "Token is not mintable");
         }
     }
 

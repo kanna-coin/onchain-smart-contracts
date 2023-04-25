@@ -47,7 +47,7 @@ export const getKnnYield = async (
 export const getKnnYieldMock = async (
   knnDeployerAddress: SignerWithAddress
 ) => {
-  const knnYield = await waffle.deployMockContract(knnDeployerAddress, KannaYield__factory.abi);
+  const knnYield = await waffle.deployMockContract(knnDeployerAddress, [...KannaYield__factory.abi]);
 
   return knnYield;
 };

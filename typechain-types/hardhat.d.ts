@@ -65,6 +65,14 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IERC165__factory>;
     getContractFactory(
+      name: "DynamicBadgeChecker",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.DynamicBadgeChecker__factory>;
+    getContractFactory(
+      name: "IDynamicBadgeChecker",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.IDynamicBadgeChecker__factory>;
+    getContractFactory(
       name: "KannaBadges",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.KannaBadges__factory>;
@@ -84,6 +92,10 @@ declare module "hardhat/types/runtime" {
       name: "KannaYield",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.KannaYield__factory>;
+    getContractFactory(
+      name: "KnnHolderBadgeChecker",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.KnnHolderBadgeChecker__factory>;
 
     getContractAt(
       name: "AggregatorV3Interface",
@@ -151,6 +163,16 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.IERC165>;
     getContractAt(
+      name: "DynamicBadgeChecker",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.DynamicBadgeChecker>;
+    getContractAt(
+      name: "IDynamicBadgeChecker",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.IDynamicBadgeChecker>;
+    getContractAt(
       name: "KannaBadges",
       address: string,
       signer?: ethers.Signer
@@ -175,6 +197,11 @@ declare module "hardhat/types/runtime" {
       address: string,
       signer?: ethers.Signer
     ): Promise<Contracts.KannaYield>;
+    getContractAt(
+      name: "KnnHolderBadgeChecker",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.KnnHolderBadgeChecker>;
 
     // default types
     getContractFactory(

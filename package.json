@@ -8,6 +8,7 @@
     "clean": "npx hardhat clean",
     "compile": "npx hardhat compile",
     "test": "npx hardhat test --network hardhat",
+    "test:bail": "npx hardhat test --network hardhat --bail",
     "node": "npx hardhat node",
     "coverage": "npm run build && npx hardhat coverage --temp artifacts && npm run build",
     "deploy:token": "npx hardhat run --network localhost deploy/1_KannaToken_deploy.ts",
