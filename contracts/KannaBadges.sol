@@ -25,6 +25,7 @@ import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 contract KannaBadges is ERC1155, Ownable, AccessControl {
     using Strings for uint16;
 
+    bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
     bytes32 private constant _MINT_TYPEHASH = keccak256("Mint(address to, uint16 id, uint256 amount, uint16 incremental, uint256 nonce)");
 
@@ -122,7 +123,7 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
         uint16 id,
         bool transferable,
         bool accumulative
-    ) public onlyOwner {
+    ) public onlyRole(MANAGER_ROLE) {
         require(!_exists(id), "Token already exists");
 
         tokens[id] = Token(id, transferable, accumulative);
@@ -212,6 +213,37 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
         for (uint256 i=0; i<addresses.length; i++) {
             _mint(addresses[i], id, 1, "");
         }
+    }
+
+    /**
+     * @dev Grants `MANAGER_ROLE` to a `manager` account.
+     *
+     * If `manager` account had not been already granted `role`, emits a {RoleGranted}
+     * event.
+     *
+     * Requirements:
+     *
+     * - the caller must have admin role.
+     *
+     * May emit a {RoleGranted} event.
+     */
+    function addManager(address newManager) external onlyOwner {
+        _grantRole(MANAGER_ROLE, newManager);
+    }
+
+    /**
+     * @dev Removes `MANAGER_ROLE` from a `manager` account.
+     *
+     * If `manager` had been granted `MANAGER_ROLE`, emits a {RoleRevoked} event.
+     *
+     * Requirements:
+     *
+     * - the caller must have admin role.
+     *
+     * May emit a {RoleRevoked} event.
+     */
+    function removeManager(address manager) external onlyOwner {
+        _revokeRole(MANAGER_ROLE, manager);
     }
 
     /**

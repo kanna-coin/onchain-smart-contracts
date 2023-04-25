@@ -48,10 +48,26 @@ describe("Kanna Badges", () => {
     return deployerWallet;
   };
 
+  const getManagerSession = async (): Promise<
+    [SignerWithAddress, KannaBadges]
+  > => {
+    const [, managerWallet] = signers;
+
+    await kannaBadges.addManager(managerWallet.address);
+
+    const managerSession = (await ethers.getContractAt(
+      "KannaBadges",
+      kannaBadges.address,
+      managerWallet
+    )) as KannaBadges;
+
+    return [managerWallet, managerSession];
+  };
+
   const getMinterSession = async (): Promise<
     [SignerWithAddress, KannaBadges]
   > => {
-    const [, minterWallet] = signers;
+    const [, , minterWallet] = signers;
 
     await kannaBadges.addMinter(minterWallet.address);
 
@@ -65,7 +81,7 @@ describe("Kanna Badges", () => {
   };
 
   const getUserWallet = async () => {
-    const [, , userAccount] = signers;
+    const [, , , userAccount] = signers;
 
     return userAccount;
   };
@@ -85,7 +101,7 @@ describe("Kanna Badges", () => {
   };
 
   const getUser2Wallet = async () => {
-    const [, , , userAccount] = signers;
+    const [, , , , userAccount] = signers;
 
     return userAccount;
   };
@@ -104,15 +120,56 @@ describe("Kanna Badges", () => {
     return [userWallet, managerSession];
   };
 
+  const registerTokens = async () => {
+    const [, managerSession] = await getManagerSession();
+
+    for await (const token of tokens) {
+      await managerSession.register(token.id, token.transferable, token.accumulative);
+    }
+  }
+
   describe("Setup", async () => {
     beforeEach(async () => {
       await deployContracts();
     });
 
     describe("Register Token", async () => {
+
+      it("should add manager", async () => {
+        const deployerWallet = await getDeployerWallet();
+        const userWallet = await getUserWallet();
+
+        const role = await kannaBadges.MANAGER_ROLE;
+
+        await expect(kannaBadges.addManager(userWallet.address))
+          .to.emit(kannaBadges, "RoleGranted")
+          .withArgs(
+            role,
+            userWallet.address,
+            deployerWallet.address
+          )
+      });
+
+      it("should remove manager", async () => {
+        const deployerWallet = await getDeployerWallet();
+        const [managerWallet] = await getManagerSession();
+
+        const role = await kannaBadges.MANAGER_ROLE;
+
+        await expect(kannaBadges.removeManager(managerWallet.address))
+          .to.emit(kannaBadges, "RoleRevoked")
+          .withArgs(
+            role,
+            managerWallet.address,
+            deployerWallet.address
+          )
+      });
+
       it("should register token", async () => {
+        const [, managerSession] = await getManagerSession();
+
         for await (const token of tokens) {
-          await expect(kannaBadges.register(token.id, token.transferable, token.accumulative))
+          await expect(managerSession.register(token.id, token.transferable, token.accumulative))
             .to.emit(kannaBadges, "TokenRegistered")
             .withArgs(
               token.id,
@@ -122,17 +179,30 @@ describe("Kanna Badges", () => {
         }
       });
 
-      it("should not register `id` already registered", async () => {
-        await expect(kannaBadges.register(1, false, false))
-          .to.emit(kannaBadges, "TokenRegistered")
-          .withArgs(
-            1,
-            false,
-            false
-          );
+      describe("should not", async () => {
+        it("register `id` already registered", async () => {
+          const [, managerSession] = await getManagerSession();
 
-        await expect(kannaBadges.register(1, false, false))
-          .to.revertedWith("Token already exists")
+          await expect(managerSession.register(1, false, false))
+            .to.emit(kannaBadges, "TokenRegistered")
+            .withArgs(
+              1,
+              false,
+              false
+            );
+
+          await expect(managerSession.register(1, false, false))
+            .to.revertedWith("Token already exists")
+        });
+
+        describe("without MANAGER_ROLE", async () => {
+          it("register", async () => {
+            const [, userSession] = await getUserSession();
+
+            await expect(userSession.register(1, false, false))
+              .to.reverted;
+          });
+        });
       });
     });
 
@@ -150,9 +220,7 @@ describe("Kanna Badges", () => {
       it("should emit URI event for each registered Token", async () => {
         const uri = 'https://new-uri/{id}';
 
-        for await (const token of tokens) {
-          await kannaBadges.register(token.id, token.transferable, token.accumulative);
-        }
+        await registerTokens();
 
         const tx = kannaBadges.setURI(uri);
 
@@ -169,9 +237,7 @@ describe("Kanna Badges", () => {
 
     describe("Mint", async () => {
       beforeEach(async () => {
-        for await (const token of tokens) {
-          await kannaBadges.register(token.id, token.transferable, token.accumulative);
-        }
+        await registerTokens();
       });
 
       it("should add minter", async () => {
@@ -191,7 +257,7 @@ describe("Kanna Badges", () => {
 
       it("should remove minter", async () => {
         const deployerWallet = await getDeployerWallet();
-        const [minterWallet, minterSession] = await getMinterSession();
+        const [minterWallet] = await getMinterSession();
 
         const role = await kannaBadges.MINTER_ROLE;
 
@@ -643,9 +709,7 @@ describe("Kanna Badges", () => {
 
     describe("Balance of", async () => {
       beforeEach(async () => {
-        for await (const token of tokens) {
-          await kannaBadges.register(token.id, token.transferable, token.accumulative);
-        }
+        await registerTokens();
       });
 
       it("should get all tokens balance", async () => {
@@ -680,9 +744,7 @@ describe("Kanna Badges", () => {
 
     describe("Transfer", async () => {
       beforeEach(async () => {
-        for await (const token of tokens) {
-          await kannaBadges.register(token.id, token.transferable, token.accumulative);
-        }
+        await registerTokens();
       });
 
       it("should transfer if `transferable`", async () => {
@@ -764,18 +826,27 @@ describe("Kanna Badges", () => {
     describe("should prevent not owner", () => {
       const revertWith = "Ownable: caller is not the owner";
 
-      it("register", async () => {
-        const [, userSession] = await getUserSession();
-
-        await expect(userSession.register(1, false, false))
-          .to.revertedWith(revertWith)
-      });
-
       it("set URI", async () => {
         const [, userSession] = await getUserSession();
 
         await expect(userSession.setURI('https://new-uri/{id}'))
           .to.revertedWith(revertWith)
+      });
+
+      it("add manager", async () => {
+        const [, userSession] = await getUserSession();
+        const [user2Wallet] = await getUser2Session();
+
+        await expect(userSession.addManager(user2Wallet.address))
+          .to.be.revertedWith(revertWith);
+      });
+
+      it("remove manager", async () => {
+        const [, userSession] = await getUserSession();
+        const [user2Wallet] = await getUser2Session();
+
+        await expect(userSession.removeManager(user2Wallet.address))
+          .to.be.revertedWith(revertWith);
       });
 
       it("add minter", async () => {
