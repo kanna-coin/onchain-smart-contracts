@@ -25,16 +25,11 @@ export interface KnnHolderBadgeCheckerInterface extends utils.Interface {
   functions: {
     "balanceOf(address,uint16)": FunctionFragment;
     "isAccumulative()": FunctionFragment;
-    "knnToken()": FunctionFragment;
     "supportsInterface(bytes4)": FunctionFragment;
   };
 
   getFunction(
-    nameOrSignatureOrTopic:
-      | "balanceOf"
-      | "isAccumulative"
-      | "knnToken"
-      | "supportsInterface"
+    nameOrSignatureOrTopic: "balanceOf" | "isAccumulative" | "supportsInterface"
   ): FunctionFragment;
 
   encodeFunctionData(
@@ -45,7 +40,6 @@ export interface KnnHolderBadgeCheckerInterface extends utils.Interface {
     functionFragment: "isAccumulative",
     values?: undefined
   ): string;
-  encodeFunctionData(functionFragment: "knnToken", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "supportsInterface",
     values: [PromiseOrValue<BytesLike>]
@@ -56,7 +50,6 @@ export interface KnnHolderBadgeCheckerInterface extends utils.Interface {
     functionFragment: "isAccumulative",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "knnToken", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "supportsInterface",
     data: BytesLike
@@ -100,8 +93,6 @@ export interface KnnHolderBadgeChecker extends BaseContract {
 
     isAccumulative(overrides?: CallOverrides): Promise<[boolean]>;
 
-    knnToken(overrides?: CallOverrides): Promise<[string]>;
-
     supportsInterface(
       interfaceId: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
@@ -116,8 +107,6 @@ export interface KnnHolderBadgeChecker extends BaseContract {
 
   isAccumulative(overrides?: CallOverrides): Promise<boolean>;
 
-  knnToken(overrides?: CallOverrides): Promise<string>;
-
   supportsInterface(
     interfaceId: PromiseOrValue<BytesLike>,
     overrides?: CallOverrides
@@ -131,8 +120,6 @@ export interface KnnHolderBadgeChecker extends BaseContract {
     ): Promise<BigNumber>;
 
     isAccumulative(overrides?: CallOverrides): Promise<boolean>;
-
-    knnToken(overrides?: CallOverrides): Promise<string>;
 
     supportsInterface(
       interfaceId: PromiseOrValue<BytesLike>,
@@ -151,8 +138,6 @@ export interface KnnHolderBadgeChecker extends BaseContract {
 
     isAccumulative(overrides?: CallOverrides): Promise<BigNumber>;
 
-    knnToken(overrides?: CallOverrides): Promise<BigNumber>;
-
     supportsInterface(
       interfaceId: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
@@ -167,8 +152,6 @@ export interface KnnHolderBadgeChecker extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     isAccumulative(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    knnToken(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     supportsInterface(
       interfaceId: PromiseOrValue<BytesLike>,

@@ -40,9 +40,9 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
 
     uint16[] public tokenIds;
     mapping(uint16 => Token) public tokens;
-    mapping(uint16 => address) private dynamicCheckers;
-
-    mapping(uint16 => mapping(address => uint16)) private mintIncrementalNonces;
+    mapping(uint16 => address) private _dynamicCheckers;
+    mapping(uint16 => uint256) private _totalSupply;
+    mapping(uint16 => mapping(address => uint16)) private _mintIncrementalNonces;
 
     event TokenRegistered(uint16 indexed id, bool transferable, bool accumulative);
 
@@ -55,8 +55,23 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
      * @dev Modifier to check if token ID is registered
      */
     modifier tokenExists(uint16 id) {
-        require(_exists(id), "Invalid Token");
+        require(exists(id), "Invalid Token");
         _;
+    }
+
+    /**
+     * @dev Returns the name of the token.
+     */
+    function name() public pure virtual returns (string memory) {
+        return 'Kanna Badges';
+    }
+
+    /**
+     * @dev Returns the symbol of the token, usually a shorter version of the
+     * name.
+     */
+    function symbol() public pure virtual returns (string memory) {
+        return 'KNNB';
     }
 
     /**
@@ -71,6 +86,20 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
 
             emit URI(uri_, id);
         }
+    }
+
+    /**
+     * @dev Indicates whether any token exist with a given id, or not.
+     */
+    function exists(uint256 id) public view virtual returns (bool) {
+        return tokens[uint16(id)].id > 0;
+    }
+
+    /**
+     * @dev Total amount of tokens in with a given id.
+     */
+    function totalSupply(uint256 id) public view virtual returns (uint256) {
+        return _totalSupply[uint16(id)];
     }
 
     /** @dev Return all `TokenBalance` owned by `account`
@@ -117,8 +146,8 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
     function balanceOf(address account, uint256 id) public view virtual override(ERC1155) returns (uint256) {
         uint16 _id = uint16(id);
 
-        if (dynamicCheckers[_id] != address(0)) {
-            return IDynamicBadgeChecker(dynamicCheckers[_id]).balanceOf(account, _id);
+        if (_dynamicCheckers[_id] != address(0)) {
+            return IDynamicBadgeChecker(_dynamicCheckers[_id]).balanceOf(account, _id);
         }
 
         return super.balanceOf(account, id);
@@ -138,7 +167,7 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
         bool transferable,
         bool accumulative
     ) public onlyRole(MANAGER_ROLE) {
-        require(!_exists(id), "Token already exists");
+        require(!exists(id), "Token already exists");
 
         tokens[id] = Token(id, transferable, accumulative);
         tokenIds.push(id);
@@ -168,7 +197,7 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
 
         register(id, false, dynamicChecker.isAccumulative());
 
-        dynamicCheckers[id] = checkerAddress;
+        _dynamicCheckers[id] = checkerAddress;
     }
 
     /** @dev Creates 1 tokens of token type `id`, and assigns them to `to`.
@@ -221,7 +250,7 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
         uint16 incremental,
         uint256 nonce
     ) external tokenExists(id) {
-        require(incremental == mintIncrementalNonces[id][to] + 1, "Invalid Nonce");
+        require(incremental == _mintIncrementalNonces[id][to] + 1, "Invalid Nonce");
 
         bytes32 signedMessage = ECDSA.toEthSignedMessageHash(
             keccak256(abi.encode(_MINT_TYPEHASH, to, id, amount, incremental, nonce))
@@ -353,7 +382,11 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
 
             require(from == address(0) || token.transferable, "Token is not transferable");
             require(token.accumulative || (balanceOf(to, id) == 0 && amount == 1), "Token is not accumulative");
-            require(from != address(0) || dynamicCheckers[id] == address(0), "Token is not mintable");
+            require(from != address(0) || _dynamicCheckers[id] == address(0), "Token is not mintable");
+
+            if (from == address(0)) {
+                _totalSupply[id] += amount;
+            }
         }
     }
 
@@ -373,19 +406,10 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
                 uint16 id = uint16(ids[i]);
                 uint256 amount = amounts[i];
 
-                mintIncrementalNonces[id][to]++;
+                _mintIncrementalNonces[id][to]++;
 
-                emit Mint(to, id, amount, mintIncrementalNonces[id][to]);
+                emit Mint(to, id, amount, _mintIncrementalNonces[id][to]);
             }
         }
-    }
-
-    /**
-     * @dev Check if token ID is registered
-     */
-    function _exists(
-        uint16 _id
-    ) internal view returns (bool) {
-        return tokens[_id].id > 0;
     }
 }

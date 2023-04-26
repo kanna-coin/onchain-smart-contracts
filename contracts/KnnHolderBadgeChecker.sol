@@ -6,7 +6,7 @@ import {KannaToken} from './KannaToken.sol';
 
 contract KnnHolderBadgeChecker is DynamicBadgeChecker {
 
-    KannaToken public immutable knnToken;
+    KannaToken private immutable knnToken;
 
     constructor(
         address _knnToken
