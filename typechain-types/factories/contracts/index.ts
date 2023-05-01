@@ -6,6 +6,7 @@ export { DynamicBadgeChecker__factory } from "./DynamicBadgeChecker__factory";
 export { KannaBadges__factory } from "./KannaBadges__factory";
 export { KannaPreSale__factory } from "./KannaPreSale__factory";
 export { KannaSale__factory } from "./KannaSale__factory";
+export { KannaSaleL2__factory } from "./KannaSaleL2__factory";
 export { KannaToken__factory } from "./KannaToken__factory";
 export { KannaYield__factory } from "./KannaYield__factory";
 export { KnnHolderBadgeChecker__factory } from "./KnnHolderBadgeChecker__factory";

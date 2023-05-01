@@ -44,6 +44,8 @@ export type { KannaPreSale } from "./contracts/KannaPreSale";
 export { KannaPreSale__factory } from "./factories/contracts/KannaPreSale__factory";
 export type { KannaSale } from "./contracts/KannaSale";
 export { KannaSale__factory } from "./factories/contracts/KannaSale__factory";
+export type { KannaSaleL2 } from "./contracts/KannaSaleL2";
+export { KannaSaleL2__factory } from "./factories/contracts/KannaSaleL2__factory";
 export type { KannaToken } from "./contracts/KannaToken";
 export { KannaToken__factory } from "./factories/contracts/KannaToken__factory";
 export type { KannaYield } from "./contracts/KannaYield";
