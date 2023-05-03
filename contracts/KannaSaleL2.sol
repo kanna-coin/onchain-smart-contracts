@@ -29,7 +29,7 @@ contract KannaSaleL2 is Ownable, AccessControl {
     bytes32 public constant CLAIM_MANAGER_ROLE = keccak256("CLAIM_MANAGER_ROLE");
 
     bytes32 private constant _CLAIM_TYPEHASH_L2 =
-        keccak256("Claim(address recipient,uint256 amountInKNN,uint256 ref,uint256 chainId,uint256 nonce)");
+        keccak256("Claim(address recipient,uint256 amountInKNN,uint256 ref,uint256 nonce,uint256 chainId)");
 
     uint256 public constant USD_AGGREGATOR_DECIMALS = 1e8;
     uint256 public constant KNN_DECIMALS = 1e18;
@@ -165,7 +165,7 @@ contract KannaSaleL2 is Ownable, AccessControl {
 
         uint256 nonce = nonces[recipient];
 
-        bytes32 hash = keccak256(abi.encode(_CLAIM_TYPEHASH_L2, recipient, amountInKNN, ref, block.chainid, nonce));
+        bytes32 hash = keccak256(abi.encode(_CLAIM_TYPEHASH_L2, recipient, amountInKNN, ref, nonce, block.chainid));
 
         return (hash, nonce);
     }
@@ -183,7 +183,7 @@ contract KannaSaleL2 is Ownable, AccessControl {
         require(knnLocked >= amountInKNN, "Insufficient locked amount");
 
         bytes32 signedMessage = ECDSA.toEthSignedMessageHash(
-            keccak256(abi.encode(_CLAIM_TYPEHASH_L2, recipient, amountInKNN, ref, block.chainid, nonce))
+            keccak256(abi.encode(_CLAIM_TYPEHASH_L2, recipient, amountInKNN, ref, nonce, block.chainid))
         );
 
         address signer = ECDSA.recover(signedMessage, signature);

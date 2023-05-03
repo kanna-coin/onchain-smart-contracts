@@ -428,7 +428,7 @@ describe('KNN SaleL2', () => {
 
       const claimTypeHash = ethers.utils.keccak256(
         ethers.utils.toUtf8Bytes(
-          'Claim(address recipient,uint256 amountInKNN,uint256 ref,uint256 chainId,uint256 nonce)'
+          'Claim(address recipient,uint256 amountInKNN,uint256 ref,uint256 nonce,uint256 chainId)'
         )
       );
 
@@ -440,8 +440,8 @@ describe('KNN SaleL2', () => {
             userAccount.address,
             amount,
             ref,
-            ethers.provider.network.chainId,
             nonce,
+            ethers.provider.network.chainId,
           ]
         )
       );
