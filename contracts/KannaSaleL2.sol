@@ -8,6 +8,8 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 
+import {FxERC20ChildTunnel} from "./interfaces/FxERC20ChildTunnel.sol";
+
 /**
  *   __                                               .__
  *  |  | ___\|/_    ____   ____ _\|/_    _______\|/_  |  |   ____
@@ -24,19 +26,19 @@ import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
  */
 contract KannaSaleL2 is Ownable, AccessControl {
     IERC20 public immutable knnToken;
+    FxERC20ChildTunnel public immutable childTunnel;
     AggregatorV3Interface public immutable priceAggregator;
 
     bytes32 public constant CLAIM_MANAGER_ROLE = keccak256("CLAIM_MANAGER_ROLE");
 
     bytes32 private constant _CLAIM_TYPEHASH_L2 =
-        keccak256("Claim(address recipient,uint256 amountInKNN,uint256 ref,uint256 nonce,uint256 chainId)");
+        keccak256("Claim(address recipient,uint256 amountInKNN,uint256 ref,uint256 timestamp,uint256 nonce,uint256 chainId)");
 
     uint256 public constant USD_AGGREGATOR_DECIMALS = 1e8;
     uint256 public constant KNN_DECIMALS = 1e18;
     uint256 public immutable knnPriceInUSD;
     uint256 public knnLocked;
 
-    mapping(address => uint256) private nonces;
     mapping(uint256 => bool) private claims;
 
     event Purchase(
@@ -53,12 +55,14 @@ contract KannaSaleL2 is Ownable, AccessControl {
 
     event Withdraw(address indexed recipient, uint256 amount);
 
-    constructor(address _knnToken, address _priceAggregator, uint256 targetQuotation) {
+    constructor(address _knnToken, address _childTunnel, address _priceAggregator, uint256 targetQuotation) {
         require(address(_knnToken) != address(0), "Invalid token address");
+        require(address(_childTunnel) != address(0), "Invalid child tunnel address");
         require(address(_priceAggregator) != address(0), "Invalid price aggregator address");
         require(targetQuotation > 0, "Invalid quotation");
 
         knnToken = IERC20(_knnToken);
+        childTunnel = FxERC20ChildTunnel(_childTunnel);
         priceAggregator = AggregatorV3Interface(_priceAggregator);
         knnPriceInUSD = targetQuotation;
     }
@@ -149,25 +153,10 @@ contract KannaSaleL2 is Ownable, AccessControl {
     /**
      * @dev release claimed tokens to recipient
      */
-    function claim(address recipient, uint256 amountInKNN, uint256 ref) external onlyRole(CLAIM_MANAGER_ROLE) {
+    function claim(address recipient, uint256 amountInKNN, uint256 ref, uint256 chainId) external onlyRole(CLAIM_MANAGER_ROLE) {
         require(availableSupply() >= amountInKNN, "Insufficient available supply");
 
-        _claim(recipient, amountInKNN, ref);
-    }
-
-    /**
-     * @dev claim message hash
-     */
-    function claimHash(address recipient, uint256 amountInKNN, uint256 ref) public view returns (bytes32, uint256) {
-        require(address(recipient) != address(0), "Invalid address");
-        require(amountInKNN > 0, "Invalid amount");
-        require(claims[ref] == false, "Already claimed");
-
-        uint256 nonce = nonces[recipient];
-
-        bytes32 hash = keccak256(abi.encode(_CLAIM_TYPEHASH_L2, recipient, amountInKNN, ref, nonce, block.chainid));
-
-        return (hash, nonce);
+        _claim(recipient, amountInKNN, ref, chainId);
     }
 
     /**
@@ -177,23 +166,24 @@ contract KannaSaleL2 is Ownable, AccessControl {
         address recipient,
         uint256 amountInKNN,
         uint256 ref,
+        uint256 timestamp,
         bytes memory signature,
         uint256 nonce
     ) external {
         require(knnLocked >= amountInKNN, "Insufficient locked amount");
+        require(timestamp >= block.timestamp, "Signature expired");
 
         bytes32 signedMessage = ECDSA.toEthSignedMessageHash(
-            keccak256(abi.encode(_CLAIM_TYPEHASH_L2, recipient, amountInKNN, ref, nonce, block.chainid))
+            keccak256(abi.encode(_CLAIM_TYPEHASH_L2, recipient, amountInKNN, ref, timestamp, nonce, block.chainid))
         );
 
         address signer = ECDSA.recover(signedMessage, signature);
 
         _checkRole(CLAIM_MANAGER_ROLE, signer);
 
-        _claim(recipient, amountInKNN, ref);
+        _claim(recipient, amountInKNN, ref, block.chainid);
 
         knnLocked -= amountInKNN;
-        nonces[recipient] = nonce + 1;
     }
 
     /**
@@ -247,11 +237,15 @@ contract KannaSaleL2 is Ownable, AccessControl {
         emit Purchase(msg.sender, msg.value, knnPriceInUSD, maticPriceInUSD, finalAmount);
     }
 
-    function _claim(address recipient, uint256 amountInKNN, uint256 ref) internal virtual positiveAmount(amountInKNN) {
+    function _claim(address recipient, uint256 amountInKNN, uint256 ref, uint256 chainId) internal virtual positiveAmount(amountInKNN) {
         require(address(recipient) != address(0), "Invalid address");
         require(claims[ref] == false, "Already claimed");
 
-        knnToken.transfer(recipient, amountInKNN);
+        if (chainId == block.chainid) {
+            knnToken.transfer(recipient, amountInKNN);
+        } else {
+            childTunnel.withdrawTo(address(knnToken), recipient, amountInKNN);
+        }
 
         claims[ref] = true;
 
