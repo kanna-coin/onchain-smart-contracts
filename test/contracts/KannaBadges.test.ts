@@ -139,6 +139,20 @@ describe("Kanna Badges", () => {
       await deployContracts();
     });
 
+    describe("Contract Info", async () => {
+      it("should return name", async () => {
+        const name = await kannaBadges.name();
+
+        await expect(name).eq('Kanna Badges');
+      });
+
+      it("should return symbol", async () => {
+        const symbol = await kannaBadges.symbol();
+
+        await expect(symbol).eq('KNNB');
+      });
+    });
+
     describe("Register Token", async () => {
 
       it("should add manager", async () => {
@@ -829,10 +843,53 @@ describe("Kanna Badges", () => {
         expect(balance).eq(5);
       })
 
-
       it("should prevent empty address", async () => {
         await expect(kannaBadges["balanceOf(address)"](ethers.constants.AddressZero))
           .to.revertedWith("ERC1155: address zero is not a valid owner");
+      });
+    });
+
+    describe("Total supply", async () => {
+      beforeEach(async () => {
+        await registerTokens();
+      });
+
+      it("should return total supply", async () => {
+        const [, minterSession] = await getMinterSession();
+        const userWallet = await getUserWallet();
+        const user2Wallet = await getUser2Wallet();
+
+        const tokenId = 2;
+
+        await minterSession["mint(address,uint16)"](userWallet.address, tokenId);
+        await minterSession["mint(address,uint16)"](user2Wallet.address, tokenId);
+
+        const totalSupply = await kannaBadges.totalSupply(tokenId);
+
+        expect(totalSupply).eq(2);
+      });
+
+      it("should return total supply accumulative token", async () => {
+        const [, minterSession] = await getMinterSession();
+        const userWallet = await getUserWallet();
+        const user2Wallet = await getUser2Wallet();
+
+        const tokenId = 3;
+
+        await minterSession["mint(address,uint16,uint256)"](userWallet.address, tokenId, 2);
+        await minterSession["mint(address,uint16,uint256)"](user2Wallet.address, tokenId, 3);
+
+        const totalSupply = await kannaBadges.totalSupply(tokenId);
+
+        expect(totalSupply).eq(5);
+      });
+
+      it("should return empty total supply", async () => {
+        const tokenId = 2;
+
+        const totalSupply = await kannaBadges.totalSupply(tokenId);
+
+        expect(totalSupply).eq(0);
       });
     });
 
