@@ -226,6 +226,20 @@ describe("Kanna Badges", () => {
           );
       });
 
+      it("should list all registered tokens", async () => {
+        await registerTokens();
+
+        const registeredTokens = await kannaBadges.tokens();
+
+        expect(
+          registeredTokens.map(t => ({
+            id: t.id,
+            transferable: t.transferable,
+            accumulative: t.accumulative,
+          }))
+        ).to.have.deep.members(tokens);
+      });
+
       describe("should not", async () => {
         it("register `id` already registered", async () => {
           const [, managerSession] = await getManagerSession();

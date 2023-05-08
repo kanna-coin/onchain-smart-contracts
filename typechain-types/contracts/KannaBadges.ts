@@ -85,8 +85,8 @@ export interface KannaBadgesInterface extends utils.Interface {
     "setURI(string)": FunctionFragment;
     "supportsInterface(bytes4)": FunctionFragment;
     "symbol()": FunctionFragment;
-    "tokenIds(uint256)": FunctionFragment;
-    "tokens(uint16)": FunctionFragment;
+    "tokens()": FunctionFragment;
+    "tokensMap(uint16)": FunctionFragment;
     "totalSupply(uint256)": FunctionFragment;
     "transferOwnership(address)": FunctionFragment;
     "uri(uint256)": FunctionFragment;
@@ -126,8 +126,8 @@ export interface KannaBadgesInterface extends utils.Interface {
       | "setURI"
       | "supportsInterface"
       | "symbol"
-      | "tokenIds"
       | "tokens"
+      | "tokensMap"
       | "totalSupply"
       | "transferOwnership"
       | "uri"
@@ -279,12 +279,9 @@ export interface KannaBadgesInterface extends utils.Interface {
     values: [PromiseOrValue<BytesLike>]
   ): string;
   encodeFunctionData(functionFragment: "symbol", values?: undefined): string;
+  encodeFunctionData(functionFragment: "tokens", values?: undefined): string;
   encodeFunctionData(
-    functionFragment: "tokenIds",
-    values: [PromiseOrValue<BigNumberish>]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "tokens",
+    functionFragment: "tokensMap",
     values: [PromiseOrValue<BigNumberish>]
   ): string;
   encodeFunctionData(
@@ -395,8 +392,8 @@ export interface KannaBadgesInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "symbol", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "tokenIds", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "tokens", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "tokensMap", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "totalSupply",
     data: BytesLike
@@ -750,12 +747,11 @@ export interface KannaBadges extends BaseContract {
 
     symbol(overrides?: CallOverrides): Promise<[string]>;
 
-    tokenIds(
-      arg0: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<[number]>;
-
     tokens(
+      overrides?: CallOverrides
+    ): Promise<[KannaBadges.TokenStructOutput[]]>;
+
+    tokensMap(
       arg0: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<
@@ -951,12 +947,9 @@ export interface KannaBadges extends BaseContract {
 
   symbol(overrides?: CallOverrides): Promise<string>;
 
-  tokenIds(
-    arg0: PromiseOrValue<BigNumberish>,
-    overrides?: CallOverrides
-  ): Promise<number>;
+  tokens(overrides?: CallOverrides): Promise<KannaBadges.TokenStructOutput[]>;
 
-  tokens(
+  tokensMap(
     arg0: PromiseOrValue<BigNumberish>,
     overrides?: CallOverrides
   ): Promise<
@@ -1150,12 +1143,9 @@ export interface KannaBadges extends BaseContract {
 
     symbol(overrides?: CallOverrides): Promise<string>;
 
-    tokenIds(
-      arg0: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<number>;
+    tokens(overrides?: CallOverrides): Promise<KannaBadges.TokenStructOutput[]>;
 
-    tokens(
+    tokensMap(
       arg0: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<
@@ -1467,12 +1457,9 @@ export interface KannaBadges extends BaseContract {
 
     symbol(overrides?: CallOverrides): Promise<BigNumber>;
 
-    tokenIds(
-      arg0: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
+    tokens(overrides?: CallOverrides): Promise<BigNumber>;
 
-    tokens(
+    tokensMap(
       arg0: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
@@ -1665,12 +1652,9 @@ export interface KannaBadges extends BaseContract {
 
     symbol(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    tokenIds(
-      arg0: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
+    tokens(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    tokens(
+    tokensMap(
       arg0: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
