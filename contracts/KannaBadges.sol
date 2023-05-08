@@ -38,8 +38,8 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
         Token token;
     }
 
-    uint16[] private tokenIds;
     mapping(uint16 => Token) public tokensMap;
+    uint16 private _lastTokenId;
     mapping(uint16 => address) private _dynamicCheckers;
     mapping(uint16 => uint256) private _totalSupply;
     mapping(uint16 => mapping(address => uint16)) private _mintIncrementalNonces;
@@ -78,10 +78,10 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
      * @dev Returns all registered tokens.
      */
     function tokens() public view virtual returns(Token[] memory) {
-        Token[] memory memoryTokens = new Token[](tokenIds.length);
+        Token[] memory memoryTokens = new Token[](_lastTokenId);
 
-        for (uint i=0; i<tokenIds.length; i++) {
-            uint16 id = tokenIds[i];
+        for (uint16 i=0; i<_lastTokenId; i++) {
+            uint16 id = i + 1;
 
             memoryTokens[i] = tokensMap[id];
         }
@@ -96,8 +96,8 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
     function setURI(string memory uri_) public onlyOwner {
         _setURI(uri_);
 
-        for (uint i=0; i<tokenIds.length; i++) {
-            uint256 id = tokenIds[i];
+        for (uint16 i=0; i<_lastTokenId; i++) {
+            uint16 id = i + 1;
 
             emit URI(uri_, id);
         }
@@ -107,7 +107,7 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
      * @dev Indicates whether any token exist with a given id, or not.
      */
     function exists(uint256 id) public view virtual returns (bool) {
-        return tokensMap[uint16(id)].id > 0;
+        return id <= _lastTokenId;
     }
 
     /**
@@ -128,8 +128,8 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
 
         uint16 length;
 
-        for (uint i=0; i<tokenIds.length; i++) {
-            uint16 id = tokenIds[i];
+        for (uint16 i=0; i<_lastTokenId; i++) {
+            uint16 id = i + 1;
 
             if (balanceOf(account, id) > 0) {
                 length++;
@@ -142,8 +142,8 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
             return balances;
         }
 
-        for (uint i=0; i<tokenIds.length; i++) {
-            uint16 id = tokenIds[i];
+        for (uint16 i=0; i<_lastTokenId; i++) {
+            uint16 id = i + 1;
 
             if (balanceOf(account, id) > 0) {
                 balances[i] = TokenBalance(balanceOf(account, id), tokensMap[id]);
@@ -178,16 +178,14 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
      * - the caller must have MANAGER_ROLE.
      */
     function register(
-        uint16 id,
         bool transferable,
         bool accumulative
     ) public onlyRole(MANAGER_ROLE) {
-        require(!exists(id), "Token already exists");
+        _lastTokenId++;
 
-        tokensMap[id] = Token(id, transferable, accumulative);
-        tokenIds.push(id);
+        tokensMap[_lastTokenId] = Token(_lastTokenId, transferable, accumulative);
 
-        emit TokenRegistered(id, transferable, accumulative);
+        emit TokenRegistered(_lastTokenId, transferable, accumulative);
     }
 
     /** @dev Register a dynamic Token with a dynamic checker
@@ -200,7 +198,6 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
      * - the caller must have MANAGER_ROLE.
      */
     function register(
-        uint16 id,
         address checkerAddress
     ) public onlyRole(MANAGER_ROLE) {
         IDynamicBadgeChecker dynamicChecker = IDynamicBadgeChecker(checkerAddress);
@@ -210,9 +207,9 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
             "`checkerAddress` needs to implement `IDynamicBadgeChecker` interface"
         );
 
-        register(id, false, dynamicChecker.isAccumulative());
+        register(false, dynamicChecker.isAccumulative());
 
-        _dynamicCheckers[id] = checkerAddress;
+        _dynamicCheckers[_lastTokenId] = checkerAddress;
     }
 
     /** @dev Creates 1 tokens of token type `id`, and assigns them to `to`.
