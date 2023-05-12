@@ -476,11 +476,30 @@ describe('KNN SaleL2', () => {
 
       await managerSession.lockSupply(amount, ref);
 
-      const [messageHash, nonce] = await managerSession.claimHash(
-        userAccount.address,
-        amount,
-        ref
+      const nonce = ethers.BigNumber.from(
+        ethers.utils.hexlify(ethers.utils.randomBytes(32))
+      ).sub(1);
+
+      const claimTypeHash = ethers.utils.keccak256(
+        ethers.utils.toUtf8Bytes(
+          'Claim(address recipient,uint256 amountInKNN,uint256 ref,uint256 nonce,uint256 chainId)'
+        )
       );
+
+      const messageHash = ethers.utils.keccak256(
+        ethers.utils.defaultAbiCoder.encode(
+          ['bytes32', 'address', 'uint256', 'uint256', 'uint256', 'uint256'],
+          [
+            claimTypeHash,
+            userAccount.address,
+            amount,
+            ref,
+            nonce,
+            ethers.provider.network.chainId,
+          ]
+        )
+      );
+
       const signature = await managerAccount.signMessage(
         ethers.utils.arrayify(messageHash)
       );
@@ -579,70 +598,36 @@ describe('KNN SaleL2', () => {
       });
     });
 
-    describe('should not generate claim hash', async () => {
-      it('when invalid address', async () => {
-        const [, managerSession] = await getManagerSession();
-
-        await expect(
-          managerSession.claimHash(ethers.constants.AddressZero, 1, ref)
-        ).to.be.revertedWith('Invalid address');
-      });
-
-      it('when invalid amount', async () => {
-        const [, managerSession] = await getManagerSession();
-        const userAccount = await getUserWallet();
-
-        await expect(
-          managerSession.claimHash(userAccount.address, 0, ref)
-        ).to.be.revertedWith('Invalid amount');
-      });
-
-      it('when ref already claimed', async () => {
-        const [managerAccount, managerSession] = await getManagerSession();
-        const [userAccount, userSession] = await getUserSession();
-
-        const amount = 1;
-
-        await managerSession.lockSupply(amount, ref);
-
-        const [messageHash, nonce] = await managerSession.claimHash(
-          userAccount.address,
-          amount,
-          ref
-        );
-        const signature = await managerAccount.signMessage(
-          ethers.utils.arrayify(messageHash)
-        );
-
-        await expect(
-          userSession.claimLocked(
-            userAccount.address,
-            amount,
-            ref,
-            signature,
-            nonce
-          )
-        )
-          .to.emit(userSession, 'Claim')
-          .withArgs(userAccount.address, ref, amount);
-
-        await expect(
-          managerSession.claimHash(userAccount.address, amount, ref)
-        ).to.be.revertedWith('Already claimed');
-      });
-    });
-
     describe('should not claim locked', async () => {
       it('when claimable amount greater than locked', async () => {
         const [managerAccount, managerSession] = await getManagerSession();
         const userAccount = await getUserWallet();
         const amount = 1;
 
-        const [messageHash, nonce] = await managerSession.claimHash(
-          userAccount.address,
-          amount,
-          ref
+        const nonce = ethers.BigNumber.from(
+          ethers.utils.hexlify(ethers.utils.randomBytes(32))
+        ).sub(1);
+
+        const claimTypeHash = ethers.utils.keccak256(
+          ethers.utils.toUtf8Bytes(
+            'Claim(address recipient,uint256 amountInKNN,uint256 ref,uint256 nonce,uint256 chainId)'
+          )
         );
+
+        const messageHash = ethers.utils.keccak256(
+          ethers.utils.defaultAbiCoder.encode(
+            ['bytes32', 'address', 'uint256', 'uint256', 'uint256', 'uint256'],
+            [
+              claimTypeHash,
+              userAccount.address,
+              amount,
+              ref,
+              nonce,
+              ethers.provider.network.chainId,
+            ]
+          )
+        );
+
         const signature = await managerAccount.signMessage(
           ethers.utils.arrayify(messageHash)
         );
@@ -665,11 +650,30 @@ describe('KNN SaleL2', () => {
 
         await knnSaleL2.removeClaimManager(managerAccount.address);
 
-        const [messageHash, nonce] = await managerSession.claimHash(
-          userAccount.address,
-          amount,
-          ref
+        const nonce = ethers.BigNumber.from(
+          ethers.utils.hexlify(ethers.utils.randomBytes(32))
+        ).sub(1);
+
+        const claimTypeHash = ethers.utils.keccak256(
+          ethers.utils.toUtf8Bytes(
+            'Claim(address recipient,uint256 amountInKNN,uint256 ref,uint256 nonce,uint256 chainId)'
+          )
         );
+
+        const messageHash = ethers.utils.keccak256(
+          ethers.utils.defaultAbiCoder.encode(
+            ['bytes32', 'address', 'uint256', 'uint256', 'uint256', 'uint256'],
+            [
+              claimTypeHash,
+              userAccount.address,
+              amount,
+              ref,
+              nonce,
+              ethers.provider.network.chainId,
+            ]
+          )
+        );
+
         const signature = await managerAccount.signMessage(
           ethers.utils.arrayify(messageHash)
         );
@@ -692,11 +696,30 @@ describe('KNN SaleL2', () => {
         const [userAccount, userSession] = await getUserSession();
         const amount = 1;
 
-        const [messageHash, nonce] = await managerSession.claimHash(
-          userAccount.address,
-          amount,
-          ref
+        const nonce = ethers.BigNumber.from(
+          ethers.utils.hexlify(ethers.utils.randomBytes(32))
+        ).sub(1);
+
+        const claimTypeHash = ethers.utils.keccak256(
+          ethers.utils.toUtf8Bytes(
+            'Claim(address recipient,uint256 amountInKNN,uint256 ref,uint256 nonce,uint256 chainId)'
+          )
         );
+
+        const messageHash = ethers.utils.keccak256(
+          ethers.utils.defaultAbiCoder.encode(
+            ['bytes32', 'address', 'uint256', 'uint256', 'uint256', 'uint256'],
+            [
+              claimTypeHash,
+              userAccount.address,
+              amount,
+              ref,
+              nonce,
+              ethers.provider.network.chainId,
+            ]
+          )
+        );
+
         const signature = await managerAccount.signMessage(
           ethers.utils.arrayify(messageHash)
         );
@@ -728,11 +751,30 @@ describe('KNN SaleL2', () => {
         const [userAccount, userSession] = await getUserSession();
         const amount = 1;
 
-        const [messageHash, nonce] = await userSession.claimHash(
-          userAccount.address,
-          amount,
-          ref
+        const nonce = ethers.BigNumber.from(
+          ethers.utils.hexlify(ethers.utils.randomBytes(32))
+        ).sub(1);
+
+        const claimTypeHash = ethers.utils.keccak256(
+          ethers.utils.toUtf8Bytes(
+            'Claim(address recipient,uint256 amountInKNN,uint256 ref,uint256 nonce,uint256 chainId)'
+          )
         );
+
+        const messageHash = ethers.utils.keccak256(
+          ethers.utils.defaultAbiCoder.encode(
+            ['bytes32', 'address', 'uint256', 'uint256', 'uint256', 'uint256'],
+            [
+              claimTypeHash,
+              userAccount.address,
+              amount,
+              ref,
+              nonce,
+              ethers.provider.network.chainId,
+            ]
+          )
+        );
+
         const signature = await userAccount.signMessage(
           ethers.utils.arrayify(messageHash)
         );

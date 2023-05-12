@@ -38,7 +38,6 @@ export interface KannaSaleL2Interface extends utils.Interface {
     "availableSupply()": FunctionFragment;
     "buyTokens()": FunctionFragment;
     "claim(address,uint256,uint256)": FunctionFragment;
-    "claimHash(address,uint256,uint256)": FunctionFragment;
     "claimLocked(address,uint256,uint256,bytes,uint256)": FunctionFragment;
     "convertToKNN(uint256)": FunctionFragment;
     "convertToWEI(uint256)": FunctionFragment;
@@ -72,7 +71,6 @@ export interface KannaSaleL2Interface extends utils.Interface {
       | "availableSupply"
       | "buyTokens"
       | "claim"
-      | "claimHash"
       | "claimLocked"
       | "convertToKNN"
       | "convertToWEI"
@@ -123,14 +121,6 @@ export interface KannaSaleL2Interface extends utils.Interface {
   encodeFunctionData(functionFragment: "buyTokens", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "claim",
-    values: [
-      PromiseOrValue<string>,
-      PromiseOrValue<BigNumberish>,
-      PromiseOrValue<BigNumberish>
-    ]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "claimHash",
     values: [
       PromiseOrValue<string>,
       PromiseOrValue<BigNumberish>,
@@ -245,7 +235,6 @@ export interface KannaSaleL2Interface extends utils.Interface {
   ): Result;
   decodeFunctionResult(functionFragment: "buyTokens", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "claim", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "claimHash", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "claimLocked",
     data: BytesLike
@@ -482,13 +471,6 @@ export interface KannaSaleL2 extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
-    claimHash(
-      recipient: PromiseOrValue<string>,
-      amountInKNN: PromiseOrValue<BigNumberish>,
-      ref: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<[string, BigNumber]>;
-
     claimLocked(
       recipient: PromiseOrValue<string>,
       amountInKNN: PromiseOrValue<BigNumberish>,
@@ -615,13 +597,6 @@ export interface KannaSaleL2 extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
-  claimHash(
-    recipient: PromiseOrValue<string>,
-    amountInKNN: PromiseOrValue<BigNumberish>,
-    ref: PromiseOrValue<BigNumberish>,
-    overrides?: CallOverrides
-  ): Promise<[string, BigNumber]>;
-
   claimLocked(
     recipient: PromiseOrValue<string>,
     amountInKNN: PromiseOrValue<BigNumberish>,
@@ -745,13 +720,6 @@ export interface KannaSaleL2 extends BaseContract {
       ref: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<void>;
-
-    claimHash(
-      recipient: PromiseOrValue<string>,
-      amountInKNN: PromiseOrValue<BigNumberish>,
-      ref: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<[string, BigNumber]>;
 
     claimLocked(
       recipient: PromiseOrValue<string>,
@@ -975,13 +943,6 @@ export interface KannaSaleL2 extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
-    claimHash(
-      recipient: PromiseOrValue<string>,
-      amountInKNN: PromiseOrValue<BigNumberish>,
-      ref: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
     claimLocked(
       recipient: PromiseOrValue<string>,
       amountInKNN: PromiseOrValue<BigNumberish>,
@@ -1113,13 +1074,6 @@ export interface KannaSaleL2 extends BaseContract {
       amountInKNN: PromiseOrValue<BigNumberish>,
       ref: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    claimHash(
-      recipient: PromiseOrValue<string>,
-      amountInKNN: PromiseOrValue<BigNumberish>,
-      ref: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
     claimLocked(

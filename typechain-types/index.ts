@@ -36,6 +36,8 @@ export type { IERC165 } from "./@openzeppelin/contracts/utils/introspection/IERC
 export { IERC165__factory } from "./factories/@openzeppelin/contracts/utils/introspection/IERC165__factory";
 export type { DynamicBadgeChecker } from "./contracts/DynamicBadgeChecker";
 export { DynamicBadgeChecker__factory } from "./factories/contracts/DynamicBadgeChecker__factory";
+export type { FxERC20ChildTunnel } from "./contracts/interfaces/FxERC20ChildTunnel";
+export { FxERC20ChildTunnel__factory } from "./factories/contracts/interfaces/FxERC20ChildTunnel__factory";
 export type { IDynamicBadgeChecker } from "./contracts/interfaces/IDynamicBadgeChecker";
 export { IDynamicBadgeChecker__factory } from "./factories/contracts/interfaces/IDynamicBadgeChecker__factory";
 export type { KannaBadges } from "./contracts/KannaBadges";
