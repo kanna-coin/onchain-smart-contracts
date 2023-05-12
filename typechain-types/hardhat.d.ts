@@ -69,6 +69,10 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.DynamicBadgeChecker__factory>;
     getContractFactory(
+      name: "FxERC20ChildTunnel",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.FxERC20ChildTunnel__factory>;
+    getContractFactory(
       name: "IDynamicBadgeChecker",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IDynamicBadgeChecker__factory>;
@@ -171,6 +175,11 @@ declare module "hardhat/types/runtime" {
       address: string,
       signer?: ethers.Signer
     ): Promise<Contracts.DynamicBadgeChecker>;
+    getContractAt(
+      name: "FxERC20ChildTunnel",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.FxERC20ChildTunnel>;
     getContractAt(
       name: "IDynamicBadgeChecker",
       address: string,
