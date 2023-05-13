@@ -205,7 +205,7 @@ describe("KNN Token", () => {
         expect(balance1).to.eq(1e25);
 
         await expect(minterSession.mint(ethers.utils.parseEther("10500000.0")))
-          .to.be.revertedWith("Maximum Supply reached");
+          .to.be.revertedWith("Maximum Supply reached!");
       });
 
       it("should prevent minting when MINTER_ROLE not present", async () => {

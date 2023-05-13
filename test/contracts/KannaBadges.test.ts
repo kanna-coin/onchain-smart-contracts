@@ -1,5 +1,5 @@
 import { ethers } from "hardhat";
-import { utils } from "ethers";
+import { ContractTransaction, utils } from "ethers";
 import chai from "chai";
 import chaiAsPromised from "chai-as-promised";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
@@ -10,6 +10,7 @@ import {
   IERC1155MetadataURI__factory,
   IERC165__factory,
 } from "../../typechain-types";
+import { TokenRegisteredEvent } from "../../typechain-types/contracts/KannaBadges";
 import { getKannaBadges, getDynamicBadgeCheckerMock } from "../../src/infrastructure/factories";
 
 chai.use(chaiAsPromised);
@@ -29,16 +30,17 @@ export function getInterfaceID(...contractInterfaces: utils.Interface[]) {
   return interfaceID._hex.padEnd(10, '0');
 }
 
-const tokens = [
-  { id: 2, transferable: false, accumulative: false },
-  { id: 3, transferable: true, accumulative: true },
-  { id: 4, transferable: true, accumulative: false },
-  { id: 5, transferable: false, accumulative: true },
+const tokensTemplate = [
+  { transferable: false, accumulative: false },
+  { transferable: true, accumulative: true },
+  { transferable: true, accumulative: false },
+  { transferable: false, accumulative: true },
 ];
 
 describe("Kanna Badges", () => {
   let signers: SignerWithAddress[];
   let kannaBadges: KannaBadges;
+  let tokens: KannaBadges.TokenStruct[];
 
   const deployContracts = async () => {
     signers = await ethers.getSigners();
@@ -126,17 +128,65 @@ describe("Kanna Badges", () => {
     return [userWallet, managerSession];
   };
 
+  const getTokenRegisteredEvent = async (tx: ContractTransaction) => {
+    const receipt = await tx.wait();
+
+    const registerEvent = (receipt?.events ?? []).find(e => e.event === 'TokenRegistered') as TokenRegisteredEvent;
+
+    return registerEvent;
+  };
+
   const registerTokens = async () => {
     const [, managerSession] = await getManagerSession();
 
-    for await (const token of tokens) {
-      await managerSession["register(uint16,bool,bool)"](token.id, token.transferable, token.accumulative);
+    for await (const token of tokensTemplate) {
+      const tx = await managerSession["register(bool,bool)"](token.transferable, token.accumulative);
+
+      const event = await getTokenRegisteredEvent(tx);
+
+      tokens.push({
+        id: event.args.id,
+        transferable: event.args.transferable,
+        accumulative: event.args.accumulative,
+      });
     }
   }
+
+  const getTokenId = (tokenType: Partial<KannaBadges.TokenStruct> = {}) => {
+    const properties = Object.keys(tokenType) as (keyof KannaBadges.TokenStruct)[];
+
+    if (properties.length === 0) {
+      return tokens[0].id;
+    }
+
+    const token = tokens.find(t => properties.every(p => t[p] === tokenType[p]));
+
+    if (!token) {
+      throw new Error('Token not registered');
+    }
+
+    return token.id;
+  };
 
   describe("Setup", async () => {
     beforeEach(async () => {
       await deployContracts();
+
+      tokens = [];
+    });
+
+    describe("Contract Info", async () => {
+      it("should return name", async () => {
+        const name = await kannaBadges.name();
+
+        await expect(name).eq('Kanna Badges');
+      });
+
+      it("should return symbol", async () => {
+        const symbol = await kannaBadges.symbol();
+
+        await expect(symbol).eq('KNNB');
+      });
     });
 
     describe("Register Token", async () => {
@@ -174,11 +224,13 @@ describe("Kanna Badges", () => {
       it("should register token", async () => {
         const [, managerSession] = await getManagerSession();
 
-        for await (const token of tokens) {
-          await expect(managerSession["register(uint16,bool,bool)"](token.id, token.transferable, token.accumulative))
+        let id = 0;
+
+        for await (const token of tokensTemplate) {
+          await expect(managerSession["register(bool,bool)"](token.transferable, token.accumulative))
             .to.emit(kannaBadges, "TokenRegistered")
             .withArgs(
-              token.id,
+              ++id,
               token.transferable,
               token.accumulative
             );
@@ -193,7 +245,7 @@ describe("Kanna Badges", () => {
 
         await dynamicChecker.mock.isAccumulative.returns(true);
 
-        await expect(managerSession["register(uint16,address)"](1, dynamicChecker.address))
+        await expect(managerSession["register(address)"](dynamicChecker.address))
           .to.emit(kannaBadges, "TokenRegistered")
           .withArgs(
             1,
@@ -203,7 +255,7 @@ describe("Kanna Badges", () => {
 
         await dynamicChecker.mock.isAccumulative.returns(false);
 
-        await expect(managerSession["register(uint16,address)"](2, dynamicChecker.address))
+        await expect(managerSession["register(address)"](dynamicChecker.address))
           .to.emit(kannaBadges, "TokenRegistered")
           .withArgs(
             2,
@@ -212,22 +264,21 @@ describe("Kanna Badges", () => {
           );
       });
 
+      it("should list all registered tokens", async () => {
+        await registerTokens();
+
+        const registeredTokens = await kannaBadges.tokens();
+
+        expect(
+          registeredTokens.map(t => ({
+            id: t.id,
+            transferable: t.transferable,
+            accumulative: t.accumulative,
+          }))
+        ).to.have.deep.members(tokens);
+      });
+
       describe("should not", async () => {
-        it("register `id` already registered", async () => {
-          const [, managerSession] = await getManagerSession();
-
-          await expect(managerSession["register(uint16,bool,bool)"](1, false, false))
-            .to.emit(kannaBadges, "TokenRegistered")
-            .withArgs(
-              1,
-              false,
-              false
-            );
-
-          await expect(managerSession["register(uint16,bool,bool)"](1, false, false))
-            .to.revertedWith("Token already exists")
-        });
-
         it("register invalid dynamic badge checker", async () => {
           const deployerWallet = await getDeployerWallet();
           const [, managerSession] = await getManagerSession();
@@ -236,7 +287,7 @@ describe("Kanna Badges", () => {
 
           await dynamicChecker.mock.supportsInterface.returns(false);
 
-          await expect(managerSession["register(uint16,address)"](1, dynamicChecker.address))
+          await expect(managerSession["register(address)"](dynamicChecker.address))
             .to.revertedWith('`checkerAddress` needs to implement `IDynamicBadgeChecker` interface');
         });
 
@@ -244,7 +295,7 @@ describe("Kanna Badges", () => {
           it("register", async () => {
             const [, userSession] = await getUserSession();
 
-            await expect(userSession["register(uint16,bool,bool)"](1, false, false))
+            await expect(userSession["register(bool,bool)"](false, false))
               .to.reverted;
           });
 
@@ -254,7 +305,7 @@ describe("Kanna Badges", () => {
 
             const dynamicChecker = await getDynamicBadgeCheckerMock(deployerWallet);
 
-            await expect(userSession["register(uint16,address)"](1, dynamicChecker.address))
+            await expect(userSession["register(address)"](dynamicChecker.address))
               .to.reverted;
           });
         });
@@ -277,9 +328,11 @@ describe("Kanna Badges", () => {
 
         await registerTokens();
 
+        const registeredTokens = await kannaBadges.tokens();
+
         const tx = kannaBadges.setURI(uri);
 
-        for await (const token of tokens) {
+        for await (const token of registeredTokens) {
           await expect(tx)
             .to.emit(kannaBadges, "URI")
             .withArgs(
@@ -329,7 +382,7 @@ describe("Kanna Badges", () => {
         const [minterWallet, minterSession] = await getMinterSession();
         const userWallet = await getUserWallet();
 
-        const tokenId = 2;
+        const tokenId = getTokenId();
 
         await expect(minterSession["mint(address,uint16)"](userWallet.address, tokenId))
           .to.emit(kannaBadges, "TransferSingle")
@@ -357,7 +410,7 @@ describe("Kanna Badges", () => {
         const [minterWallet, minterSession] = await getMinterSession();
         const userWallet = await getUserWallet();
 
-        const tokenId = 3;
+        const tokenId = getTokenId({ accumulative: true });
         const amount = 5;
 
         await expect(minterSession["mint(address,uint16,uint256)"](userWallet.address, tokenId, amount))
@@ -387,12 +440,14 @@ describe("Kanna Badges", () => {
         const userWallet = await getUserWallet();
         const user2Wallet = await getUser2Wallet();
 
-        const tokenId = 2;
+        const tokenId = getTokenId();
 
-        await expect(minterSession.batchMint(tokenId, [
+        const tx = minterSession.batchMint(tokenId, [
           userWallet.address,
           user2Wallet.address,
-        ]))
+        ]);
+
+        await expect(tx)
           .to.emit(kannaBadges, "TransferSingle")
           .withArgs(
             minterWallet.address,
@@ -400,7 +455,9 @@ describe("Kanna Badges", () => {
             userWallet.address,
             tokenId,
             1
-          )
+          );
+
+        await expect(tx)
           .to.emit(kannaBadges, "TransferSingle")
           .withArgs(
             minterWallet.address,
@@ -408,14 +465,18 @@ describe("Kanna Badges", () => {
             user2Wallet.address,
             tokenId,
             1
-          )
+          );
+
+        await expect(tx)
           .to.emit(kannaBadges, "Mint")
           .withArgs(
             userWallet.address,
             tokenId,
             1,
             1
-          )
+          );
+
+        await expect(tx)
           .to.emit(kannaBadges, "Mint")
           .withArgs(
             user2Wallet.address,
@@ -437,7 +498,7 @@ describe("Kanna Badges", () => {
         const [minterWallet] = await getMinterSession();
         const [userWallet, userSession] = await getUserSession();
 
-        const tokenId = 3;
+        const tokenId = getTokenId({ accumulative: true });
         const amount = 5;
         const incremental = 1;
 
@@ -456,14 +517,16 @@ describe("Kanna Badges", () => {
 
         const signature = await minterWallet.signMessage(ethers.utils.arrayify(messageHash));
 
-        await expect(userSession["mint(address,uint16,uint256,bytes,uint16,uint256)"](
+        const tx = userSession["mint(address,uint16,uint256,bytes,uint16,uint256)"](
           userWallet.address,
           tokenId,
           amount,
           signature,
           incremental,
           nonce,
-        ))
+        );
+
+        await expect(tx)
           .to.emit(kannaBadges, "TransferSingle")
           .withArgs(
             userWallet.address,
@@ -471,7 +534,9 @@ describe("Kanna Badges", () => {
             userWallet.address,
             tokenId,
             amount
-          )
+          );
+
+        await expect(tx)
           .to.emit(kannaBadges, "Mint")
           .withArgs(
             userWallet.address,
@@ -489,10 +554,12 @@ describe("Kanna Badges", () => {
         const [minterWallet, minterSession] = await getMinterSession();
         const userWallet = await getUserWallet();
 
-        const tokenId = 3;
+        const tokenId = getTokenId({ accumulative: true });
 
         for (let i = 1; i < 5; i++) {
-          await expect(minterSession["mint(address,uint16)"](userWallet.address, tokenId))
+          const tx = minterSession["mint(address,uint16)"](userWallet.address, tokenId);
+
+          await expect(tx)
             .to.emit(kannaBadges, "TransferSingle")
             .withArgs(
               minterWallet.address,
@@ -500,7 +567,9 @@ describe("Kanna Badges", () => {
               userWallet.address,
               tokenId,
               1
-            )
+            );
+
+          await expect(tx)
             .to.emit(kannaBadges, "Mint")
             .withArgs(
               userWallet.address,
@@ -518,14 +587,18 @@ describe("Kanna Badges", () => {
           const [, minterSession] = await getMinterSession();
           const userWallet = await getUserWallet();
 
-          const tokenId = 1;
 
           const dynamicChecker = await getDynamicBadgeCheckerMock(deployerWallet);
 
           await dynamicChecker.mock.isAccumulative.returns(false);
-          await dynamicChecker.mock.balanceOf.withArgs(userWallet.address, tokenId).returns(0);
 
-          await managerSession["register(uint16,address)"](tokenId, dynamicChecker.address);
+          const tx = await managerSession["register(address)"](dynamicChecker.address);
+
+          const event = await getTokenRegisteredEvent(tx);
+
+          const tokenId = event.args.id;
+
+          await dynamicChecker.mock.balanceOf.withArgs(userWallet.address, tokenId).returns(0);
 
           await expect(minterSession["mint(address,uint16)"](userWallet.address, tokenId))
             .to.revertedWith('Token is not mintable');
@@ -536,7 +609,9 @@ describe("Kanna Badges", () => {
             const [, userSession] = await getUserSession();
             const user2Wallet = await getUser2Wallet();
 
-            await expect(userSession["mint(address,uint16)"](user2Wallet.address, 2))
+            const tokenId = getTokenId();
+
+            await expect(userSession["mint(address,uint16)"](user2Wallet.address, tokenId))
               .to.reverted;
           });
 
@@ -544,7 +619,9 @@ describe("Kanna Badges", () => {
             const [, userSession] = await getUserSession();
             const user2Wallet = await getUser2Wallet();
 
-            await expect(userSession["mint(address,uint16,uint256)"](user2Wallet.address, 3, 5))
+            const tokenId = getTokenId();
+
+            await expect(userSession["mint(address,uint16,uint256)"](user2Wallet.address, tokenId, 5))
               .to.reverted;
           });
 
@@ -552,7 +629,9 @@ describe("Kanna Badges", () => {
             const [, userSession] = await getUserSession();
             const user2Wallet = await getUser2Wallet();
 
-            await expect(userSession.batchMint(2, [user2Wallet.address]))
+            const tokenId = getTokenId();
+
+            await expect(userSession.batchMint(tokenId, [user2Wallet.address]))
               .to.reverted;
           });
 
@@ -560,7 +639,7 @@ describe("Kanna Badges", () => {
             const [userWallet, userSession] = await getUserSession();
             const user2Wallet = await getUser2Wallet();
 
-            const tokenId = 3;
+            const tokenId = getTokenId({ accumulative: true });
             const amount = 5;
             const incremental = 1;
 
@@ -666,7 +745,7 @@ describe("Kanna Badges", () => {
             const [, minterSession] = await getMinterSession();
             const userWallet = await getUserWallet();
 
-            const tokenId = 2;
+            const tokenId = getTokenId({ accumulative: false });
 
             await minterSession["mint(address,uint16)"](userWallet.address, tokenId);
 
@@ -678,7 +757,7 @@ describe("Kanna Badges", () => {
             const [, minterSession] = await getMinterSession();
             const userWallet = await getUserWallet();
 
-            const tokenId = 2;
+            const tokenId = getTokenId({ accumulative: false });
 
             await expect(minterSession["mint(address,uint16,uint256)"](userWallet.address, tokenId, 2))
               .to.revertedWith(`Token is not accumulative`);
@@ -690,7 +769,7 @@ describe("Kanna Badges", () => {
             const [minterWallet] = await getMinterSession();
             const [userWallet, userSession] = await getUserSession();
 
-            const tokenId = 3;
+            const tokenId = getTokenId({ accumulative: true });
             const amount = 5;
             const incremental = 2;
 
@@ -724,7 +803,7 @@ describe("Kanna Badges", () => {
             const [minterWallet] = await getMinterSession();
             const [userWallet, userSession] = await getUserSession();
 
-            const tokenId = 3;
+            const tokenId = getTokenId({ accumulative: true });
             const amount = 5;
             const incremental = 1;
 
@@ -790,16 +869,19 @@ describe("Kanna Badges", () => {
         const [, minterSession] = await getMinterSession();
         const userWallet = await getUserWallet();
 
-        await minterSession["mint(address,uint16)"](userWallet.address, 2);
-        await minterSession["mint(address,uint16,uint256)"](userWallet.address, 3, 5);
+        const token1Id = getTokenId({ accumulative: false });
+        const token2Id = getTokenId({ accumulative: true });
+
+        await minterSession["mint(address,uint16)"](userWallet.address, token1Id);
+        await minterSession["mint(address,uint16,uint256)"](userWallet.address, token2Id, 5);
 
         const balances = await kannaBadges["balanceOf(address)"](userWallet.address);
 
-        const token2Balance = balances.find(b => b.token.id === 2);
-        const token3Balance = balances.find(b => b.token.id === 3);
+        const token1Balance = balances.find(b => b.token.id === token1Id);
+        const token2Balance = balances.find(b => b.token.id === token2Id);
 
-        expect(token2Balance?.balance).eq(1);
-        expect(token3Balance?.balance).eq(5);
+        expect(token1Balance?.balance).eq(1);
+        expect(token2Balance?.balance).eq(5);
       });
 
       it("should get empty array", async () => {
@@ -815,24 +897,70 @@ describe("Kanna Badges", () => {
         const [, managerSession] = await getManagerSession();
         const userWallet = await getUserWallet();
 
-        const tokenId = 1;
-
         const dynamicChecker = await getDynamicBadgeCheckerMock(deployerWallet);
 
         await dynamicChecker.mock.isAccumulative.returns(true);
-        await dynamicChecker.mock.balanceOf.withArgs(userWallet.address, tokenId).returns(5);
 
-        await managerSession["register(uint16,address)"](1, dynamicChecker.address);
+        const tx = await managerSession["register(address)"](dynamicChecker.address);
+
+        const event = await getTokenRegisteredEvent(tx);
+
+        const tokenId = event.args.id;
+
+        await dynamicChecker.mock.balanceOf.withArgs(userWallet.address, tokenId).returns(5);
 
         const balance = await kannaBadges["balanceOf(address,uint256)"](userWallet.address, tokenId);
 
         expect(balance).eq(5);
       })
 
-
       it("should prevent empty address", async () => {
         await expect(kannaBadges["balanceOf(address)"](ethers.constants.AddressZero))
           .to.revertedWith("ERC1155: address zero is not a valid owner");
+      });
+    });
+
+    describe("Total supply", async () => {
+      beforeEach(async () => {
+        await registerTokens();
+      });
+
+      it("should return total supply", async () => {
+        const [, minterSession] = await getMinterSession();
+        const userWallet = await getUserWallet();
+        const user2Wallet = await getUser2Wallet();
+
+        const tokenId = getTokenId();
+
+        await minterSession["mint(address,uint16)"](userWallet.address, tokenId);
+        await minterSession["mint(address,uint16)"](user2Wallet.address, tokenId);
+
+        const totalSupply = await kannaBadges.totalSupply(tokenId);
+
+        expect(totalSupply).eq(2);
+      });
+
+      it("should return total supply accumulative token", async () => {
+        const [, minterSession] = await getMinterSession();
+        const userWallet = await getUserWallet();
+        const user2Wallet = await getUser2Wallet();
+
+        const tokenId = getTokenId({ accumulative: true });
+
+        await minterSession["mint(address,uint16,uint256)"](userWallet.address, tokenId, 2);
+        await minterSession["mint(address,uint16,uint256)"](user2Wallet.address, tokenId, 3);
+
+        const totalSupply = await kannaBadges.totalSupply(tokenId);
+
+        expect(totalSupply).eq(5);
+      });
+
+      it("should return empty total supply", async () => {
+        const tokenId = getTokenId();
+
+        const totalSupply = await kannaBadges.totalSupply(tokenId);
+
+        expect(totalSupply).eq(0);
       });
     });
 
@@ -846,7 +974,7 @@ describe("Kanna Badges", () => {
         const [userWallet, userSession] = await getUserSession();
         const user2Wallet = await getUser2Wallet();
 
-        const tokenId = 3;
+        const tokenId = getTokenId({ transferable: true });
         const amount = 1;
 
         await minterSession["mint(address,uint16)"](userWallet.address, tokenId);
@@ -867,7 +995,7 @@ describe("Kanna Badges", () => {
         const [userWallet, userSession] = await getUserSession();
         const user2Wallet = await getUser2Wallet();
 
-        const tokenId = 2;
+        const tokenId = getTokenId({ transferable: false });
         const amount = 1;
 
         await minterSession["mint(address,uint16)"](userWallet.address, tokenId);

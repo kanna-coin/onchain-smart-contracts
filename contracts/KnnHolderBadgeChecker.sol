@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.17;
+pragma solidity ^0.8.18;
 
 import {DynamicBadgeChecker} from './DynamicBadgeChecker.sol';
 import {KannaToken} from './KannaToken.sol';
 
 contract KnnHolderBadgeChecker is DynamicBadgeChecker {
 
-    KannaToken public immutable knnToken;
+    KannaToken private immutable knnToken;
 
     constructor(
         address _knnToken
