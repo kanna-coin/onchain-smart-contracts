@@ -2,6 +2,7 @@
 /* tslint:disable */
 /* eslint-disable */
 export * as interfaces from "./interfaces";
+export * as mocks from "./mocks";
 export { DynamicBadgeChecker__factory } from "./DynamicBadgeChecker__factory";
 export { KannaBadges__factory } from "./KannaBadges__factory";
 export { KannaPreSale__factory } from "./KannaPreSale__factory";

@@ -104,6 +104,10 @@ declare module "hardhat/types/runtime" {
       name: "KnnHolderBadgeChecker",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.KnnHolderBadgeChecker__factory>;
+    getContractFactory(
+      name: "AggregatorV3Mock",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.AggregatorV3Mock__factory>;
 
     getContractAt(
       name: "AggregatorV3Interface",
@@ -220,6 +224,11 @@ declare module "hardhat/types/runtime" {
       address: string,
       signer?: ethers.Signer
     ): Promise<Contracts.KnnHolderBadgeChecker>;
+    getContractAt(
+      name: "AggregatorV3Mock",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.AggregatorV3Mock>;
 
     // default types
     getContractFactory(

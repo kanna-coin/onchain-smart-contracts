@@ -54,3 +54,5 @@ export type { KannaYield } from "./contracts/KannaYield";
 export { KannaYield__factory } from "./factories/contracts/KannaYield__factory";
 export type { KnnHolderBadgeChecker } from "./contracts/KnnHolderBadgeChecker";
 export { KnnHolderBadgeChecker__factory } from "./factories/contracts/KnnHolderBadgeChecker__factory";
+export type { AggregatorV3Mock } from "./contracts/mocks/AggregatorV3Mock";
+export { AggregatorV3Mock__factory } from "./factories/contracts/mocks/AggregatorV3Mock__factory";

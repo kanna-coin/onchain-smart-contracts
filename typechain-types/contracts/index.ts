@@ -3,6 +3,8 @@
 /* eslint-disable */
 import type * as interfaces from "./interfaces";
 export type { interfaces };
+import type * as mocks from "./mocks";
+export type { mocks };
 export type { DynamicBadgeChecker } from "./DynamicBadgeChecker";
 export type { KannaBadges } from "./KannaBadges";
 export type { KannaPreSale } from "./KannaPreSale";
