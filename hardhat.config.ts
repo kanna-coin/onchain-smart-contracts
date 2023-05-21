@@ -8,35 +8,21 @@ import "@typechain/hardhat";
 import "@nomiclabs/hardhat-etherscan";
 import "solidity-coverage";
 
+interface CustomNetworkConfig {
+  tokenAddress?: string;
+  priceAggregator?: string;
+}
+
 declare module "hardhat/types" {
-  export interface HardhatNetworkConfig {
-    priceAggregator?: string;
-  }
-
-  export interface HttpNetworkConfig {
-    priceAggregator?: string;
-  }
-
-  export interface HardhatNetworkUserConfig {
-    priceAggregator?: string;
-  }
-
-  export interface HttpNetworkUserConfig {
-    priceAggregator?: string;
-  }
+  export interface HardhatNetworkConfig extends CustomNetworkConfig { }
+  export interface HttpNetworkConfig extends CustomNetworkConfig { }
+  export interface HardhatNetworkUserConfig extends CustomNetworkConfig { }
+  export interface HttpNetworkUserConfig extends CustomNetworkConfig { }
 }
-
-interface Etherscan {
-  etherscan: {
-    apiKey: Record<string, string | undefined>
-  };
-}
-
-type HardhatUserEtherscanConfig = HardhatUserConfig & Etherscan;
 
 const PRIVATE_KEY = process.env.PRIVATE_KEY as string;
 
-const config: HardhatUserEtherscanConfig = {
+const config: HardhatUserConfig = {
   defaultNetwork: "hardhat",
   solidity: {
     compilers: [{ version: "0.8.17", settings: {} }],
@@ -54,27 +40,32 @@ const config: HardhatUserEtherscanConfig = {
           order: "fifo",
         },
       },
+      tokenAddress: process.env.TOKEN_ADDRESS,
       priceAggregator: process.env.PRICE_AGGREGATOR_ADDRESS,
     },
     localhost: {},
     goerli: {
       url: process.env.GOERLI_RPC_NODE_ENDPOINT || process.env.RPC_NODE_ENDPOINT,
       accounts: [process.env.GOERLI_PRIVATE_KEY || PRIVATE_KEY],
+      tokenAddress: process.env.GOERLI_TOKEN_ADDRESS || process.env.TOKEN_ADDRESS,
       priceAggregator: process.env.GOERLI_PRICE_AGGREGATOR_ADDRESS,
     },
     sepolia: {
       url: process.env.SEPOLIA_RPC_NODE_ENDPOINT || process.env.RPC_NODE_ENDPOINT,
       accounts: [process.env.SEPOLIA_PRIVATE_KEY || PRIVATE_KEY],
+      tokenAddress: process.env.SEPOLIA_TOKEN_ADDRESS || process.env.TOKEN_ADDRESS,
       priceAggregator: process.env.SEPOLIA_PRICE_AGGREGATOR_ADDRESS,
     },
     polygon: {
       url: process.env.POLYGON_RPC_NODE_ENDPOINT || process.env.RPC_NODE_ENDPOINT,
       accounts: [process.env.POLYGON_PRIVATE_KEY || PRIVATE_KEY],
+      tokenAddress: process.env.POLYGON_TOKEN_ADDRESS || process.env.TOKEN_ADDRESS,
       priceAggregator: process.env.POLYGON_PRICE_AGGREGATOR_ADDRESS,
     },
-    mumbai: {
+    polygonMumbai: {
       url: process.env.MUMBAI_RPC_NODE_ENDPOINT || process.env.RPC_NODE_ENDPOINT,
       accounts: [process.env.MUMBAI_PRIVATE_KEY || PRIVATE_KEY],
+      tokenAddress: process.env.MUMBAI_TOKEN_ADDRESS || process.env.TOKEN_ADDRESS,
       priceAggregator: process.env.MUMBAI_PRICE_AGGREGATOR_ADDRESS,
     },
     coverage: {
@@ -83,11 +74,11 @@ const config: HardhatUserEtherscanConfig = {
   },
   etherscan: {
     apiKey: {
-      mainnet: process.env.ETHERSCAN_API_KEY,
-      goerli: process.env.ETHERSCAN_API_KEY,
-      sepolia: process.env.ETHERSCAN_API_KEY,
-      polygon: process.env.POLYGONSCAN_API_KEY,
-      mumbai: process.env.POLYGONSCAN_API_KEY,
+      mainnet: process.env.ETHERSCAN_API_KEY || '',
+      goerli: process.env.ETHERSCAN_API_KEY || '',
+      sepolia: process.env.ETHERSCAN_API_KEY || '',
+      polygon: process.env.POLYGONSCAN_API_KEY || '',
+      polygonMumbai: process.env.POLYGONSCAN_API_KEY || '',
     }
   },
 };

@@ -10,10 +10,10 @@
     "test": "npx hardhat test --network hardhat",
     "node": "npx hardhat node",
     "coverage": "npm run build && npx hardhat coverage --temp artifacts",
-    "deploy:token": "npx hardhat run --network localhost deploy/1_KannaToken_deploy.ts",
-    "deploy:yield": "npx hardhat run --network localhost deploy/2_KannaYield_deploy.ts",
-    "deploy:presale": "npx hardhat run --network localhost deploy/3_KannaPreSale_deploy.ts",
-    "deploy": "npx hardhat run --network localhost deploy/kanna-go-live-sale.ts"
+    "deploy:token": "npx hardhat run --network localhost deploy/kanna-go-live-token.ts",
+    "deploy:yield": "npx hardhat run --network localhost deploy/kanna-go-live-yield.ts",
+    "deploy:presale": "npx hardhat run --network localhost deploy/kanna-go-live-presale.ts",
+    "deploy:sale": "npx hardhat run --network localhost deploy/kanna-go-live-sale.ts"
   },
   "repository": {
     "type": "git",
@@ -35,7 +35,7 @@
     "@typechain/hardhat": "^6.1.4",
     "@types/chai": "^4.2.18",
     "@types/chai-as-promised": "^7.1.1",
-    "@types/mocha": "^8.2.2",
+    "@types/mocha": "^10.0.1",
     "@types/node": "^16.18.3",
     "chai": "^4.3.4",
     "chai-as-promised": "^7.1.1",
