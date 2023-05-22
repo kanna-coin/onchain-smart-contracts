@@ -1,6 +1,6 @@
 import { ethers, run } from "hardhat";
 import "@nomiclabs/hardhat-etherscan";
-import { getKnnSale, getSaleParameters } from "../src/infrastructure/factories";
+import { getKnnToken } from "../src/infrastructure/factories";
 
 const sleep = (seconds: number) =>
   new Promise((resolve) => setTimeout(resolve, 1000 * seconds));
@@ -8,19 +8,14 @@ const sleep = (seconds: number) =>
 async function main() {
   const [deployerWallet] = await ethers.getSigners();
 
-  const knnToken: any = {
-    address: process.env.TOKEN_ADDRESS,
-  };
-
-  const knnSale = await getKnnSale(deployerWallet, knnToken);
-  console.log(`knnSale: ${knnSale.address}\n`);
+  const knnToken = await getKnnToken(deployerWallet);
+  console.log(`knnToken: ${knnToken.address}\n`);
   sleep(2);
 
   await run("verify:verify", {
-    address: knnSale.address,
-    constructorArguments: getSaleParameters(knnToken),
+    address: knnToken.address,
+    constructorArguments: [],
   });
-  sleep(2);
 }
 
 main()
