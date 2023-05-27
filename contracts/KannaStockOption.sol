@@ -17,7 +17,7 @@ import "./KannaToken.sol";
  *  /____  > |__|   \____/  \___  >|__|_ \  \____/ |   __/  |__|  |__| \____/ |___|  /
  *       \/                     \/      \/         |__|                            \/
  *
- *  @title KNN Sale for KNN Token
+ *  @title KNN Stock Option (Cliff & Vesting)
  *  @author KANNA Team
  *  @custom:github  https://github.com/kanna-coin
  *  @custom:site https://kannacoin.io
