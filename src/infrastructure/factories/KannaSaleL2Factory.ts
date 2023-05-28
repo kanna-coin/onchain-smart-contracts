@@ -1,66 +1,64 @@
 import '@nomiclabs/hardhat-waffle';
-import { ethers, waffle, network } from 'hardhat';
+import { ethers, waffle } from 'hardhat';
 import { MockContract } from 'ethereum-waffle';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import {
-  KannaPreSale__factory,
-  KannaPreSale,
+  KannaSaleL2__factory,
+  KannaSaleL2,
   KannaToken,
 } from '../../../typechain-types';
 
 const parse1e18 = (integer: number): string => `${integer}000000000000000000`;
 
-const preSaleAmount = parse1e18(350_000);
+const saleAmount = parse1e18(100_000);
 
-const defaultQuotation = '50000000';
+const defaultQuotation = '60000000';
 
-export const getKnnPreSaleFactory = async (
-  deployerAddress: SignerWithAddress
-) =>
+export const getKnnSaleL2Factory = async (deployerAddress: SignerWithAddress) =>
   (await ethers.getContractFactory(
-    'KannaPreSale',
+    'KannaSaleL2',
     deployerAddress
-  )) as KannaPreSale__factory;
+  )) as KannaSaleL2__factory;
 
-export const getPreSaleParameters = (
+export const getSaleL2Parameters = (
   knnToken: KannaToken | MockContract,
-  aggregatorAddress: string = network.config.priceAggregator!,
+  aggregatorAddress: string = process.env.PRICE_AGGREGATOR_ADDRESS!,
   quotation: string = defaultQuotation
 ): [string, string, string] => {
   return [knnToken.address, aggregatorAddress, quotation];
 };
 
-export const getKnnPreSale = async (
+export const getKnnSaleL2 = async (
   knnDeployerAddress: SignerWithAddress,
   knnToken: KannaToken | MockContract,
   knnTreasurer?: KannaToken | MockContract,
-  aggregatorAddress: string = network.config.priceAggregator!,
+  aggregatorAddress: string = process.env.PRICE_AGGREGATOR_ADDRESS!,
   quotation: string = defaultQuotation
-): Promise<KannaPreSale> => {
-  const parameters = getPreSaleParameters(
+): Promise<KannaSaleL2> => {
+  const parameters = getSaleL2Parameters(
     knnToken,
     aggregatorAddress,
     quotation
   );
 
-  const knnPreSaleFactory = await getKnnPreSaleFactory(knnDeployerAddress);
+  const knnSaleFactory = await getKnnSaleL2Factory(knnDeployerAddress);
 
-  const knnPreSale = await knnPreSaleFactory.deploy(...parameters);
+  const knnSale = await knnSaleFactory.deploy(...parameters);
 
-  await knnPreSale.deployed();
+  await knnSale.deployed();
 
   if (knnTreasurer) {
-    await knnTreasurer.transfer(knnPreSale.address, preSaleAmount);
+    await knnTreasurer.transfer(knnSale.address, saleAmount);
   }
 
-  return knnPreSale;
+  return knnSale;
 };
 
-export const getKnnPreSaleMock = async (
+export const getKnnSaleL2Mock = async (
   knnDeployerAddress: SignerWithAddress
 ) => {
   const knnPreSale = await waffle.deployMockContract(knnDeployerAddress, [
-    ...KannaPreSale__factory.abi,
+    ...KannaSaleL2__factory.abi,
   ]);
 
   return knnPreSale;

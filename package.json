@@ -10,11 +10,13 @@
     "test": "npx hardhat test --network hardhat",
     "test:bail": "npx hardhat test --network hardhat --bail",
     "node": "npx hardhat node",
-    "coverage": "npm run build && npx hardhat coverage --temp artifacts",
-    "deploy:token": "npx hardhat run --network localhost deploy/kanna-go-live-token.ts",
-    "deploy:yield": "npx hardhat run --network localhost deploy/kanna-go-live-yield.ts",
-    "deploy:presale": "npx hardhat run --network localhost deploy/kanna-go-live-presale.ts",
-    "deploy:sale": "npx hardhat run --network localhost deploy/kanna-go-live-sale.ts"
+    "coverage": "npm run build && npx hardhat coverage --temp artifacts && npm run build",
+    "deploy:token": "npx hardhat run --network localhost deploy/1_KannaToken_deploy.ts",
+    "deploy:yield": "npx hardhat run --network localhost deploy/2_KannaYield_deploy.ts",
+    "deploy:presale": "npx hardhat run --network localhost deploy/3_KannaPreSale_deploy.ts",
+    "deploy:aggregator": "npx hardhat run --network goerli deploy/aggregatorv3-mock_deploy.ts",
+    "deploy:salel2": "npx hardhat run --network mumbai deploy/kanna-go-live-salel2.ts",
+    "deploy": "npx hardhat run --network localhost deploy/kanna-go-live-sale.ts"
   },
   "repository": {
     "type": "git",

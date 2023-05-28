@@ -69,6 +69,10 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.DynamicBadgeChecker__factory>;
     getContractFactory(
+      name: "FxERC20ChildTunnel",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.FxERC20ChildTunnel__factory>;
+    getContractFactory(
       name: "IDynamicBadgeChecker",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IDynamicBadgeChecker__factory>;
@@ -85,6 +89,10 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.KannaSale__factory>;
     getContractFactory(
+      name: "KannaSaleL2",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.KannaSaleL2__factory>;
+    getContractFactory(
       name: "KannaToken",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.KannaToken__factory>;
@@ -96,6 +104,10 @@ declare module "hardhat/types/runtime" {
       name: "KnnHolderBadgeChecker",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.KnnHolderBadgeChecker__factory>;
+    getContractFactory(
+      name: "AggregatorV3Mock",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.AggregatorV3Mock__factory>;
 
     getContractAt(
       name: "AggregatorV3Interface",
@@ -168,6 +180,11 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.DynamicBadgeChecker>;
     getContractAt(
+      name: "FxERC20ChildTunnel",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.FxERC20ChildTunnel>;
+    getContractAt(
       name: "IDynamicBadgeChecker",
       address: string,
       signer?: ethers.Signer
@@ -188,6 +205,11 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.KannaSale>;
     getContractAt(
+      name: "KannaSaleL2",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.KannaSaleL2>;
+    getContractAt(
       name: "KannaToken",
       address: string,
       signer?: ethers.Signer
@@ -202,6 +224,11 @@ declare module "hardhat/types/runtime" {
       address: string,
       signer?: ethers.Signer
     ): Promise<Contracts.KnnHolderBadgeChecker>;
+    getContractAt(
+      name: "AggregatorV3Mock",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.AggregatorV3Mock>;
 
     // default types
     getContractFactory(

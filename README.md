@@ -17,7 +17,7 @@
 
 ## Kanna Multisig Wallet
 
-[0x51F9298d8C9DAD2105c99cee8429430a15381C3E](<https://etherscan.io/address/0x51F9298d8C9DAD2105c99cee8429430a15381C3E>)
+[0x51F9298d8C9DAD2105c99cee8429430a15381C3E](https://etherscan.io/address/0x51F9298d8C9DAD2105c99cee8429430a15381C3E)
 
 ## Tests Coverage
 
@@ -73,3 +73,10 @@ Create/modify network config in `hardhat.config.ts` and add API key and private 
       <https://goerli.etherscan.io/address/0x07d973db1799A43fe94B4e0E5C12F1bdc830319f#code>
 - [x] Yield: `0x735C67CF90c9c1b64d9e9bd46F58ab2f3Ba0181d`
       <https://goerli.etherscan.io/address/0x735C67CF90c9c1b64d9e9bd46F58ab2f3Ba0181d#code>
+
+## Mumbai
+
+- [x] fxKNN: `0x8Dcb54DdD4dd25a74a9e35d0cF5A45273952eA2c`
+      <https://mumbai.polygonscan.com/address/0x8Dcb54DdD4dd25a74a9e35d0cF5A45273952eA2c#code>
+- [x] SaleL2: `0x6F5543F31950b69188CE35E05120BACa47f64518`
+      <https://mumbai.polygonscan.com/address/0x6F5543F31950b69188CE35E05120BACa47f64518#code>
