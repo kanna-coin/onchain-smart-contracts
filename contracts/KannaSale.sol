@@ -21,7 +21,7 @@ import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
  *  @author KANNA Team
  *  @custom:github  https://github.com/kanna-coin
  *  @custom:site https://kannacoin.io
- *  @custom:discord https://discord.gg/V5KDU8DKCh
+ *  @custom:discord https://discord.kannacoin.io
  */
 contract KannaSale is Ownable, AccessControl {
     IERC20 public immutable knnToken;

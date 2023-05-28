@@ -1,6 +1,6 @@
 import { ethers, run } from "hardhat";
 import "@nomiclabs/hardhat-etherscan";
-import { getKnnSale, getSaleParameters } from "../src/infrastructure/factories";
+import { getKannaBadges, getKannaBadgesParameters } from "../src/infrastructure/factories";
 
 const sleep = (seconds: number) =>
   new Promise((resolve) => setTimeout(resolve, 1000 * seconds));
@@ -8,17 +8,15 @@ const sleep = (seconds: number) =>
 async function main() {
   const [deployerWallet] = await ethers.getSigners();
 
-  const knnToken: any = {
-    address: process.env.TOKEN_ADDRESS,
-  };
+  const uri = 'https://nft-dev.kannacoin.io/{id}.json';
 
-  const knnSale = await getKnnSale(deployerWallet, knnToken);
-  console.log(`knnSale: ${knnSale.address}\n`);
+  const kannaBadges = await getKannaBadges(deployerWallet, uri);
+  console.log(`kannaBadges: ${kannaBadges.address}\n`);
   sleep(2);
 
   await run("verify:verify", {
-    address: knnSale.address,
-    constructorArguments: getSaleParameters(knnToken),
+    address: kannaBadges.address,
+    constructorArguments: getKannaBadgesParameters(uri),
   });
   sleep(2);
 }

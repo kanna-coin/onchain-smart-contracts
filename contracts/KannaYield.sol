@@ -18,7 +18,7 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
     rates are weighted according to its {subscription} amount over the total {poolSize}.
  *  @custom:github  https://github.com/kanna-coin
  *  @custom:site https://kannacoin.io
- *  @custom:discord https://discord.gg/V5KDU8DKCh
+ *  @custom:discord https://discord.kannacoin.io
  */
 contract KannaYield is Ownable {
     event RewardAdded(address indexed user, uint256 reward);

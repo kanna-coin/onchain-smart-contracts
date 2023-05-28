@@ -17,7 +17,7 @@ import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
  *  @author KANNA Team
  *  @custom:github  https://github.com/kanna-coin
  *  @custom:site https://kannacoin.io
- *  @custom:discord https://discord.gg/V5KDU8DKCh
+ *  @custom:discord https://discord.kannacoin.io
  */
 contract KannaToken is ERC20, Ownable, AccessControl {
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
