@@ -41,6 +41,7 @@ export interface KannaStockOptionInterface extends utils.Interface {
     "owner()": FunctionFragment;
     "start()": FunctionFragment;
     "token()": FunctionFragment;
+    "vesting()": FunctionFragment;
     "withdraw()": FunctionFragment;
   };
 
@@ -59,6 +60,7 @@ export interface KannaStockOptionInterface extends utils.Interface {
       | "owner"
       | "start"
       | "token"
+      | "vesting"
       | "withdraw"
   ): FunctionFragment;
 
@@ -84,6 +86,7 @@ export interface KannaStockOptionInterface extends utils.Interface {
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
   encodeFunctionData(functionFragment: "start", values?: undefined): string;
   encodeFunctionData(functionFragment: "token", values?: undefined): string;
+  encodeFunctionData(functionFragment: "vesting", values?: undefined): string;
   encodeFunctionData(functionFragment: "withdraw", values?: undefined): string;
 
   decodeFunctionResult(
@@ -108,6 +111,7 @@ export interface KannaStockOptionInterface extends utils.Interface {
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "start", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "token", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "vesting", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "withdraw", data: BytesLike): Result;
 
   events: {
@@ -205,6 +209,8 @@ export interface KannaStockOption extends BaseContract {
 
     token(overrides?: CallOverrides): Promise<[string]>;
 
+    vesting(overrides?: CallOverrides): Promise<[BigNumber]>;
+
     withdraw(
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
@@ -238,6 +244,8 @@ export interface KannaStockOption extends BaseContract {
 
   token(overrides?: CallOverrides): Promise<string>;
 
+  vesting(overrides?: CallOverrides): Promise<BigNumber>;
+
   withdraw(
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
@@ -268,6 +276,8 @@ export interface KannaStockOption extends BaseContract {
     start(overrides?: CallOverrides): Promise<BigNumber>;
 
     token(overrides?: CallOverrides): Promise<string>;
+
+    vesting(overrides?: CallOverrides): Promise<BigNumber>;
 
     withdraw(overrides?: CallOverrides): Promise<void>;
   };
@@ -339,6 +349,8 @@ export interface KannaStockOption extends BaseContract {
 
     token(overrides?: CallOverrides): Promise<BigNumber>;
 
+    vesting(overrides?: CallOverrides): Promise<BigNumber>;
+
     withdraw(
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
@@ -374,6 +386,8 @@ export interface KannaStockOption extends BaseContract {
     start(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     token(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    vesting(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     withdraw(
       overrides?: Overrides & { from?: PromiseOrValue<string> }

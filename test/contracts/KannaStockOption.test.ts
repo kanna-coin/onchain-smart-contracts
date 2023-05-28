@@ -1,15 +1,8 @@
 import { ethers, network } from 'hardhat';
-import {
-  KannaStockOption,
-  KannaStockOption__factory,
-  KannaToken,
-} from '../../typechain-types';
+import { KannaStockOption__factory, KannaToken } from '../../typechain-types';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
-import {
-  getKnnToken,
-  releaseFromTreasury,
-} from '../../src/infrastructure/factories';
+import { getKnnToken } from '../../src/infrastructure/factories';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
 chai.use(chaiAsPromised);
@@ -43,12 +36,14 @@ describe('KNN Stock Option', () => {
   it('should cancel while in the cliff duration', async () => {
     const cliff = DAY_UNIT * 90;
     const lock = DAY_UNIT * 365;
+    const vesting = DAY_UNIT * 365;
 
     const contract = await stockFactory.deploy(
       owner.address,
       holder.address,
       cliff,
       lock,
+      vesting,
       token.address
     );
 
@@ -67,12 +62,14 @@ describe('KNN Stock Option', () => {
   it('should not cancel after cliff duration', async () => {
     const cliff = DAY_UNIT * 90;
     const lock = DAY_UNIT * 365;
+    const vesting = DAY_UNIT * 365;
 
     const contract = await stockFactory.deploy(
       owner.address,
       holder.address,
       cliff,
       lock,
+      vesting,
       token.address
     );
 
@@ -91,12 +88,14 @@ describe('KNN Stock Option', () => {
   it('should not withdraw before cliff duration', async () => {
     const cliff = DAY_UNIT * 90;
     const lock = DAY_UNIT * 365;
+    const vesting = DAY_UNIT * 365;
 
     const contract = await stockFactory.deploy(
       owner.address,
       holder.address,
       cliff,
       lock,
+      vesting,
       token.address
     );
 
@@ -117,12 +116,14 @@ describe('KNN Stock Option', () => {
   it('should not withdraw before lock duration', async () => {
     const cliff = DAY_UNIT * 90;
     const lock = DAY_UNIT * 365;
+    const vesting = DAY_UNIT * 365;
 
     const contract = await stockFactory.deploy(
       owner.address,
       holder.address,
       cliff,
       lock,
+      vesting,
       token.address
     );
 
@@ -143,12 +144,14 @@ describe('KNN Stock Option', () => {
   it('should allow contract to be withdrawn after the lock duration', async () => {
     const cliff = DAY_UNIT * 90;
     const lock = DAY_UNIT * 365;
+    const vesting = DAY_UNIT * 365;
 
     const contract = await stockFactory.deploy(
       owner.address,
       holder.address,
       cliff,
       lock,
+      vesting,
       token.address
     );
 
@@ -170,12 +173,14 @@ describe('KNN Stock Option', () => {
   it('should not allow contract to be withdrawn twice', async () => {
     const cliff = DAY_UNIT * 90;
     const lock = DAY_UNIT * 365;
+    const vesting = DAY_UNIT * 365;
 
     const contract = await stockFactory.deploy(
       owner.address,
       holder.address,
       cliff,
       lock,
+      vesting,
       token.address
     );
 
@@ -198,12 +203,14 @@ describe('KNN Stock Option', () => {
   it('should not allow contract to be withdrawn by non-holder', async () => {
     const cliff = DAY_UNIT * 90;
     const lock = DAY_UNIT * 365;
+    const vesting = DAY_UNIT * 365;
 
     const contract = await stockFactory.deploy(
       owner.address,
       holder.address,
       cliff,
       lock,
+      vesting,
       token.address
     );
 
@@ -220,12 +227,14 @@ describe('KNN Stock Option', () => {
   it('should not allow cancel twice', async () => {
     const cliff = DAY_UNIT * 90;
     const lock = DAY_UNIT * 365;
+    const vesting = DAY_UNIT * 365;
 
     const contract = await stockFactory.deploy(
       owner.address,
       holder.address,
       cliff,
       lock,
+      vesting,
       token.address
     );
 
@@ -243,12 +252,14 @@ describe('KNN Stock Option', () => {
   it('should not withdraw after canceled', async () => {
     const cliff = DAY_UNIT * 90;
     const lock = DAY_UNIT * 365;
+    const vesting = DAY_UNIT * 365;
 
     const contract = await stockFactory.deploy(
       owner.address,
       holder.address,
       cliff,
       lock,
+      vesting,
       token.address
     );
 
@@ -271,6 +282,7 @@ describe('KNN Stock Option', () => {
   it('should retrieve the amount vested', async () => {
     const cliff = DAY_UNIT * 90;
     const lock = DAY_UNIT * 365;
+    const vesting = DAY_UNIT * 365;
 
     const amount = parse1e18(100);
 
@@ -279,6 +291,7 @@ describe('KNN Stock Option', () => {
       holder.address,
       cliff,
       lock,
+      vesting,
       token.address
     );
 
@@ -288,7 +301,9 @@ describe('KNN Stock Option', () => {
     await token.connect(treasuryWallet).transfer(contract.address, amount);
     await network.provider.send('evm_mine');
 
-    await network.provider.send('evm_increaseTime', [cliff + lock + 1]);
+    await network.provider.send('evm_increaseTime', [
+      cliff + lock + vesting + 1,
+    ]);
     await network.provider.send('evm_mine');
 
     const vested = await contract.amountVested();
@@ -299,6 +314,7 @@ describe('KNN Stock Option', () => {
   it('should retrieve the amount vested after cliff (1/4 duration)', async () => {
     const cliff = DAY_UNIT * 90;
     const lock = DAY_UNIT * 365;
+    const vesting = DAY_UNIT * 365;
 
     const amount = parse1e18(100);
 
@@ -307,6 +323,7 @@ describe('KNN Stock Option', () => {
       holder.address,
       cliff,
       lock,
+      vesting,
       token.address
     );
 
@@ -322,13 +339,14 @@ describe('KNN Stock Option', () => {
     const vested = await contract.amountVested();
 
     expect(Number(vested) / 1e18).to.greaterThanOrEqual(
-      Number(amount) / 1e18 / 4
+      Number(amount) / 1e18 / 4 / 1.9
     );
   });
 
   it('should retrieve amount of days left to cancel', async () => {
     const cliff = DAY_UNIT * 90;
     const lock = DAY_UNIT * 365;
+    const vesting = DAY_UNIT * 365;
 
     const amount = parse1e18(100);
 
@@ -337,6 +355,7 @@ describe('KNN Stock Option', () => {
       holder.address,
       cliff,
       lock,
+      vesting,
       token.address
     );
 
@@ -361,6 +380,7 @@ describe('KNN Stock Option', () => {
   it('should retrieve the amount of days left to withdraw', async () => {
     const cliff = DAY_UNIT * 90;
     const lock = DAY_UNIT * 365;
+    const vesting = DAY_UNIT * 365;
 
     const amount = parse1e18(100);
 
@@ -369,6 +389,7 @@ describe('KNN Stock Option', () => {
       holder.address,
       cliff,
       lock,
+      vesting,
       token.address
     );
 

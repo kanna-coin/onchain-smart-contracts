@@ -27,6 +27,7 @@ contract KannaStockOption {
     address public owner;
     uint256 public cliff;
     uint256 public lock;
+    uint256 public vesting;
     uint256 public duration;
     uint256 public start;
     address public holder;
@@ -52,12 +53,17 @@ contract KannaStockOption {
         uint256 remainingCliffDuration
     );
 
-    constructor(address _owner, address _holder, uint256 _cliff, uint256 _lock, KannaToken _token) {
+    receive() external payable {
+        revert("Cannot receive ETH");
+    }
+
+    constructor(address _owner, address _holder, uint256 _cliff, uint256 _lock, uint256 _vesting, KannaToken _token) {
         owner = _owner;
         holder = _holder;
         cliff = _cliff;
         lock = _lock;
-        duration = cliff + lock;
+        vesting = _vesting;
+        duration = cliff + lock + vesting;
         start = block.timestamp;
         token = _token;
     }
@@ -65,7 +71,9 @@ contract KannaStockOption {
     function amountVested() public view notCanceled returns (uint256) {
         uint256 amount = token.balanceOf(address(this));
 
-        if (block.timestamp >= start + duration) {
+        if (start + cliff >= block.timestamp) {
+            return 0;
+        } else if (block.timestamp >= start + duration) {
             return amount;
         }
 
@@ -73,11 +81,13 @@ contract KannaStockOption {
     }
 
     function daysLeftToWithdraw() public view notCanceled returns (uint256) {
-        if (block.timestamp >= start + duration) {
+        uint256 lockDuration = start + cliff + lock;
+
+        if (block.timestamp >= lockDuration) {
             return 0;
         }
 
-        return (start + duration - block.timestamp) / 1 days;
+        return (lockDuration - block.timestamp) / 1 days;
     }
 
     function daysLeftToCancel() public view notCanceled returns (uint256) {
@@ -92,10 +102,25 @@ contract KannaStockOption {
         require(!completed, "Already withdrawn");
         require(msg.sender == holder, "Only holder can call this function");
         require(block.timestamp >= start + cliff, "Cannot withdraw while in cliff");
-        require(block.timestamp >= start + duration, "Cannot withdraw before lock duration");
+        require(block.timestamp >= start + cliff + lock, "Cannot withdraw before lock duration");
 
-        uint256 amount = token.balanceOf(address(this));
+        uint256 balance = token.balanceOf(address(this));
+        uint256 amount;
+
+        if (block.timestamp >= start + duration) {
+            amount = balance;
+        } else {
+            amount = (balance * (block.timestamp - start)) / duration;
+        }
+
         token.transfer(holder, amount);
+
+        uint256 leftover = balance - amount;
+
+        if (leftover > 0) {
+            token.transfer(owner, leftover);
+        }
+
         completed = true;
 
         emit Completed(owner, holder, amount, duration, lock, block.timestamp - start + duration);
