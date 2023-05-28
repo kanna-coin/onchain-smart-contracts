@@ -1,22 +1,22 @@
-import "@nomiclabs/hardhat-waffle";
-import { ethers, network } from "hardhat";
-import { MockContract } from "ethereum-waffle";
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import '@nomiclabs/hardhat-waffle';
+import { ethers, network } from 'hardhat';
+import { MockContract } from 'ethereum-waffle';
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import {
   KannaSale__factory,
   KannaSale,
   KannaToken,
-} from "../../../typechain-types";
+} from '../../../typechain-types';
 
 const parse1e18 = (integer: number): string => `${integer}000000000000000000`;
 
 const saleAmount = parse1e18(100_000);
 
-const defaultQuotation = "60000000";
+const defaultQuotation = '60000000';
 
 export const getKnnSaleFactory = async (deployerAddress: SignerWithAddress) =>
   (await ethers.getContractFactory(
-    "KannaSale",
+    'KannaSale',
     deployerAddress
   )) as KannaSale__factory;
 

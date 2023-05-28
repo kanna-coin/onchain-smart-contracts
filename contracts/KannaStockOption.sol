@@ -25,7 +25,6 @@ import "./KannaToken.sol";
  */
 contract KannaStockOption {
     address public owner;
-    uint256 public amount;
     uint256 public cliff;
     uint256 public lock;
     uint256 public duration;
@@ -53,10 +52,9 @@ contract KannaStockOption {
         uint256 remainingCliffDuration
     );
 
-    constructor(address _owner, address _holder, uint256 _amount, uint256 _cliff, uint256 _lock, KannaToken _token) {
+    constructor(address _owner, address _holder, uint256 _cliff, uint256 _lock, KannaToken _token) {
         owner = _owner;
         holder = _holder;
-        amount = _amount;
         cliff = _cliff;
         lock = _lock;
         duration = cliff + lock;
@@ -64,8 +62,8 @@ contract KannaStockOption {
         token = _token;
     }
 
-    function amountVested() public view returns (uint256) {
-        require(!canceled, "Contract canceled");
+    function amountVested() public view notCanceled returns (uint256) {
+        uint256 amount = token.balanceOf(address(this));
 
         if (block.timestamp >= start + duration) {
             return amount;
@@ -74,9 +72,7 @@ contract KannaStockOption {
         return (amount * (block.timestamp - start)) / duration;
     }
 
-    function daysLeftToWithdraw() public view returns (uint256) {
-        require(!canceled, "Contract canceled");
-
+    function daysLeftToWithdraw() public view notCanceled returns (uint256) {
         if (block.timestamp >= start + duration) {
             return 0;
         }
@@ -84,9 +80,7 @@ contract KannaStockOption {
         return (start + duration - block.timestamp) / 1 days;
     }
 
-    function daysLeftToCancel() public view returns (uint256) {
-        require(!canceled, "Contract canceled");
-
+    function daysLeftToCancel() public view notCanceled returns (uint256) {
         if (block.timestamp >= start + cliff) {
             return 0;
         }
@@ -94,27 +88,32 @@ contract KannaStockOption {
         return (start + cliff - block.timestamp) / 1 days;
     }
 
-    function withdraw() external {
-        require(!canceled, "Contract canceled");
+    function withdraw() external notCanceled {
         require(!completed, "Already withdrawn");
         require(msg.sender == holder, "Only holder can call this function");
-        require(block.timestamp >= start + cliff, "Cannot withdraw while in cliff period");
+        require(block.timestamp >= start + cliff, "Cannot withdraw while in cliff");
         require(block.timestamp >= start + duration, "Cannot withdraw before lock duration");
 
+        uint256 amount = token.balanceOf(address(this));
         token.transfer(holder, amount);
         completed = true;
 
         emit Completed(owner, holder, amount, duration, lock, block.timestamp - start + duration);
     }
 
-    function cancel() external {
-        require(!canceled, "Already canceled");
+    function cancel() external notCanceled {
         require(msg.sender == owner, "Only owner can call this function");
         require(block.timestamp < start + cliff, "Cannot cancel after cliff");
 
+        uint256 amount = token.balanceOf(address(this));
         token.transfer(owner, amount);
         canceled = true;
 
         emit Canceled(owner, holder, amount, duration, cliff, block.timestamp - start, start + cliff - block.timestamp);
+    }
+
+    modifier notCanceled() {
+        require(!canceled, "Contract already canceled");
+        _;
     }
 }

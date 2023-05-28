@@ -1,19 +1,22 @@
-import "@nomiclabs/hardhat-waffle";
-import { ethers, waffle } from "hardhat";
-import { BigNumberish, constants } from "ethers";
-import { MockContract } from "ethereum-waffle";
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import '@nomiclabs/hardhat-waffle';
+import { ethers, waffle } from 'hardhat';
+import { BigNumberish, constants } from 'ethers';
+import { MockContract } from 'ethereum-waffle';
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
-import { KannaToken__factory, KannaToken } from "../../../typechain-types";
+import { KannaToken__factory, KannaToken } from '../../../typechain-types';
 
-export const getKannaTokenFactory = async (deployerAddress: SignerWithAddress) => (await ethers.getContractFactory(
-  "KannaToken",
-  deployerAddress
-)) as KannaToken__factory;
+export const getKannaTokenFactory = async (
+  deployerAddress: SignerWithAddress
+) =>
+  (await ethers.getContractFactory(
+    'KannaToken',
+    deployerAddress
+  )) as KannaToken__factory;
 
 export const getKnnToken = async (
   knnDeployerAddress: SignerWithAddress,
-  treasuryAddress?: SignerWithAddress,
+  treasuryAddress?: SignerWithAddress
 ): Promise<KannaToken> => {
   const KannaTokenFactory = await getKannaTokenFactory(knnDeployerAddress);
 
@@ -29,7 +32,7 @@ export const getKnnToken = async (
 };
 
 export const getKnnTreasurer = async (
-  kannaToken: KannaToken | MockContract,
+  kannaToken: KannaToken | MockContract
 ) => {
   const treasuryAdress = await kannaToken.treasury();
 
@@ -39,7 +42,7 @@ export const getKnnTreasurer = async (
 
   const treasurySigner = await ethers.getSigner(treasuryAdress);
 
-  return await kannaToken.connect(treasurySigner) as KannaToken;
+  return (await kannaToken.connect(treasurySigner)) as KannaToken;
 };
 
 export const releaseFromTreasury = async (
@@ -53,14 +56,17 @@ export const releaseFromTreasury = async (
     return;
   }
 
-  await treasuryInstance.transfer(recipient, amount);
+  return treasuryInstance.transfer(recipient, amount);
 };
 
 export const getKnnTokenMock = async (
   knnDeployerAddress: SignerWithAddress,
-  treasuryAddress?: SignerWithAddress,
+  treasuryAddress?: SignerWithAddress
 ) => {
-  const KannaToken = await waffle.deployMockContract(knnDeployerAddress, KannaToken__factory.abi);
+  const KannaToken = await waffle.deployMockContract(
+    knnDeployerAddress,
+    KannaToken__factory.abi
+  );
 
   if (treasuryAddress) {
     await KannaToken.mock.treasury.returns(treasuryAddress.address);

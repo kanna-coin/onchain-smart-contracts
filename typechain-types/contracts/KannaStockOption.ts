@@ -28,7 +28,6 @@ import type {
 
 export interface KannaStockOptionInterface extends utils.Interface {
   functions: {
-    "amount()": FunctionFragment;
     "amountVested()": FunctionFragment;
     "cancel()": FunctionFragment;
     "canceled()": FunctionFragment;
@@ -47,7 +46,6 @@ export interface KannaStockOptionInterface extends utils.Interface {
 
   getFunction(
     nameOrSignatureOrTopic:
-      | "amount"
       | "amountVested"
       | "cancel"
       | "canceled"
@@ -64,7 +62,6 @@ export interface KannaStockOptionInterface extends utils.Interface {
       | "withdraw"
   ): FunctionFragment;
 
-  encodeFunctionData(functionFragment: "amount", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "amountVested",
     values?: undefined
@@ -89,7 +86,6 @@ export interface KannaStockOptionInterface extends utils.Interface {
   encodeFunctionData(functionFragment: "token", values?: undefined): string;
   encodeFunctionData(functionFragment: "withdraw", values?: undefined): string;
 
-  decodeFunctionResult(functionFragment: "amount", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "amountVested",
     data: BytesLike
@@ -181,8 +177,6 @@ export interface KannaStockOption extends BaseContract {
   removeListener: OnEvent<this>;
 
   functions: {
-    amount(overrides?: CallOverrides): Promise<[BigNumber]>;
-
     amountVested(overrides?: CallOverrides): Promise<[BigNumber]>;
 
     cancel(
@@ -215,8 +209,6 @@ export interface KannaStockOption extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
   };
-
-  amount(overrides?: CallOverrides): Promise<BigNumber>;
 
   amountVested(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -251,8 +243,6 @@ export interface KannaStockOption extends BaseContract {
   ): Promise<ContractTransaction>;
 
   callStatic: {
-    amount(overrides?: CallOverrides): Promise<BigNumber>;
-
     amountVested(overrides?: CallOverrides): Promise<BigNumber>;
 
     cancel(overrides?: CallOverrides): Promise<void>;
@@ -321,8 +311,6 @@ export interface KannaStockOption extends BaseContract {
   };
 
   estimateGas: {
-    amount(overrides?: CallOverrides): Promise<BigNumber>;
-
     amountVested(overrides?: CallOverrides): Promise<BigNumber>;
 
     cancel(
@@ -357,8 +345,6 @@ export interface KannaStockOption extends BaseContract {
   };
 
   populateTransaction: {
-    amount(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
     amountVested(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     cancel(
