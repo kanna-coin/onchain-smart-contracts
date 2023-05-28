@@ -1,23 +1,26 @@
-import "@nomiclabs/hardhat-waffle";
-import { ethers, waffle, network } from "hardhat";
-import { MockContract } from "ethereum-waffle";
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import '@nomiclabs/hardhat-waffle';
+import { ethers, waffle, network } from 'hardhat';
+import { MockContract } from 'ethereum-waffle';
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import {
   KannaPreSale__factory,
   KannaPreSale,
   KannaToken,
-} from "../../../typechain-types";
+} from '../../../typechain-types';
 
 const parse1e18 = (integer: number): string => `${integer}000000000000000000`;
 
 const preSaleAmount = parse1e18(350_000);
 
-const defaultQuotation = "50000000";
+const defaultQuotation = '50000000';
 
-export const getKnnPreSaleFactory = async (deployerAddress: SignerWithAddress) => (await ethers.getContractFactory(
-  "KannaPreSale",
-  deployerAddress
-)) as KannaPreSale__factory;
+export const getKnnPreSaleFactory = async (
+  deployerAddress: SignerWithAddress
+) =>
+  (await ethers.getContractFactory(
+    'KannaPreSale',
+    deployerAddress
+  )) as KannaPreSale__factory;
 
 export const getPreSaleParameters = (
   knnToken: KannaToken | MockContract,
@@ -32,9 +35,13 @@ export const getKnnPreSale = async (
   knnToken: KannaToken | MockContract,
   knnTreasurer?: KannaToken | MockContract,
   aggregatorAddress: string = network.config.priceAggregator!,
-  quotation: string = defaultQuotation,
+  quotation: string = defaultQuotation
 ): Promise<KannaPreSale> => {
-  const parameters = getPreSaleParameters(knnToken, aggregatorAddress, quotation);
+  const parameters = getPreSaleParameters(
+    knnToken,
+    aggregatorAddress,
+    quotation
+  );
 
   const knnPreSaleFactory = await getKnnPreSaleFactory(knnDeployerAddress);
 
@@ -52,7 +59,9 @@ export const getKnnPreSale = async (
 export const getKnnPreSaleMock = async (
   knnDeployerAddress: SignerWithAddress
 ) => {
-  const knnPreSale = await waffle.deployMockContract(knnDeployerAddress, KannaPreSale__factory.abi);
+  const knnPreSale = await waffle.deployMockContract(knnDeployerAddress, [
+    ...KannaPreSale__factory.abi,
+  ]);
 
   return knnPreSale;
 };

@@ -60,7 +60,7 @@ export const getKnnTokenMock = async (
   knnDeployerAddress: SignerWithAddress,
   treasuryAddress?: SignerWithAddress,
 ) => {
-  const KannaToken = await waffle.deployMockContract(knnDeployerAddress, KannaToken__factory.abi);
+  const KannaToken = await waffle.deployMockContract(knnDeployerAddress, [...KannaToken__factory.abi]);
 
   if (treasuryAddress) {
     await KannaToken.mock.treasury.returns(treasuryAddress.address);

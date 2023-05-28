@@ -1,8 +1,8 @@
-import { ethers, network } from "hardhat";
-import chai from "chai";
-import chaiAsPromised from "chai-as-promised";
-import { KannaToken, KannaPreSale } from "../../typechain-types";
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { ethers, network } from 'hardhat';
+import chai from 'chai';
+import chaiAsPromised from 'chai-as-promised';
+import { KannaToken, KannaPreSale } from '../../typechain-types';
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import {
   getKnnToken,
   getKnnTreasurer,
@@ -11,14 +11,14 @@ import {
   getAggregatorMock,
   getKnnPreSaleFactory,
   getPreSaleParameters,
-} from "../../src/infrastructure/factories";
+} from '../../src/infrastructure/factories';
 
 chai.use(chaiAsPromised);
 const { expect } = chai;
 
-const ref = "1";
+const ref = '1';
 
-describe("KNN PreSale", () => {
+describe('KNN PreSale', () => {
   let signers: SignerWithAddress[];
   let knnToken: KannaToken;
   let knnTreasurer: KannaToken | undefined;
@@ -62,7 +62,7 @@ describe("KNN PreSale", () => {
     await knnPreSale.addClaimManager(managerWallet.address);
 
     const managerSession = (await ethers.getContractAt(
-      "KannaPreSale",
+      'KannaPreSale',
       knnPreSale.address,
       managerWallet
     )) as KannaPreSale;
@@ -76,7 +76,7 @@ describe("KNN PreSale", () => {
     const userWallet = await getUserWallet();
 
     const managerSession = (await ethers.getContractAt(
-      "KannaPreSale",
+      'KannaPreSale',
       knnPreSale.address,
       userWallet
     )) as KannaPreSale;
@@ -84,19 +84,19 @@ describe("KNN PreSale", () => {
     return [userWallet, managerSession];
   };
 
-  describe("Setup", async () => {
+  describe('Setup', async () => {
     beforeEach(async () => {
       await deployContracts();
     });
 
-    it("should initialize KNN PreSale with amount of 50K tokens", async () => {
+    it('should initialize KNN PreSale with amount of 50K tokens', async () => {
       const tokensToSell = await knnToken.balanceOf(knnPreSale.address);
       const balance = parseInt(tokensToSell._hex, 16);
 
       expect(balance).to.greaterThanOrEqual(5e22);
     });
 
-    it("should not initialize KNN PreSale with invalid token address", async () => {
+    it('should not initialize KNN PreSale with invalid token address', async () => {
       const deployerWallet = await getDeployerWallet();
 
       const knnPreSaleFactory = await getKnnPreSaleFactory(deployerWallet);
@@ -109,54 +109,57 @@ describe("KNN PreSale", () => {
           aggregatorAddress,
           quotation
         )
-      ).to.be.revertedWith("Invalid token address");
+      ).to.be.revertedWith('Invalid token address');
     });
 
-    it("should not initialize KNN PreSale with invalid price aggregator address", async () => {
+    it('should not initialize KNN PreSale with invalid price aggregator address', async () => {
       const deployerWallet = await getDeployerWallet();
 
       const knnPreSaleFactory = await getKnnPreSaleFactory(deployerWallet);
 
-      const parameters = getPreSaleParameters(knnToken, ethers.constants.AddressZero);
+      const parameters = getPreSaleParameters(
+        knnToken,
+        ethers.constants.AddressZero
+      );
 
-      await expect(
-        knnPreSaleFactory.deploy(...parameters)
-      ).to.be.revertedWith("Invalid price aggregator address");
+      await expect(knnPreSaleFactory.deploy(...parameters)).to.be.revertedWith(
+        'Invalid price aggregator address'
+      );
     });
 
-    it("should not initialize KNN PreSale with empty quotation", async () => {
+    it('should not initialize KNN PreSale with empty quotation', async () => {
       const deployerWallet = await getDeployerWallet();
 
       await expect(
-        getKnnPreSale(deployerWallet, knnToken, knnTreasurer, undefined, "0")
-      ).to.be.revertedWith("Invalid quotation");
+        getKnnPreSale(deployerWallet, knnToken, knnTreasurer, undefined, '0')
+      ).to.be.revertedWith('Invalid quotation');
     });
 
-    it("should convert ETH to KNN", async () => {
+    it('should convert ETH to KNN', async () => {
       const [total, quotation] = await knnPreSale.convertToKNN(
-        ethers.utils.parseEther("1")
+        ethers.utils.parseEther('1')
       );
 
       expect(parseFloat(ethers.utils.formatEther(total))).to.greaterThan(2000);
       expect(parseInt(quotation.toHexString(), 16)).to.greaterThan(1000 * 1e8);
     });
 
-    it("should buy KNN tokens", async () => {
+    it('should buy KNN tokens', async () => {
       const deployerWallet = await getDeployerWallet();
 
-      await network.provider.send("hardhat_setBalance", [
+      await network.provider.send('hardhat_setBalance', [
         deployerWallet.address,
-        "0xFFFFFFFFFFFFFFFF",
+        '0xFFFFFFFFFFFFFFFF',
       ]);
-      await network.provider.send("evm_mine");
+      await network.provider.send('evm_mine');
 
-      const eth = ethers.utils.parseEther("5.001001999238");
+      const eth = ethers.utils.parseEther('5.001001999238');
 
       const knnPriceInUSD = await knnPreSale.knnPriceInUSD();
       const [amountInKNN, ethPriceInUSD] = await knnPreSale.convertToKNN(eth);
 
       await expect(knnPreSale.buyTokens({ value: eth }))
-        .to.emit(knnPreSale, "Purchase")
+        .to.emit(knnPreSale, 'Purchase')
         .withArgs(
           deployerWallet.address,
           eth,
@@ -171,65 +174,64 @@ describe("KNN PreSale", () => {
       expect(balance).to.lessThan(3.5e23);
     });
 
-    describe("should not buy KNN tokens", async () => {
-
-      it("when amount is lower than USD_AGGREGATOR_DECIMALS", async () => {
+    describe('should not buy KNN tokens', async () => {
+      it('when amount is lower than USD_AGGREGATOR_DECIMALS', async () => {
         const invalidValue = 1e8 - 1;
 
         const options = { value: invalidValue };
 
         await expect(knnPreSale.buyTokens(options)).to.be.revertedWith(
-          "Invalid amount"
+          'Invalid amount'
         );
       });
 
-      it("when amount is greater than contract balance", async () => {
+      it('when amount is greater than contract balance', async () => {
         const deployerWallet = await getDeployerWallet();
 
         const balance = await knnToken.balanceOf(knnPreSale.address);
 
         const [balanceInWei] = await knnPreSale.convertToWEI(balance);
 
-        await network.provider.send("hardhat_setBalance", [
+        await network.provider.send('hardhat_setBalance', [
           deployerWallet.address,
           ethers.utils.hexStripZeros(
-            balanceInWei.add(ethers.utils.parseEther("1"))._hex
+            balanceInWei.add(ethers.utils.parseEther('1'))._hex
           ),
         ]);
-        await network.provider.send("evm_mine");
+        await network.provider.send('evm_mine');
 
         const options = { value: balanceInWei.add(1) };
 
         await expect(knnPreSale.buyTokens(options)).to.be.revertedWith(
-          "Insufficient supply!"
+          'Insufficient supply!'
         );
       });
 
-      it("when amount is greater than available supply", async () => {
+      it('when amount is greater than available supply', async () => {
         const deployerWallet = await getDeployerWallet();
         const [, managerSession] = await getManagerSession();
 
         const balance = await knnToken.balanceOf(knnPreSale.address);
         const [balanceInWei] = await knnPreSale.convertToWEI(balance);
 
-        await network.provider.send("hardhat_setBalance", [
+        await network.provider.send('hardhat_setBalance', [
           deployerWallet.address,
           ethers.utils.hexStripZeros(
-            balanceInWei.add(ethers.utils.parseEther("1"))._hex
+            balanceInWei.add(ethers.utils.parseEther('1'))._hex
           ),
         ]);
-        await network.provider.send("evm_mine");
+        await network.provider.send('evm_mine');
 
         await managerSession.lockSupply(1e10, ref);
 
         const options = { value: balanceInWei };
 
         await expect(knnPreSale.buyTokens(options)).to.be.revertedWith(
-          "Insufficient supply!"
+          'Insufficient supply!'
         );
       });
 
-      it("when KNN transfer fail", async () => {
+      it('when KNN transfer fail', async () => {
         const deployerWallet = await getDeployerWallet();
         const treasuryWallet = await getTreasuryWallet();
         const mockToken = await getKnnTokenMock(deployerWallet, treasuryWallet);
@@ -242,14 +244,14 @@ describe("KNN PreSale", () => {
           knnTreasurer
         );
 
-        const eth = ethers.utils.parseEther("5.001001999238");
+        const eth = ethers.utils.parseEther('5.001001999238');
 
         await expect(knnPreSaleWithMock.buyTokens({ value: eth })).to.be
           .reverted;
       });
     });
 
-    it("should lock supply", async () => {
+    it('should lock supply', async () => {
       const [, managerSession] = await getManagerSession();
 
       const balance = await knnToken.balanceOf(knnPreSale.address);
@@ -257,7 +259,7 @@ describe("KNN PreSale", () => {
       const toLock = 1e10;
 
       await expect(managerSession.lockSupply(toLock, ref))
-        .to.emit(managerSession, "Lock")
+        .to.emit(managerSession, 'Lock')
         .withArgs(ref, toLock);
 
       let availableSupply = await knnPreSale.availableSupply();
@@ -267,7 +269,7 @@ describe("KNN PreSale", () => {
       expect(availableSupply).to.eq(expectedSupply);
 
       await expect(managerSession.lockSupply(toLock, ref))
-        .to.emit(managerSession, "Lock")
+        .to.emit(managerSession, 'Lock')
         .withArgs(ref, toLock);
 
       availableSupply = await knnPreSale.availableSupply();
@@ -277,8 +279,8 @@ describe("KNN PreSale", () => {
       expect(availableSupply).to.eq(expectedSupply);
     });
 
-    describe("should not lock", async () => {
-      it("when supply greater than supply", async () => {
+    describe('should not lock', async () => {
+      it('when supply greater than supply', async () => {
         const [, managerSession] = await getManagerSession();
 
         const availableSupply = await knnPreSale.availableSupply();
@@ -286,21 +288,21 @@ describe("KNN PreSale", () => {
         const toLock = availableSupply.add(1);
 
         await expect(managerSession.lockSupply(toLock, ref)).to.be.revertedWith(
-          "Insufficient supply!"
+          'Insufficient supply!'
         );
       });
 
-      it("when empty amount", async () => {
+      it('when empty amount', async () => {
         const [, managerSession] = await getManagerSession();
 
         const toLock = 0;
 
         await expect(managerSession.lockSupply(toLock, ref)).to.be.revertedWith(
-          "Invalid amount"
+          'Invalid amount'
         );
       });
 
-      it("when invalid CLAIM_MANAGER_ROLE", async () => {
+      it('when invalid CLAIM_MANAGER_ROLE', async () => {
         const [managerAccount, managerSession] = await getManagerSession();
         const amount = 1;
 
@@ -310,7 +312,7 @@ describe("KNN PreSale", () => {
       });
     });
 
-    it("should unlock supply", async () => {
+    it('should unlock supply', async () => {
       const [, managerSession] = await getManagerSession();
 
       const balance = await knnToken.balanceOf(knnPreSale.address);
@@ -324,7 +326,7 @@ describe("KNN PreSale", () => {
       const firstUnlock = 1e9;
 
       await expect(managerSession.unlockSupply(firstUnlock, ref))
-        .to.emit(managerSession, "Unlock")
+        .to.emit(managerSession, 'Unlock')
         .withArgs(ref, firstUnlock);
 
       expectedSupply = expectedSupply.add(firstUnlock);
@@ -336,7 +338,7 @@ describe("KNN PreSale", () => {
       const secondUnlock = 5 * 1e9;
 
       await expect(managerSession.unlockSupply(secondUnlock, ref))
-        .to.emit(managerSession, "Unlock")
+        .to.emit(managerSession, 'Unlock')
         .withArgs(ref, secondUnlock);
 
       expectedSupply = expectedSupply.add(secondUnlock);
@@ -346,8 +348,8 @@ describe("KNN PreSale", () => {
       expect(availableSupply).to.eq(expectedSupply);
     });
 
-    describe("should unlock lock", async () => {
-      it("when supply greater than locked", async () => {
+    describe('should unlock lock', async () => {
+      it('when supply greater than locked', async () => {
         const [, managerSession] = await getManagerSession();
         const toLock = 1e10;
         const toUnlock = toLock + 1;
@@ -356,20 +358,20 @@ describe("KNN PreSale", () => {
 
         await expect(
           managerSession.unlockSupply(toUnlock, ref)
-        ).to.be.revertedWith("Insufficient locked supply!");
+        ).to.be.revertedWith('Insufficient locked supply!');
       });
 
-      it("when empty amount", async () => {
+      it('when empty amount', async () => {
         const [, managerSession] = await getManagerSession();
 
         const toUnlock = 0;
 
         await expect(
           managerSession.unlockSupply(toUnlock, ref)
-        ).to.be.revertedWith("Invalid amount");
+        ).to.be.revertedWith('Invalid amount');
       });
 
-      it("when invalid CLAIM_MANAGER_ROLE", async () => {
+      it('when invalid CLAIM_MANAGER_ROLE', async () => {
         const [managerAccount, managerSession] = await getManagerSession();
         const amount = 1;
 
@@ -379,27 +381,27 @@ describe("KNN PreSale", () => {
       });
     });
 
-    it("should revert the receive function", async () => {
+    it('should revert the receive function', async () => {
       const deployerWallet = await getDeployerWallet();
 
-      await network.provider.send("hardhat_setBalance", [
+      await network.provider.send('hardhat_setBalance', [
         deployerWallet.address,
-        "0xFFFFFFFFFFFFFFFF",
+        '0xFFFFFFFFFFFFFFFF',
       ]);
-      await network.provider.send("evm_mine");
+      await network.provider.send('evm_mine');
 
       await expect(
         deployerWallet.sendTransaction({
           to: knnPreSale.address,
-          value: ethers.utils.parseEther("5.001001999238"),
+          value: ethers.utils.parseEther('5.001001999238'),
         })
       ).to.be.reverted;
     });
 
-    it("should invoke the fallback function", async () => {
+    it('should invoke the fallback function', async () => {
       const deployerWallet = await getDeployerWallet();
 
-      const nonExistentFuncSignature = "nonExistentFunc(uint256,uint256)";
+      const nonExistentFuncSignature = 'nonExistentFunc(uint256,uint256)';
       const fakeDemoContract = new ethers.Contract(
         knnPreSale.address,
         [
@@ -413,7 +415,7 @@ describe("KNN PreSale", () => {
         .reverted;
     });
 
-    it("should allow claim locked random nonce", async () => {
+    it('should allow claim locked random nonce', async () => {
       const [managerAccount, managerSession] = await getManagerSession();
       const [userAccount, userSession] = await getUserSession();
 
@@ -421,10 +423,14 @@ describe("KNN PreSale", () => {
 
       await managerSession.lockSupply(amount, ref);
 
-      const nonce = ethers.BigNumber.from(ethers.utils.hexlify(ethers.utils.randomBytes(32))).sub(1);
+      const nonce = ethers.BigNumber.from(
+        ethers.utils.hexlify(ethers.utils.randomBytes(32))
+      ).sub(1);
 
       const claimTypeHash = ethers.utils.keccak256(
-        ethers.utils.toUtf8Bytes("Claim(address recipient,uint256 amountInKNN,uint256 ref,uint256 nonce)")
+        ethers.utils.toUtf8Bytes(
+          'Claim(address recipient,uint256 amountInKNN,uint256 ref,uint256 nonce)'
+        )
       );
 
       const messageHash = ethers.utils.keccak256(
@@ -434,10 +440,20 @@ describe("KNN PreSale", () => {
         )
       );
 
-      const signature = await managerAccount.signMessage(ethers.utils.arrayify(messageHash));
+      const signature = await managerAccount.signMessage(
+        ethers.utils.arrayify(messageHash)
+      );
 
-      await expect(userSession.claimLocked(userAccount.address, amount, ref, signature, nonce))
-        .to.emit(userSession, "Claim")
+      await expect(
+        userSession.claimLocked(
+          userAccount.address,
+          amount,
+          ref,
+          signature,
+          nonce
+        )
+      )
+        .to.emit(userSession, 'Claim')
         .withArgs(userAccount.address, ref, amount);
 
       const balanceUint256 = await knnToken.balanceOf(userAccount.address);
@@ -446,7 +462,7 @@ describe("KNN PreSale", () => {
       expect(balance).to.eq(amount);
     });
 
-    it("should allow claim locked", async () => {
+    it('should allow claim locked', async () => {
       const [managerAccount, managerSession] = await getManagerSession();
       const [userAccount, userSession] = await getUserSession();
 
@@ -454,11 +470,25 @@ describe("KNN PreSale", () => {
 
       await managerSession.lockSupply(amount, ref);
 
-      const [messageHash, nonce] = await managerSession.claimHash(userAccount.address, amount, ref);
-      const signature = await managerAccount.signMessage(ethers.utils.arrayify(messageHash));
+      const [messageHash, nonce] = await managerSession.claimHash(
+        userAccount.address,
+        amount,
+        ref
+      );
+      const signature = await managerAccount.signMessage(
+        ethers.utils.arrayify(messageHash)
+      );
 
-      await expect(userSession.claimLocked(userAccount.address, amount, ref, signature, nonce))
-        .to.emit(userSession, "Claim")
+      await expect(
+        userSession.claimLocked(
+          userAccount.address,
+          amount,
+          ref,
+          signature,
+          nonce
+        )
+      )
+        .to.emit(userSession, 'Claim')
         .withArgs(userAccount.address, ref, amount);
 
       const balanceUint256 = await knnToken.balanceOf(userAccount.address);
@@ -467,16 +497,14 @@ describe("KNN PreSale", () => {
       expect(balance).to.eq(amount);
     });
 
-    it("should allow claim", async () => {
+    it('should allow claim', async () => {
       const [, managerSession] = await getManagerSession();
       const userAccount = await getUserWallet();
 
       const amount = 1;
 
-      await expect(
-        managerSession.claim(userAccount.address, amount, ref)
-      )
-        .to.emit(managerSession, "Claim")
+      await expect(managerSession.claim(userAccount.address, amount, ref))
+        .to.emit(managerSession, 'Claim')
         .withArgs(userAccount.address, ref, amount);
 
       const balanceUint256 = await knnToken.balanceOf(userAccount.address);
@@ -485,34 +513,32 @@ describe("KNN PreSale", () => {
       expect(balance).to.eq(amount);
     });
 
-    describe("should not claim", async () => {
-      it("to invalid recipient address", async () => {
+    describe('should not claim', async () => {
+      it('to invalid recipient address', async () => {
         const [, managerSession] = await getManagerSession();
         const amount = 1;
 
         await expect(
           managerSession.claim(ethers.constants.AddressZero, amount, ref)
-        ).to.be.revertedWith("Invalid address");
+        ).to.be.revertedWith('Invalid address');
       });
 
-      it("already claimed ref", async () => {
+      it('already claimed ref', async () => {
         const [, managerSession] = await getManagerSession();
         const userAccount = await getUserWallet();
 
         const amount = 1;
 
-        await expect(
-          managerSession.claim(userAccount.address, amount, ref)
-        )
-          .to.emit(managerSession, "Claim")
+        await expect(managerSession.claim(userAccount.address, amount, ref))
+          .to.emit(managerSession, 'Claim')
           .withArgs(userAccount.address, ref, amount);
 
         await expect(
           managerSession.claim(userAccount.address, amount, ref)
-        ).to.be.revertedWith("Already claimed");
+        ).to.be.revertedWith('Already claimed');
       });
 
-      it("when claimable amount greater available supply", async () => {
+      it('when claimable amount greater available supply', async () => {
         const [, managerSession] = await getManagerSession();
         const userAccount = await getUserWallet();
 
@@ -522,49 +548,50 @@ describe("KNN PreSale", () => {
 
         await expect(
           managerSession.claim(userAccount.address, amount, ref)
-        ).to.be.revertedWith("Insufficient available supply");
+        ).to.be.revertedWith('Insufficient available supply');
       });
 
-      it("when empty amount", async () => {
+      it('when empty amount', async () => {
         const [, managerSession] = await getManagerSession();
         const userAccount = await getUserWallet();
         const amount = 0;
 
         await expect(
           managerSession.claim(userAccount.address, amount, ref)
-        ).to.be.revertedWith("Invalid amount");
+        ).to.be.revertedWith('Invalid amount');
       });
 
-      it("when invalid CLAIM_MANAGER_ROLE", async () => {
+      it('when invalid CLAIM_MANAGER_ROLE', async () => {
         const [managerAccount, managerSession] = await getManagerSession();
         const userAccount = await getUserWallet();
         const amount = 1;
 
         await knnPreSale.removeClaimManager(managerAccount.address);
 
-        await expect(
-          managerSession.claim(userAccount.address, amount, ref)
-        ).to.be.reverted;
+        await expect(managerSession.claim(userAccount.address, amount, ref)).to
+          .be.reverted;
       });
     });
 
-    describe("should not generate claim hash", async () => {
-      it("when invalid address", async () => {
+    describe('should not generate claim hash', async () => {
+      it('when invalid address', async () => {
         const [, managerSession] = await getManagerSession();
 
-        await expect(managerSession.claimHash(ethers.constants.AddressZero, 1, ref))
-          .to.be.revertedWith('Invalid address');
+        await expect(
+          managerSession.claimHash(ethers.constants.AddressZero, 1, ref)
+        ).to.be.revertedWith('Invalid address');
       });
 
-      it("when invalid amount", async () => {
+      it('when invalid amount', async () => {
         const [, managerSession] = await getManagerSession();
         const userAccount = await getUserWallet();
 
-        await expect(managerSession.claimHash(userAccount.address, 0, ref))
-          .to.be.revertedWith('Invalid amount');
+        await expect(
+          managerSession.claimHash(userAccount.address, 0, ref)
+        ).to.be.revertedWith('Invalid amount');
       });
 
-      it("when ref already claimed", async () => {
+      it('when ref already claimed', async () => {
         const [managerAccount, managerSession] = await getManagerSession();
         const [userAccount, userSession] = await getUserSession();
 
@@ -572,63 +599,114 @@ describe("KNN PreSale", () => {
 
         await managerSession.lockSupply(amount, ref);
 
-        const [messageHash, nonce] = await managerSession.claimHash(userAccount.address, amount, ref);
-        const signature = await managerAccount.signMessage(ethers.utils.arrayify(messageHash));
+        const [messageHash, nonce] = await managerSession.claimHash(
+          userAccount.address,
+          amount,
+          ref
+        );
+        const signature = await managerAccount.signMessage(
+          ethers.utils.arrayify(messageHash)
+        );
 
-        await expect(userSession.claimLocked(userAccount.address, amount, ref, signature, nonce))
-          .to.emit(userSession, "Claim")
+        await expect(
+          userSession.claimLocked(
+            userAccount.address,
+            amount,
+            ref,
+            signature,
+            nonce
+          )
+        )
+          .to.emit(userSession, 'Claim')
           .withArgs(userAccount.address, ref, amount);
 
-        await expect(managerSession.claimHash(userAccount.address, amount, ref))
-          .to.be.revertedWith('Already claimed');
+        await expect(
+          managerSession.claimHash(userAccount.address, amount, ref)
+        ).to.be.revertedWith('Already claimed');
       });
     });
 
-    describe("should not claim locked", async () => {
-      it("when claimable amount greater than locked", async () => {
+    describe('should not claim locked', async () => {
+      it('when claimable amount greater than locked', async () => {
         const [managerAccount, managerSession] = await getManagerSession();
         const userAccount = await getUserWallet();
         const amount = 1;
 
-        const [messageHash, nonce] = await managerSession.claimHash(userAccount.address, amount, ref);
-        const signature = await managerAccount.signMessage(ethers.utils.arrayify(messageHash));
+        const [messageHash, nonce] = await managerSession.claimHash(
+          userAccount.address,
+          amount,
+          ref
+        );
+        const signature = await managerAccount.signMessage(
+          ethers.utils.arrayify(messageHash)
+        );
 
         await expect(
-          managerSession.claimLocked(userAccount.address, amount, ref, signature, nonce)
-        ).to.be.revertedWith("Insufficient locked amount");
+          managerSession.claimLocked(
+            userAccount.address,
+            amount,
+            ref,
+            signature,
+            nonce
+          )
+        ).to.be.revertedWith('Insufficient locked amount');
       });
 
-      it("when invalid CLAIM_MANAGER_ROLE", async () => {
+      it('when invalid CLAIM_MANAGER_ROLE', async () => {
         const [managerAccount, managerSession] = await getManagerSession();
         const userAccount = await getUserWallet();
         const amount = 1;
 
         await knnPreSale.removeClaimManager(managerAccount.address);
 
-        const [messageHash, nonce] = await managerSession.claimHash(userAccount.address, amount, ref);
-        const signature = await managerAccount.signMessage(ethers.utils.arrayify(messageHash));
+        const [messageHash, nonce] = await managerSession.claimHash(
+          userAccount.address,
+          amount,
+          ref
+        );
+        const signature = await managerAccount.signMessage(
+          ethers.utils.arrayify(messageHash)
+        );
 
         await expect(
-          managerSession.claimLocked(userAccount.address, amount, ref, signature, nonce)
+          managerSession.claimLocked(
+            userAccount.address,
+            amount,
+            ref,
+            signature,
+            nonce
+          )
         ).to.be.reverted;
       });
     });
 
-    describe("should not claim locked with signature", async () => {
-      it("when claimable amount greater than locked", async () => {
+    describe('should not claim locked with signature', async () => {
+      it('when claimable amount greater than locked', async () => {
         const [managerAccount, managerSession] = await getManagerSession();
         const [userAccount, userSession] = await getUserSession();
         const amount = 1;
 
-        const [messageHash, nonce] = await managerSession.claimHash(userAccount.address, amount, ref);
-        const signature = await managerAccount.signMessage(ethers.utils.arrayify(messageHash));
+        const [messageHash, nonce] = await managerSession.claimHash(
+          userAccount.address,
+          amount,
+          ref
+        );
+        const signature = await managerAccount.signMessage(
+          ethers.utils.arrayify(messageHash)
+        );
 
         await expect(
-          userSession.claimLocked(userAccount.address, amount, ref, signature, nonce)
-        ).to.be.revertedWith("Insufficient locked amount");
+          userSession.claimLocked(
+            userAccount.address,
+            amount,
+            ref,
+            signature,
+            nonce
+          )
+        ).to.be.revertedWith('Insufficient locked amount');
       });
 
-      it("when invalid signature length", async () => {
+      it('when invalid signature length', async () => {
         const [, managerSession] = await getManagerSession();
         const [userAccount, userSession] = await getUserSession();
         const amount = 1;
@@ -636,28 +714,40 @@ describe("KNN PreSale", () => {
         await managerSession.lockSupply(amount, ref);
 
         await expect(
-          userSession.claimLocked(userAccount.address, amount, ref, "0x01", "1")
-        ).to.be.revertedWith("ECDSA: invalid signature length");
+          userSession.claimLocked(userAccount.address, amount, ref, '0x01', '1')
+        ).to.be.revertedWith('ECDSA: invalid signature length');
       });
 
-      it("when invalid CLAIM_MANAGER_ROLE", async () => {
+      it('when invalid CLAIM_MANAGER_ROLE', async () => {
         const [userAccount, userSession] = await getUserSession();
         const amount = 1;
 
-        const [messageHash, nonce] = await userSession.claimHash(userAccount.address, amount, ref);
-        const signature = await userAccount.signMessage(ethers.utils.arrayify(messageHash));
+        const [messageHash, nonce] = await userSession.claimHash(
+          userAccount.address,
+          amount,
+          ref
+        );
+        const signature = await userAccount.signMessage(
+          ethers.utils.arrayify(messageHash)
+        );
 
         await expect(
-          userSession.claimLocked(userAccount.address, amount, ref, signature, nonce)
+          userSession.claimLocked(
+            userAccount.address,
+            amount,
+            ref,
+            signature,
+            nonce
+          )
         ).to.be.reverted;
       });
     });
 
-    it("should withdraw contract ETH", async () => {
+    it('should withdraw contract ETH', async () => {
       const userAccount = await getUserWallet();
 
       await knnPreSale.buyTokens({
-        value: ethers.utils.parseEther("5.001001999238"),
+        value: ethers.utils.parseEther('5.001001999238'),
       });
 
       const userBalance = await ethers.provider.getBalance(userAccount.address);
@@ -666,7 +756,7 @@ describe("KNN PreSale", () => {
       );
 
       await expect(knnPreSale.withdraw(userAccount.address))
-        .to.emit(knnPreSale, "Withdraw")
+        .to.emit(knnPreSale, 'Withdraw')
         .withArgs(userAccount.address, preSaleBalance);
 
       const expetedUserBalance = userBalance.add(preSaleBalance);
@@ -683,7 +773,7 @@ describe("KNN PreSale", () => {
       expect(newPreSaleBalance).to.equal(0);
     });
 
-    it("should not convert KNN to Wei when Invalid round answer", async () => {
+    it('should not convert KNN to Wei when Invalid round answer', async () => {
       const deployerWallet = await getDeployerWallet();
       const aggregatorMock = await getAggregatorMock(deployerWallet);
 
@@ -698,16 +788,16 @@ describe("KNN PreSale", () => {
 
       await expect(
         knnPreSaleWithAggregatorMock.convertToWEI(1e2)
-      ).to.be.revertedWith("Invalid round answer");
+      ).to.be.revertedWith('Invalid round answer');
     });
 
-    it("should not convert KNN to Wei when Invalid amount", async () => {
-      await expect(
-        knnPreSale.convertToWEI(0)
-      ).to.be.revertedWith("Invalid amount");
+    it('should not convert KNN to Wei when Invalid amount', async () => {
+      await expect(knnPreSale.convertToWEI(0)).to.be.revertedWith(
+        'Invalid amount'
+      );
     });
 
-    it("should not convert Wei to KNN when Invalid round answer", async () => {
+    it('should not convert Wei to KNN when Invalid round answer', async () => {
       const deployerWallet = await getDeployerWallet();
       const aggregatorMock = await getAggregatorMock(deployerWallet);
 
@@ -722,16 +812,16 @@ describe("KNN PreSale", () => {
 
       await expect(
         knnPreSaleWithAggregatorMock.convertToKNN(1e2)
-      ).to.be.revertedWith("Invalid round answer");
+      ).to.be.revertedWith('Invalid round answer');
     });
 
-    it("should not convert Wei to KNN when Invalid amount", async () => {
-      await expect(
-        knnPreSale.convertToKNN(0)
-      ).to.be.revertedWith("Invalid amount");
+    it('should not convert Wei to KNN when Invalid amount', async () => {
+      await expect(knnPreSale.convertToKNN(0)).to.be.revertedWith(
+        'Invalid amount'
+      );
     });
 
-    it("should end contract", async () => {
+    it('should end contract', async () => {
       const userAccount = await getUserWallet();
 
       const userBalance = await knnToken.balanceOf(userAccount.address);
@@ -749,7 +839,7 @@ describe("KNN PreSale", () => {
       expect(newUserBalance).to.equal(expetedUserBalance);
     });
 
-    it("should end contract without availableSupply", async () => {
+    it('should end contract without availableSupply', async () => {
       const [, managerSession] = await getManagerSession();
       const userAccount = await getUserWallet();
 
@@ -769,35 +859,39 @@ describe("KNN PreSale", () => {
       expect(newUserBalance).to.equal(userBalance);
     });
 
-    describe("should prevent not owner", () => {
-      const revertWith = "Ownable: caller is not the owner";
+    describe('should prevent not owner', () => {
+      const revertWith = 'Ownable: caller is not the owner';
 
-      it("add claim manager", async () => {
+      it('add claim manager', async () => {
         const [, userSession] = await getUserSession();
 
-        await expect(userSession.addClaimManager(ethers.constants.AddressZero))
-          .to.be.revertedWith(revertWith);
+        await expect(
+          userSession.addClaimManager(ethers.constants.AddressZero)
+        ).to.be.revertedWith(revertWith);
       });
 
-      it("remove claim manager", async () => {
+      it('remove claim manager', async () => {
         const [, userSession] = await getUserSession();
 
-        await expect(userSession.removeClaimManager(ethers.constants.AddressZero))
-          .to.be.revertedWith(revertWith);
+        await expect(
+          userSession.removeClaimManager(ethers.constants.AddressZero)
+        ).to.be.revertedWith(revertWith);
       });
 
-      it("withdraw contract ETH", async () => {
+      it('withdraw contract ETH', async () => {
         const [, userSession] = await getUserSession();
 
-        await expect(userSession.withdraw(ethers.constants.AddressZero))
-          .to.be.revertedWith(revertWith);
+        await expect(
+          userSession.withdraw(ethers.constants.AddressZero)
+        ).to.be.revertedWith(revertWith);
       });
 
-      it("end contract", async () => {
+      it('end contract', async () => {
         const [, userSession] = await getUserSession();
 
-        await expect(userSession.end(ethers.constants.AddressZero))
-          .to.be.revertedWith(revertWith);
+        await expect(
+          userSession.end(ethers.constants.AddressZero)
+        ).to.be.revertedWith(revertWith);
       });
     });
   });
