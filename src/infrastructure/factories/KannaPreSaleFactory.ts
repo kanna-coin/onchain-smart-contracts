@@ -1,5 +1,5 @@
 import "@nomiclabs/hardhat-waffle";
-import { ethers, waffle } from "hardhat";
+import { ethers, waffle, network } from "hardhat";
 import { MockContract } from "ethereum-waffle";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import {
@@ -21,7 +21,7 @@ export const getKnnPreSaleFactory = async (deployerAddress: SignerWithAddress) =
 
 export const getPreSaleParameters = (
   knnToken: KannaToken | MockContract,
-  aggregatorAddress: string = process.env.PRICE_AGGREGATOR_ADDRESS!,
+  aggregatorAddress: string = network.config.priceAggregator!,
   quotation: string = defaultQuotation
 ): [string, string, string] => {
   return [knnToken.address, aggregatorAddress, quotation];
@@ -31,7 +31,7 @@ export const getKnnPreSale = async (
   knnDeployerAddress: SignerWithAddress,
   knnToken: KannaToken | MockContract,
   knnTreasurer?: KannaToken | MockContract,
-  aggregatorAddress: string = process.env.PRICE_AGGREGATOR_ADDRESS!,
+  aggregatorAddress: string = network.config.priceAggregator!,
   quotation: string = defaultQuotation,
 ): Promise<KannaPreSale> => {
   const parameters = getPreSaleParameters(knnToken, aggregatorAddress, quotation);

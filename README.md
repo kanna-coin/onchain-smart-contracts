@@ -1,8 +1,19 @@
-![KannaCoin.io](https://kannacoin.io/wp-content/uploads/2022/02/logo-kanna.png)
-
 # SmartContracts Mono-Repository
+<p align="center">
+    <img src="https://kannacoin.wpenginepowered.com/wp-content/uploads/2023/01/knn-green@2x.png" width="60%" alt="Kanna">
+</p>
 
----
+<p align="center">
+<img src="https://img.shields.io/badge/language-solidity-blueviolet.svg?style=flat" alt="Solidity">
+<img src="https://img.shields.io/badge/compiler%20version-0.8.17-blueviolet.svg?style=flat" alt="SolcVersion_8_17">
+<br/>
+<img src="https://img.shields.io/badge/hardhat-2.2.1-yellow.svg?style=flat" alt="SolcVersion_8_17">
+<img src="https://img.shields.io/badge/v5.7.2-ethers-purple.svg?style=flat" alt="Ethers">
+<img src="https://img.shields.io/badge/testing%20lang-typescript-blue.svg?style=flat" alt="Typescript">
+<img src="https://img.shields.io/badge/powered%20by-chainlink-darkblue.svg?style=flat" alt="Powered by Chainlink">
+<br/>
+</p>
+<hr/>
 
 ## Kanna Multisig Wallet
 

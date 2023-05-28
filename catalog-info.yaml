@@ -1,0 +1,13 @@
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: treasury-staking-monorepo
+  annotations:
+    github.com/project-slug: kanna-coin/treasury-staking-monorepo
+    backstage.io/techdocs-ref: dir:.
+spec:
+  type: library
+  lifecycle: production
+  owner: onchain-squad
+  system: dapp
