@@ -6,7 +6,8 @@ import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import {IDynamicBadgeChecker} from './interfaces/IDynamicBadgeChecker.sol';
+import {IDynamicBadgeChecker} from "./interfaces/IDynamicBadgeChecker.sol";
+
 /**
  *  __                                  ___.               .___
  * |  | ___\|/_    ____   ____ _\|/_    \_ |__ _\|/_     __| _/ ____   ____   ______
@@ -22,10 +23,10 @@ import {IDynamicBadgeChecker} from './interfaces/IDynamicBadgeChecker.sol';
  *  @custom:discord https://discord.kannacoin.io
  */
 contract KannaBadges is ERC1155, Ownable, AccessControl {
-
     bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
-    bytes32 private constant _MINT_TYPEHASH = keccak256("Mint(address to, uint16 id, uint256 amount, uint16 incremental, uint256 nonce)");
+    bytes32 private constant _MINT_TYPEHASH =
+        keccak256("Mint(address to, uint16 id, uint256 amount, uint16 incremental, uint256 dueDate, uint256 nonce)");
 
     struct Token {
         uint16 id;
@@ -48,8 +49,7 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
 
     event Mint(address indexed to, uint16 indexed id, uint256 amount, uint16 nonce);
 
-    constructor (string memory uri_) ERC1155(uri_) {
-    }
+    constructor(string memory uri_) ERC1155(uri_) {}
 
     /**
      * @dev Modifier to check if token ID is registered
@@ -63,7 +63,7 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
      * @dev Returns the name of the token.
      */
     function name() public pure virtual returns (string memory) {
-        return 'Kanna Badges';
+        return "Kanna Badges";
     }
 
     /**
@@ -71,16 +71,16 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
      * name.
      */
     function symbol() public pure virtual returns (string memory) {
-        return 'KNNB';
+        return "KNNB";
     }
 
     /**
      * @dev Returns all registered tokens.
      */
-    function tokens() public view virtual returns(Token[] memory) {
+    function tokens() public view virtual returns (Token[] memory) {
         Token[] memory memoryTokens = new Token[](_lastTokenId);
 
-        for (uint16 i=0; i<_lastTokenId; i++) {
+        for (uint16 i = 0; i < _lastTokenId; i++) {
             uint16 id = i + 1;
 
             memoryTokens[i] = tokensMap[id];
@@ -96,7 +96,7 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
     function setURI(string memory uri_) public onlyOwner {
         _setURI(uri_);
 
-        for (uint16 i=0; i<_lastTokenId; i++) {
+        for (uint16 i = 0; i < _lastTokenId; i++) {
             uint16 id = i + 1;
 
             emit URI(uri_, id);
@@ -128,7 +128,7 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
 
         uint16 length;
 
-        for (uint16 i=0; i<_lastTokenId; i++) {
+        for (uint16 i = 0; i < _lastTokenId; i++) {
             uint16 id = i + 1;
 
             if (balanceOf(account, id) > 0) {
@@ -142,7 +142,7 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
             return balances;
         }
 
-        for (uint16 i=0; i<_lastTokenId; i++) {
+        for (uint16 i = 0; i < _lastTokenId; i++) {
             uint16 id = i + 1;
 
             if (balanceOf(account, id) > 0) {
@@ -177,10 +177,7 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
      * - the token `id` must not be registered.
      * - the caller must have MANAGER_ROLE.
      */
-    function register(
-        bool transferable,
-        bool accumulative
-    ) public onlyRole(MANAGER_ROLE) {
+    function register(bool transferable, bool accumulative) public onlyRole(MANAGER_ROLE) {
         _lastTokenId++;
 
         tokensMap[_lastTokenId] = Token(_lastTokenId, transferable, accumulative);
@@ -197,9 +194,7 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
      * - the token `id` must not be registered.
      * - the caller must have MANAGER_ROLE.
      */
-    function register(
-        address checkerAddress
-    ) public onlyRole(MANAGER_ROLE) {
+    function register(address checkerAddress) public onlyRole(MANAGER_ROLE) {
         IDynamicBadgeChecker dynamicChecker = IDynamicBadgeChecker(checkerAddress);
 
         require(
@@ -221,10 +216,7 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
      * - the caller must have a minter role.
      * - the token `id` must be registered.
      */
-    function mint(
-        address to,
-        uint16 id
-    ) public onlyRole(MINTER_ROLE) tokenExists(id) {
+    function mint(address to, uint16 id) public onlyRole(MINTER_ROLE) tokenExists(id) {
         _mint(to, id, 1, "");
     }
 
@@ -237,11 +229,7 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
      * - the caller must have a minter role.
      * - the token `id` must be registered.
      */
-    function mint(
-        address to,
-        uint16 id,
-        uint256 amount
-    ) public onlyRole(MINTER_ROLE) tokenExists(id) {
+    function mint(address to, uint16 id, uint256 amount) public onlyRole(MINTER_ROLE) tokenExists(id) {
         _mint(to, id, amount, "");
     }
 
@@ -260,12 +248,14 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
         uint256 amount,
         bytes memory signature,
         uint16 incremental,
+        uint256 dueDate,
         uint256 nonce
     ) external tokenExists(id) {
         require(incremental == _mintIncrementalNonces[id][to] + 1, "Invalid Nonce");
+        require(block.timestamp <= dueDate, "Invalid date");
 
         bytes32 signedMessage = ECDSA.toEthSignedMessageHash(
-            keccak256(abi.encode(_MINT_TYPEHASH, to, id, amount, incremental, nonce))
+            keccak256(abi.encode(_MINT_TYPEHASH, to, id, amount, incremental, dueDate, nonce))
         );
 
         address signer = ECDSA.recover(signedMessage, signature);
@@ -286,11 +276,8 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
      * - the caller must have a minter role.
      * - the token `id` must be registered.
      */
-    function batchMint(
-        uint16 id,
-        address[] memory addresses
-    ) public onlyRole(MINTER_ROLE) tokenExists(id) {
-        for (uint256 i=0; i<addresses.length; i++) {
+    function batchMint(uint16 id, address[] memory addresses) public onlyRole(MINTER_ROLE) tokenExists(id) {
+        for (uint256 i = 0; i < addresses.length; i++) {
             _mint(addresses[i], id, 1, "");
         }
     }
@@ -361,9 +348,7 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
      * @dev See {IERC165-supportsInterface}.
      */
     function supportsInterface(bytes4 interfaceId) public view virtual override(ERC1155, AccessControl) returns (bool) {
-        return
-            ERC1155.supportsInterface(interfaceId) ||
-            AccessControl.supportsInterface(interfaceId);
+        return ERC1155.supportsInterface(interfaceId) || AccessControl.supportsInterface(interfaceId);
     }
 
     /**
@@ -387,7 +372,7 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
         uint256[] memory amounts,
         bytes memory
     ) internal virtual override {
-        for (uint i=0; i<ids.length; i++) {
+        for (uint i = 0; i < ids.length; i++) {
             uint16 id = uint16(ids[i]);
             uint256 amount = amounts[i];
             Token memory token = tokensMap[id];
@@ -414,7 +399,7 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
         bytes memory
     ) internal virtual override {
         if (from == address(0)) {
-            for (uint i=0; i<ids.length; i++) {
+            for (uint i = 0; i < ids.length; i++) {
                 uint16 id = uint16(ids[i]);
                 uint256 amount = amounts[i];
 
