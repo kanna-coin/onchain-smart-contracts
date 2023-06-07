@@ -175,20 +175,6 @@ describe("Kanna Badges", () => {
       tokens = [];
     });
 
-    describe("Contract Info", async () => {
-      it("should return name", async () => {
-        const name = await kannaBadges.name();
-
-        await expect(name).eq('Kanna Badges');
-      });
-
-      it("should return symbol", async () => {
-        const symbol = await kannaBadges.symbol();
-
-        await expect(symbol).eq('KNNB');
-      });
-    });
-
     describe("Register Token", async () => {
 
       it("should add manager", async () => {

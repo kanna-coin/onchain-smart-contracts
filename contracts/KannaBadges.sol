@@ -60,21 +60,6 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
     }
 
     /**
-     * @dev Returns the name of the token.
-     */
-    function name() public pure virtual returns (string memory) {
-        return 'Kanna Badges';
-    }
-
-    /**
-     * @dev Returns the symbol of the token, usually a shorter version of the
-     * name.
-     */
-    function symbol() public pure virtual returns (string memory) {
-        return 'KNNB';
-    }
-
-    /**
      * @dev Returns all registered tokens.
      */
     function tokens() public view virtual returns(Token[] memory) {
