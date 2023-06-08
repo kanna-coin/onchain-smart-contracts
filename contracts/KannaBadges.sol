@@ -43,10 +43,13 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
     mapping(uint16 => address) private _dynamicCheckers;
     mapping(uint16 => uint256) private _totalSupply;
     mapping(uint16 => mapping(address => uint16)) private _mintIncrementalNonces;
+    mapping(uint16 => bool) private _bridgeChains;
 
     event TokenRegistered(uint16 indexed id, bool transferable, bool accumulative);
 
     event Mint(address indexed to, uint16 indexed id, uint256 amount, uint16 nonce);
+
+    event BridgeTransfer(address indexed account, uint16 indexed id, uint256 amount, uint16 chainId);
 
     constructor (string memory uri_) ERC1155(uri_) {
     }
@@ -352,6 +355,51 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
     }
 
     /**
+     * @dev Check if chain bridge is enabled.
+     */
+    function isBridgeEnabled(uint16 chainId) public view returns (bool) {
+        return _bridgeChains[chainId];
+    }
+
+    /**
+     * @dev Enable a chain bridge
+     */
+    function enableBridge(uint16 chainId) external onlyOwner {
+        _bridgeChains[chainId] = true;
+    }
+
+    /**
+     * @dev Disable a chain bridge
+     */
+    function disableBridge(uint16 chainId) external onlyOwner {
+        _bridgeChains[chainId] = false;
+    }
+
+    /**
+     * @dev Trnafers a token to another chain
+     *
+     * If `minter` had been granted `MINTER_ROLE`, emits a {RoleRevoked} event.
+     *
+     * Requirements:
+     *
+     * - the caller must have enough balance.
+     * - the chain id bridge must be enabled.
+     * - the token must not be a dynamic type.
+     *
+     * Emit a {BridgeTransfer} event.
+     */
+    function transferToChain(uint16 id, uint16 chainId, uint256 amount) external tokenExists(id) {
+        require(amount > 0, "Invalid amount");
+        require(balanceOf(_msgSender(), id) >= amount, "Insuficient balance");
+        require(_bridgeChains[chainId], "Invalid chain");
+        require(_dynamicCheckers[id] == address(0), "Token is not transferable");
+
+        _burn(_msgSender(), id, amount);
+
+        emit BridgeTransfer(_msgSender(), id, amount, chainId);
+    }
+
+    /**
      * @dev See {IERC1155-_beforeTokenTransfer}
      *
      * Check if the transferred tokens are elegible to transfer.
@@ -377,12 +425,16 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
             uint256 amount = amounts[i];
             Token memory token = tokensMap[id];
 
-            require(from == address(0) || token.transferable, "Token is not transferable");
-            require(token.accumulative || (balanceOf(to, id) == 0 && amount == 1), "Token is not accumulative");
+            require(from == address(0) || to == address(0) || token.transferable, "Token is not transferable");
+            require(to == address(0) || token.accumulative || (balanceOf(to, id) == 0 && amount == 1), "Token is not accumulative");
             require(from != address(0) || _dynamicCheckers[id] == address(0), "Token is not mintable");
 
             if (from == address(0)) {
                 _totalSupply[id] += amount;
+            }
+
+            if (to == address(0)) {
+                _totalSupply[id] -= amount;
             }
         }
     }

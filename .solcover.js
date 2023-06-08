@@ -2,6 +2,7 @@ const fs = require('fs');
 
 module.exports = {
     istanbulReporter: ['html', 'lcov', 'text', 'json', 'json-summary'],
+    skipFiles: ['mocks/'],
     onIstanbulComplete: () => {
         const json = require('./coverage/coverage-summary.json');
 
