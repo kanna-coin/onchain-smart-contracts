@@ -1,23 +1,22 @@
 import { config as dotEnvConfig } from 'dotenv';
 dotEnvConfig();
 
-import { HardhatUserConfig } from 'hardhat/types';
+import type { HardhatUserConfig } from 'hardhat/types/config';
 
 import '@nomiclabs/hardhat-waffle';
 import '@typechain/hardhat';
 import '@nomiclabs/hardhat-etherscan';
 import 'solidity-coverage';
+import 'hardhat-gas-reporter';
 
 interface CustomNetworkConfig {
   tokenAddress?: string;
   priceAggregator?: string;
 }
 
-declare module 'hardhat/types' {
-  export interface HardhatNetworkConfig extends CustomNetworkConfig {}
-  export interface HttpNetworkConfig extends CustomNetworkConfig {}
-  export interface HardhatNetworkUserConfig extends CustomNetworkConfig {}
-  export interface HttpNetworkUserConfig extends CustomNetworkConfig {}
+declare module "hardhat/types/config" {
+  export interface HardhatNetworkUserConfig extends CustomNetworkConfig { }
+  export interface HttpNetworkUserConfig extends CustomNetworkConfig { }
 }
 
 const PRIVATE_KEY = process.env.PRIVATE_KEY as string;
@@ -43,7 +42,7 @@ const config: HardhatUserConfig = {
         // eslint-disable-next-line
         enabled: true,
         url: process.env.RPC_NODE_ENDPOINT || '',
-        blockNumber: 8890396,
+        // blockNumber: 8890396,
       },
       mining: {
         mempool: {
@@ -98,6 +97,10 @@ const config: HardhatUserConfig = {
       polygon: process.env.POLYGONSCAN_API_KEY || '',
       polygonMumbai: process.env.POLYGONSCAN_API_KEY || '',
     },
+  },
+  gasReporter: {
+    enabled: true,
+    currency: 'USD'
   },
 };
 

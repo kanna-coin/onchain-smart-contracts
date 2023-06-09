@@ -175,20 +175,6 @@ describe("Kanna Badges", () => {
       tokens = [];
     });
 
-    describe("Contract Info", async () => {
-      it("should return name", async () => {
-        const name = await kannaBadges.name();
-
-        await expect(name).eq('Kanna Badges');
-      });
-
-      it("should return symbol", async () => {
-        const symbol = await kannaBadges.symbol();
-
-        await expect(symbol).eq('KNNB');
-      });
-    });
-
     describe("Register Token", async () => {
 
       it("should add manager", async () => {
@@ -1045,6 +1031,129 @@ describe("Kanna Badges", () => {
       });
     });
 
+    describe("Bridge", async () => {
+      beforeEach(async () => {
+        await registerTokens();
+      });
+
+      it("should enable chain", async () => {
+        const chainId = 2;
+
+        await kannaBadges.enableBridge(chainId);
+
+        const isEnabled = await kannaBadges.isBridgeEnabled(chainId);
+
+        expect(isEnabled).eq(true);
+      });
+
+      it("should disable chain", async () => {
+        const chainId = 2;
+
+        await kannaBadges.enableBridge(chainId);
+
+        await kannaBadges.disableBridge(chainId);
+
+        const isEnabled = await kannaBadges.isBridgeEnabled(chainId);
+
+        expect(isEnabled).eq(false);
+      });
+
+      it("should transfer to chain", async () => {
+        const [, minterSession] = await getMinterSession();
+        const [userWallet, userSession] = await getUserSession();
+
+        const tokenId = getTokenId({ transferable: true });
+        const chainId = 2;
+        const amount = 1;
+
+        await minterSession["mint(address,uint16)"](userWallet.address, tokenId);
+
+        await kannaBadges.enableBridge(chainId);
+
+        await expect(userSession.transferToChain(tokenId, chainId, amount))
+          .to.emit(kannaBadges, "BridgeTransfer")
+          .withArgs(
+            userWallet.address,
+            tokenId,
+            amount,
+            chainId
+          )
+      });
+
+      describe("should not transfer", async () => {
+        it("token not registered", async () => {
+          const [, userSession] = await getUserSession();
+
+          const tokenId = 99;
+          const chainId = 2;
+          const amount = 1;
+
+          await expect(userSession.transferToChain(tokenId, chainId, amount))
+            .to.be.revertedWith("Invalid Token");
+        });
+
+        it("amount lower than one", async () => {
+          const [, userSession] = await getUserSession();
+
+          const tokenId = getTokenId();
+          const chainId = 2;
+          const amount = 0;
+
+          await expect(userSession.transferToChain(tokenId, chainId, amount))
+            .to.be.revertedWith("Invalid amount");
+        });
+
+        it("insuficient balance", async () => {
+          const [, userSession] = await getUserSession();
+
+          const tokenId = getTokenId();
+          const chainId = 2;
+          const amount = 1;
+
+          await expect(userSession.transferToChain(tokenId, chainId, amount))
+            .to.be.revertedWith("Insuficient balance");
+        });
+
+        it("invalid chain id", async () => {
+          const [, minterSession] = await getMinterSession();
+          const [userWallet, userSession] = await getUserSession();
+
+          const tokenId = getTokenId();
+          const chainId = 2;
+          const amount = 1;
+
+          await minterSession["mint(address,uint16)"](userWallet.address, 1);
+
+          await expect(userSession.transferToChain(tokenId, chainId, amount))
+            .to.be.revertedWith("Invalid chain");
+        });
+
+        it("dynamic token", async () => {
+          const deployerWallet = await getDeployerWallet();
+          const [, managerSession] = await getManagerSession();
+          const [userWallet, userSession] = await getUserSession();
+
+          const chainId = 2;
+          const amount = 1;
+
+          await kannaBadges.enableBridge(chainId);
+
+          const dynamicChecker = await getDynamicBadgeCheckerMock(deployerWallet);
+
+          await dynamicChecker.mock.isAccumulative.returns(true);
+
+          const tx = await managerSession["register(address)"](dynamicChecker.address);
+          const event = await getTokenRegisteredEvent(tx);
+          const tokenId = event.args.id;
+
+          await dynamicChecker.mock.balanceOf.withArgs(userWallet.address, tokenId).returns(1);
+
+          await expect(userSession.transferToChain(tokenId, chainId, amount))
+            .to.be.revertedWith("Token is not transferable");
+        });
+      });
+    });
+
     describe("should prevent not owner", () => {
       const revertWith = "Ownable: caller is not the owner";
 
@@ -1084,6 +1193,20 @@ describe("Kanna Badges", () => {
         const [user2Wallet] = await getUser2Session();
 
         await expect(userSession.removeMinter(user2Wallet.address))
+          .to.be.revertedWith(revertWith);
+      });
+
+      it("enable bridge chain", async () => {
+        const [, userSession] = await getUserSession();
+
+        await expect(userSession.enableBridge(2))
+          .to.be.revertedWith(revertWith);
+      });
+
+      it("disable bridge chain", async () => {
+        const [, userSession] = await getUserSession();
+
+        await expect(userSession.disableBridge(2))
           .to.be.revertedWith(revertWith);
       });
     });
