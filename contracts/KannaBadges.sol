@@ -42,6 +42,7 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
     uint16 private _lastTokenId;
     mapping(uint16 => address) private _dynamicCheckers;
     mapping(uint16 => uint256) private _totalSupply;
+    mapping(uint16 => uint256) private _holders;
     mapping(uint16 => mapping(address => uint16)) private _mintIncrementalNonces;
     mapping(uint16 => bool) private _bridgeChains;
 
@@ -154,6 +155,13 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
         }
 
         return super.balanceOf(account, id);
+    }
+
+    /**
+     * @dev Return holders amount of token
+     */
+    function holders(uint16 id) public view returns (uint256) {
+        return _holders[id];
     }
 
     /** @dev Register a new Token
@@ -435,6 +443,14 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
 
             if (to == address(0)) {
                 _totalSupply[id] -= amount;
+            }
+
+            if (from != address(0) && balanceOf(from, id) - amount == 0) {
+                _holders[id]--;
+            }
+
+            if (to != address(0) && balanceOf(to, id) == 0) {
+                _holders[id]++;
             }
         }
     }
