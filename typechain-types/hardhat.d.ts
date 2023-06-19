@@ -2,239 +2,239 @@
 /* tslint:disable */
 /* eslint-disable */
 
-import { ethers } from 'ethers';
+import { ethers } from "ethers";
 import {
   FactoryOptions,
   HardhatEthersHelpers as HardhatEthersHelpersBase,
-} from '@nomiclabs/hardhat-ethers/types';
+} from "@nomiclabs/hardhat-ethers/types";
 
-import * as Contracts from '.';
+import * as Contracts from ".";
 
-declare module 'hardhat/types/runtime' {
+declare module "hardhat/types/runtime" {
   interface HardhatEthersHelpers extends HardhatEthersHelpersBase {
     getContractFactory(
-      name: 'AggregatorV3Interface',
+      name: "AggregatorV3Interface",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.AggregatorV3Interface__factory>;
     getContractFactory(
-      name: 'AccessControl',
+      name: "AccessControl",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.AccessControl__factory>;
     getContractFactory(
-      name: 'IAccessControl',
+      name: "IAccessControl",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IAccessControl__factory>;
     getContractFactory(
-      name: 'Ownable',
+      name: "Ownable",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.Ownable__factory>;
     getContractFactory(
-      name: 'ERC1155',
+      name: "ERC1155",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.ERC1155__factory>;
     getContractFactory(
-      name: 'IERC1155MetadataURI',
+      name: "IERC1155MetadataURI",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IERC1155MetadataURI__factory>;
     getContractFactory(
-      name: 'IERC1155',
+      name: "IERC1155",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IERC1155__factory>;
     getContractFactory(
-      name: 'IERC1155Receiver',
+      name: "IERC1155Receiver",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IERC1155Receiver__factory>;
     getContractFactory(
-      name: 'ERC20',
+      name: "ERC20",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.ERC20__factory>;
     getContractFactory(
-      name: 'IERC20Metadata',
+      name: "IERC20Metadata",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IERC20Metadata__factory>;
     getContractFactory(
-      name: 'IERC20',
+      name: "IERC20",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IERC20__factory>;
     getContractFactory(
-      name: 'ERC165',
+      name: "ERC165",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.ERC165__factory>;
     getContractFactory(
-      name: 'IERC165',
+      name: "IERC165",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IERC165__factory>;
     getContractFactory(
-      name: 'DynamicBadgeChecker',
+      name: "DynamicBadgeChecker",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.DynamicBadgeChecker__factory>;
     getContractFactory(
-      name: 'FxERC20ChildTunnel',
+      name: "FxERC20ChildTunnel",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.FxERC20ChildTunnel__factory>;
     getContractFactory(
-      name: 'IDynamicBadgeChecker',
+      name: "IDynamicBadgeChecker",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IDynamicBadgeChecker__factory>;
     getContractFactory(
-      name: 'KannaBadges',
+      name: "KannaBadges",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.KannaBadges__factory>;
     getContractFactory(
-      name: 'KannaPreSale',
+      name: "KannaPreSale",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.KannaPreSale__factory>;
     getContractFactory(
-      name: 'KannaSale',
+      name: "KannaSale",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.KannaSale__factory>;
     getContractFactory(
-      name: 'KannaSaleL2',
+      name: "KannaSaleL2",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.KannaSaleL2__factory>;
     getContractFactory(
-      name: 'KannaStockOption',
+      name: "KannaStockOption",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.KannaStockOption__factory>;
     getContractFactory(
-      name: 'KannaToken',
+      name: "KannaToken",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.KannaToken__factory>;
     getContractFactory(
-      name: 'KannaYield',
+      name: "KannaYield",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.KannaYield__factory>;
     getContractFactory(
-      name: 'KnnHolderBadgeChecker',
+      name: "KnnHolderBadgeChecker",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.KnnHolderBadgeChecker__factory>;
     getContractFactory(
-      name: 'AggregatorV3Mock',
+      name: "AggregatorV3Mock",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.AggregatorV3Mock__factory>;
 
     getContractAt(
-      name: 'AggregatorV3Interface',
+      name: "AggregatorV3Interface",
       address: string,
       signer?: ethers.Signer
     ): Promise<Contracts.AggregatorV3Interface>;
     getContractAt(
-      name: 'AccessControl',
+      name: "AccessControl",
       address: string,
       signer?: ethers.Signer
     ): Promise<Contracts.AccessControl>;
     getContractAt(
-      name: 'IAccessControl',
+      name: "IAccessControl",
       address: string,
       signer?: ethers.Signer
     ): Promise<Contracts.IAccessControl>;
     getContractAt(
-      name: 'Ownable',
+      name: "Ownable",
       address: string,
       signer?: ethers.Signer
     ): Promise<Contracts.Ownable>;
     getContractAt(
-      name: 'ERC1155',
+      name: "ERC1155",
       address: string,
       signer?: ethers.Signer
     ): Promise<Contracts.ERC1155>;
     getContractAt(
-      name: 'IERC1155MetadataURI',
+      name: "IERC1155MetadataURI",
       address: string,
       signer?: ethers.Signer
     ): Promise<Contracts.IERC1155MetadataURI>;
     getContractAt(
-      name: 'IERC1155',
+      name: "IERC1155",
       address: string,
       signer?: ethers.Signer
     ): Promise<Contracts.IERC1155>;
     getContractAt(
-      name: 'IERC1155Receiver',
+      name: "IERC1155Receiver",
       address: string,
       signer?: ethers.Signer
     ): Promise<Contracts.IERC1155Receiver>;
     getContractAt(
-      name: 'ERC20',
+      name: "ERC20",
       address: string,
       signer?: ethers.Signer
     ): Promise<Contracts.ERC20>;
     getContractAt(
-      name: 'IERC20Metadata',
+      name: "IERC20Metadata",
       address: string,
       signer?: ethers.Signer
     ): Promise<Contracts.IERC20Metadata>;
     getContractAt(
-      name: 'IERC20',
+      name: "IERC20",
       address: string,
       signer?: ethers.Signer
     ): Promise<Contracts.IERC20>;
     getContractAt(
-      name: 'ERC165',
+      name: "ERC165",
       address: string,
       signer?: ethers.Signer
     ): Promise<Contracts.ERC165>;
     getContractAt(
-      name: 'IERC165',
+      name: "IERC165",
       address: string,
       signer?: ethers.Signer
     ): Promise<Contracts.IERC165>;
     getContractAt(
-      name: 'DynamicBadgeChecker',
+      name: "DynamicBadgeChecker",
       address: string,
       signer?: ethers.Signer
     ): Promise<Contracts.DynamicBadgeChecker>;
     getContractAt(
-      name: 'FxERC20ChildTunnel',
+      name: "FxERC20ChildTunnel",
       address: string,
       signer?: ethers.Signer
     ): Promise<Contracts.FxERC20ChildTunnel>;
     getContractAt(
-      name: 'IDynamicBadgeChecker',
+      name: "IDynamicBadgeChecker",
       address: string,
       signer?: ethers.Signer
     ): Promise<Contracts.IDynamicBadgeChecker>;
     getContractAt(
-      name: 'KannaBadges',
+      name: "KannaBadges",
       address: string,
       signer?: ethers.Signer
     ): Promise<Contracts.KannaBadges>;
     getContractAt(
-      name: 'KannaPreSale',
+      name: "KannaPreSale",
       address: string,
       signer?: ethers.Signer
     ): Promise<Contracts.KannaPreSale>;
     getContractAt(
-      name: 'KannaSale',
+      name: "KannaSale",
       address: string,
       signer?: ethers.Signer
     ): Promise<Contracts.KannaSale>;
     getContractAt(
-      name: 'KannaSaleL2',
+      name: "KannaSaleL2",
       address: string,
       signer?: ethers.Signer
     ): Promise<Contracts.KannaSaleL2>;
     getContractAt(
-      name: 'KannaStockOption',
+      name: "KannaStockOption",
       address: string,
       signer?: ethers.Signer
     ): Promise<Contracts.KannaStockOption>;
     getContractAt(
-      name: 'KannaToken',
+      name: "KannaToken",
       address: string,
       signer?: ethers.Signer
     ): Promise<Contracts.KannaToken>;
     getContractAt(
-      name: 'KannaYield',
+      name: "KannaYield",
       address: string,
       signer?: ethers.Signer
     ): Promise<Contracts.KannaYield>;
     getContractAt(
-      name: 'KnnHolderBadgeChecker',
+      name: "KnnHolderBadgeChecker",
       address: string,
       signer?: ethers.Signer
     ): Promise<Contracts.KnnHolderBadgeChecker>;
     getContractAt(
-      name: 'AggregatorV3Mock',
+      name: "AggregatorV3Mock",
       address: string,
       signer?: ethers.Signer
     ): Promise<Contracts.AggregatorV3Mock>;

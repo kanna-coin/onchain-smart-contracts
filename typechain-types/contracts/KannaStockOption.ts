@@ -4,6 +4,7 @@
 import type {
   BaseContract,
   BigNumber,
+  BigNumberish,
   BytesLike,
   CallOverrides,
   ContractTransaction,
@@ -28,131 +29,175 @@ import type {
 
 export interface KannaStockOptionInterface extends utils.Interface {
   functions: {
-    "amountVested()": FunctionFragment;
-    "cancel()": FunctionFragment;
-    "canceled()": FunctionFragment;
-    "cliff()": FunctionFragment;
-    "completed()": FunctionFragment;
-    "daysLeftToCancel()": FunctionFragment;
-    "daysLeftToWithdraw()": FunctionFragment;
-    "duration()": FunctionFragment;
-    "holder()": FunctionFragment;
-    "lock()": FunctionFragment;
+    "availableToWithdraw()": FunctionFragment;
+    "finalize()": FunctionFragment;
+    "initialize(address,uint256,uint256,uint256,uint256,uint256,uint256,address)": FunctionFragment;
     "owner()": FunctionFragment;
-    "start()": FunctionFragment;
-    "token()": FunctionFragment;
-    "vesting()": FunctionFragment;
-    "withdraw()": FunctionFragment;
+    "renounceOwnership()": FunctionFragment;
+    "timestamp()": FunctionFragment;
+    "totalVested()": FunctionFragment;
+    "transferOwnership(address)": FunctionFragment;
+    "vestingForecast(uint256)": FunctionFragment;
+    "withdraw(uint256)": FunctionFragment;
   };
 
   getFunction(
     nameOrSignatureOrTopic:
-      | "amountVested"
-      | "cancel"
-      | "canceled"
-      | "cliff"
-      | "completed"
-      | "daysLeftToCancel"
-      | "daysLeftToWithdraw"
-      | "duration"
-      | "holder"
-      | "lock"
+      | "availableToWithdraw"
+      | "finalize"
+      | "initialize"
       | "owner"
-      | "start"
-      | "token"
-      | "vesting"
+      | "renounceOwnership"
+      | "timestamp"
+      | "totalVested"
+      | "transferOwnership"
+      | "vestingForecast"
       | "withdraw"
   ): FunctionFragment;
 
   encodeFunctionData(
-    functionFragment: "amountVested",
+    functionFragment: "availableToWithdraw",
     values?: undefined
   ): string;
-  encodeFunctionData(functionFragment: "cancel", values?: undefined): string;
-  encodeFunctionData(functionFragment: "canceled", values?: undefined): string;
-  encodeFunctionData(functionFragment: "cliff", values?: undefined): string;
-  encodeFunctionData(functionFragment: "completed", values?: undefined): string;
+  encodeFunctionData(functionFragment: "finalize", values?: undefined): string;
   encodeFunctionData(
-    functionFragment: "daysLeftToCancel",
-    values?: undefined
+    functionFragment: "initialize",
+    values: [
+      PromiseOrValue<string>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<string>
+    ]
   ): string;
-  encodeFunctionData(
-    functionFragment: "daysLeftToWithdraw",
-    values?: undefined
-  ): string;
-  encodeFunctionData(functionFragment: "duration", values?: undefined): string;
-  encodeFunctionData(functionFragment: "holder", values?: undefined): string;
-  encodeFunctionData(functionFragment: "lock", values?: undefined): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
-  encodeFunctionData(functionFragment: "start", values?: undefined): string;
-  encodeFunctionData(functionFragment: "token", values?: undefined): string;
-  encodeFunctionData(functionFragment: "vesting", values?: undefined): string;
-  encodeFunctionData(functionFragment: "withdraw", values?: undefined): string;
+  encodeFunctionData(
+    functionFragment: "renounceOwnership",
+    values?: undefined
+  ): string;
+  encodeFunctionData(functionFragment: "timestamp", values?: undefined): string;
+  encodeFunctionData(
+    functionFragment: "totalVested",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "transferOwnership",
+    values: [PromiseOrValue<string>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "vestingForecast",
+    values: [PromiseOrValue<BigNumberish>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "withdraw",
+    values: [PromiseOrValue<BigNumberish>]
+  ): string;
 
   decodeFunctionResult(
-    functionFragment: "amountVested",
+    functionFragment: "availableToWithdraw",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "cancel", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "canceled", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "cliff", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "completed", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "daysLeftToCancel",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "daysLeftToWithdraw",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(functionFragment: "duration", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "holder", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "lock", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "finalize", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "initialize", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "start", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "token", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "vesting", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "renounceOwnership",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(functionFragment: "timestamp", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "totalVested",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "transferOwnership",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "vestingForecast",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "withdraw", data: BytesLike): Result;
 
   events: {
-    "Canceled(address,address,uint256,uint256,uint256,uint256,uint256)": EventFragment;
-    "Completed(address,address,uint256,uint256,uint256,uint256)": EventFragment;
+    "Finalize(address,uint256,uint256)": EventFragment;
+    "Initialize(address,uint256,uint256,uint256,uint256,uint256,uint256,address,uint256)": EventFragment;
+    "OwnershipTransferred(address,address)": EventFragment;
+    "Withdraw(address,uint256,uint256)": EventFragment;
   };
 
-  getEvent(nameOrSignatureOrTopic: "Canceled"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "Completed"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "Finalize"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "Initialize"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "OwnershipTransferred"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "Withdraw"): EventFragment;
 }
 
-export interface CanceledEventObject {
-  owner: string;
-  holder: string;
+export interface FinalizeEventObject {
+  initiator: string;
   amount: BigNumber;
-  contractDuration: BigNumber;
-  cliffDuration: BigNumber;
-  cliffDurationElapsed: BigNumber;
-  remainingCliffDuration: BigNumber;
+  elapsed: BigNumber;
 }
-export type CanceledEvent = TypedEvent<
-  [string, string, BigNumber, BigNumber, BigNumber, BigNumber, BigNumber],
-  CanceledEventObject
+export type FinalizeEvent = TypedEvent<
+  [string, BigNumber, BigNumber],
+  FinalizeEventObject
 >;
 
-export type CanceledEventFilter = TypedEventFilter<CanceledEvent>;
+export type FinalizeEventFilter = TypedEventFilter<FinalizeEvent>;
 
-export interface CompletedEventObject {
-  owner: string;
-  holder: string;
+export interface InitializeEventObject {
+  tokenAddress: string;
+  startDate: BigNumber;
+  daysOfVesting: BigNumber;
+  daysOfCliff: BigNumber;
+  daysOfLock: BigNumber;
+  percentOfTGE: BigNumber;
   amount: BigNumber;
-  contractDuration: BigNumber;
-  lockDuration: BigNumber;
-  totalDurationElapsed: BigNumber;
+  beneficiary: string;
+  initializedAt: BigNumber;
 }
-export type CompletedEvent = TypedEvent<
-  [string, string, BigNumber, BigNumber, BigNumber, BigNumber],
-  CompletedEventObject
+export type InitializeEvent = TypedEvent<
+  [
+    string,
+    BigNumber,
+    BigNumber,
+    BigNumber,
+    BigNumber,
+    BigNumber,
+    BigNumber,
+    string,
+    BigNumber
+  ],
+  InitializeEventObject
 >;
 
-export type CompletedEventFilter = TypedEventFilter<CompletedEvent>;
+export type InitializeEventFilter = TypedEventFilter<InitializeEvent>;
+
+export interface OwnershipTransferredEventObject {
+  previousOwner: string;
+  newOwner: string;
+}
+export type OwnershipTransferredEvent = TypedEvent<
+  [string, string],
+  OwnershipTransferredEventObject
+>;
+
+export type OwnershipTransferredEventFilter =
+  TypedEventFilter<OwnershipTransferredEvent>;
+
+export interface WithdrawEventObject {
+  beneficiary: string;
+  amount: BigNumber;
+  elapsed: BigNumber;
+}
+export type WithdrawEvent = TypedEvent<
+  [string, BigNumber, BigNumber],
+  WithdrawEventObject
+>;
+
+export type WithdrawEventFilter = TypedEventFilter<WithdrawEvent>;
 
 export interface KannaStockOption extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
@@ -181,215 +226,278 @@ export interface KannaStockOption extends BaseContract {
   removeListener: OnEvent<this>;
 
   functions: {
-    amountVested(overrides?: CallOverrides): Promise<[BigNumber]>;
+    availableToWithdraw(overrides?: CallOverrides): Promise<[BigNumber]>;
 
-    cancel(
+    finalize(
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
-    canceled(overrides?: CallOverrides): Promise<[boolean]>;
-
-    cliff(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    completed(overrides?: CallOverrides): Promise<[boolean]>;
-
-    daysLeftToCancel(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    daysLeftToWithdraw(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    duration(overrides?: CallOverrides): Promise<[BigNumber]>;
-
-    holder(overrides?: CallOverrides): Promise<[string]>;
-
-    lock(overrides?: CallOverrides): Promise<[BigNumber]>;
+    initialize(
+      tokenAddress: PromiseOrValue<string>,
+      startDate: PromiseOrValue<BigNumberish>,
+      daysOfVesting: PromiseOrValue<BigNumberish>,
+      daysOfCliff: PromiseOrValue<BigNumberish>,
+      daysOfLock: PromiseOrValue<BigNumberish>,
+      percentOfTGE: PromiseOrValue<BigNumberish>,
+      amount: PromiseOrValue<BigNumberish>,
+      beneficiary: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
 
     owner(overrides?: CallOverrides): Promise<[string]>;
 
-    start(overrides?: CallOverrides): Promise<[BigNumber]>;
+    renounceOwnership(
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
 
-    token(overrides?: CallOverrides): Promise<[string]>;
+    timestamp(overrides?: CallOverrides): Promise<[BigNumber]>;
 
-    vesting(overrides?: CallOverrides): Promise<[BigNumber]>;
+    totalVested(overrides?: CallOverrides): Promise<[BigNumber]>;
+
+    transferOwnership(
+      newOwner: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
+    vestingForecast(
+      date: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<[BigNumber]>;
 
     withdraw(
+      amountToWithdraw: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
   };
 
-  amountVested(overrides?: CallOverrides): Promise<BigNumber>;
+  availableToWithdraw(overrides?: CallOverrides): Promise<BigNumber>;
 
-  cancel(
+  finalize(
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
-  canceled(overrides?: CallOverrides): Promise<boolean>;
-
-  cliff(overrides?: CallOverrides): Promise<BigNumber>;
-
-  completed(overrides?: CallOverrides): Promise<boolean>;
-
-  daysLeftToCancel(overrides?: CallOverrides): Promise<BigNumber>;
-
-  daysLeftToWithdraw(overrides?: CallOverrides): Promise<BigNumber>;
-
-  duration(overrides?: CallOverrides): Promise<BigNumber>;
-
-  holder(overrides?: CallOverrides): Promise<string>;
-
-  lock(overrides?: CallOverrides): Promise<BigNumber>;
+  initialize(
+    tokenAddress: PromiseOrValue<string>,
+    startDate: PromiseOrValue<BigNumberish>,
+    daysOfVesting: PromiseOrValue<BigNumberish>,
+    daysOfCliff: PromiseOrValue<BigNumberish>,
+    daysOfLock: PromiseOrValue<BigNumberish>,
+    percentOfTGE: PromiseOrValue<BigNumberish>,
+    amount: PromiseOrValue<BigNumberish>,
+    beneficiary: PromiseOrValue<string>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
 
   owner(overrides?: CallOverrides): Promise<string>;
 
-  start(overrides?: CallOverrides): Promise<BigNumber>;
+  renounceOwnership(
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
 
-  token(overrides?: CallOverrides): Promise<string>;
+  timestamp(overrides?: CallOverrides): Promise<BigNumber>;
 
-  vesting(overrides?: CallOverrides): Promise<BigNumber>;
+  totalVested(overrides?: CallOverrides): Promise<BigNumber>;
+
+  transferOwnership(
+    newOwner: PromiseOrValue<string>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
+  vestingForecast(
+    date: PromiseOrValue<BigNumberish>,
+    overrides?: CallOverrides
+  ): Promise<BigNumber>;
 
   withdraw(
+    amountToWithdraw: PromiseOrValue<BigNumberish>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
   callStatic: {
-    amountVested(overrides?: CallOverrides): Promise<BigNumber>;
+    availableToWithdraw(overrides?: CallOverrides): Promise<BigNumber>;
 
-    cancel(overrides?: CallOverrides): Promise<void>;
+    finalize(overrides?: CallOverrides): Promise<void>;
 
-    canceled(overrides?: CallOverrides): Promise<boolean>;
-
-    cliff(overrides?: CallOverrides): Promise<BigNumber>;
-
-    completed(overrides?: CallOverrides): Promise<boolean>;
-
-    daysLeftToCancel(overrides?: CallOverrides): Promise<BigNumber>;
-
-    daysLeftToWithdraw(overrides?: CallOverrides): Promise<BigNumber>;
-
-    duration(overrides?: CallOverrides): Promise<BigNumber>;
-
-    holder(overrides?: CallOverrides): Promise<string>;
-
-    lock(overrides?: CallOverrides): Promise<BigNumber>;
+    initialize(
+      tokenAddress: PromiseOrValue<string>,
+      startDate: PromiseOrValue<BigNumberish>,
+      daysOfVesting: PromiseOrValue<BigNumberish>,
+      daysOfCliff: PromiseOrValue<BigNumberish>,
+      daysOfLock: PromiseOrValue<BigNumberish>,
+      percentOfTGE: PromiseOrValue<BigNumberish>,
+      amount: PromiseOrValue<BigNumberish>,
+      beneficiary: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<void>;
 
     owner(overrides?: CallOverrides): Promise<string>;
 
-    start(overrides?: CallOverrides): Promise<BigNumber>;
+    renounceOwnership(overrides?: CallOverrides): Promise<void>;
 
-    token(overrides?: CallOverrides): Promise<string>;
+    timestamp(overrides?: CallOverrides): Promise<BigNumber>;
 
-    vesting(overrides?: CallOverrides): Promise<BigNumber>;
+    totalVested(overrides?: CallOverrides): Promise<BigNumber>;
 
-    withdraw(overrides?: CallOverrides): Promise<void>;
+    transferOwnership(
+      newOwner: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    vestingForecast(
+      date: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    withdraw(
+      amountToWithdraw: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<void>;
   };
 
   filters: {
-    "Canceled(address,address,uint256,uint256,uint256,uint256,uint256)"(
-      owner?: PromiseOrValue<string> | null,
-      holder?: PromiseOrValue<string> | null,
+    "Finalize(address,uint256,uint256)"(
+      initiator?: PromiseOrValue<string> | null,
       amount?: null,
-      contractDuration?: null,
-      cliffDuration?: null,
-      cliffDurationElapsed?: null,
-      remainingCliffDuration?: null
-    ): CanceledEventFilter;
-    Canceled(
-      owner?: PromiseOrValue<string> | null,
-      holder?: PromiseOrValue<string> | null,
+      elapsed?: null
+    ): FinalizeEventFilter;
+    Finalize(
+      initiator?: PromiseOrValue<string> | null,
       amount?: null,
-      contractDuration?: null,
-      cliffDuration?: null,
-      cliffDurationElapsed?: null,
-      remainingCliffDuration?: null
-    ): CanceledEventFilter;
+      elapsed?: null
+    ): FinalizeEventFilter;
 
-    "Completed(address,address,uint256,uint256,uint256,uint256)"(
-      owner?: PromiseOrValue<string> | null,
-      holder?: PromiseOrValue<string> | null,
+    "Initialize(address,uint256,uint256,uint256,uint256,uint256,uint256,address,uint256)"(
+      tokenAddress?: null,
+      startDate?: null,
+      daysOfVesting?: null,
+      daysOfCliff?: null,
+      daysOfLock?: null,
+      percentOfTGE?: null,
       amount?: null,
-      contractDuration?: null,
-      lockDuration?: null,
-      totalDurationElapsed?: null
-    ): CompletedEventFilter;
-    Completed(
-      owner?: PromiseOrValue<string> | null,
-      holder?: PromiseOrValue<string> | null,
+      beneficiary?: null,
+      initializedAt?: null
+    ): InitializeEventFilter;
+    Initialize(
+      tokenAddress?: null,
+      startDate?: null,
+      daysOfVesting?: null,
+      daysOfCliff?: null,
+      daysOfLock?: null,
+      percentOfTGE?: null,
       amount?: null,
-      contractDuration?: null,
-      lockDuration?: null,
-      totalDurationElapsed?: null
-    ): CompletedEventFilter;
+      beneficiary?: null,
+      initializedAt?: null
+    ): InitializeEventFilter;
+
+    "OwnershipTransferred(address,address)"(
+      previousOwner?: PromiseOrValue<string> | null,
+      newOwner?: PromiseOrValue<string> | null
+    ): OwnershipTransferredEventFilter;
+    OwnershipTransferred(
+      previousOwner?: PromiseOrValue<string> | null,
+      newOwner?: PromiseOrValue<string> | null
+    ): OwnershipTransferredEventFilter;
+
+    "Withdraw(address,uint256,uint256)"(
+      beneficiary?: PromiseOrValue<string> | null,
+      amount?: null,
+      elapsed?: null
+    ): WithdrawEventFilter;
+    Withdraw(
+      beneficiary?: PromiseOrValue<string> | null,
+      amount?: null,
+      elapsed?: null
+    ): WithdrawEventFilter;
   };
 
   estimateGas: {
-    amountVested(overrides?: CallOverrides): Promise<BigNumber>;
+    availableToWithdraw(overrides?: CallOverrides): Promise<BigNumber>;
 
-    cancel(
+    finalize(
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
-    canceled(overrides?: CallOverrides): Promise<BigNumber>;
-
-    cliff(overrides?: CallOverrides): Promise<BigNumber>;
-
-    completed(overrides?: CallOverrides): Promise<BigNumber>;
-
-    daysLeftToCancel(overrides?: CallOverrides): Promise<BigNumber>;
-
-    daysLeftToWithdraw(overrides?: CallOverrides): Promise<BigNumber>;
-
-    duration(overrides?: CallOverrides): Promise<BigNumber>;
-
-    holder(overrides?: CallOverrides): Promise<BigNumber>;
-
-    lock(overrides?: CallOverrides): Promise<BigNumber>;
+    initialize(
+      tokenAddress: PromiseOrValue<string>,
+      startDate: PromiseOrValue<BigNumberish>,
+      daysOfVesting: PromiseOrValue<BigNumberish>,
+      daysOfCliff: PromiseOrValue<BigNumberish>,
+      daysOfLock: PromiseOrValue<BigNumberish>,
+      percentOfTGE: PromiseOrValue<BigNumberish>,
+      amount: PromiseOrValue<BigNumberish>,
+      beneficiary: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
 
     owner(overrides?: CallOverrides): Promise<BigNumber>;
 
-    start(overrides?: CallOverrides): Promise<BigNumber>;
+    renounceOwnership(
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
 
-    token(overrides?: CallOverrides): Promise<BigNumber>;
+    timestamp(overrides?: CallOverrides): Promise<BigNumber>;
 
-    vesting(overrides?: CallOverrides): Promise<BigNumber>;
+    totalVested(overrides?: CallOverrides): Promise<BigNumber>;
+
+    transferOwnership(
+      newOwner: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    vestingForecast(
+      date: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
 
     withdraw(
+      amountToWithdraw: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
   };
 
   populateTransaction: {
-    amountVested(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    cancel(
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    canceled(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    cliff(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    completed(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    daysLeftToCancel(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    daysLeftToWithdraw(
+    availableToWithdraw(
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
-    duration(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+    finalize(
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
 
-    holder(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    lock(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+    initialize(
+      tokenAddress: PromiseOrValue<string>,
+      startDate: PromiseOrValue<BigNumberish>,
+      daysOfVesting: PromiseOrValue<BigNumberish>,
+      daysOfCliff: PromiseOrValue<BigNumberish>,
+      daysOfLock: PromiseOrValue<BigNumberish>,
+      percentOfTGE: PromiseOrValue<BigNumberish>,
+      amount: PromiseOrValue<BigNumberish>,
+      beneficiary: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
 
     owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    start(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+    renounceOwnership(
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
 
-    token(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+    timestamp(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    vesting(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+    totalVested(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    transferOwnership(
+      newOwner: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    vestingForecast(
+      date: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
 
     withdraw(
+      amountToWithdraw: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
   };

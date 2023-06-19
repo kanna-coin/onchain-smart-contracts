@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.17;
 
-import "./KannaToken.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 /**
  *   __
@@ -17,128 +18,159 @@ import "./KannaToken.sol";
  *  /____  > |__|   \____/  \___  >|__|_ \  \____/ |   __/  |__|  |__| \____/ |___|  /
  *       \/                     \/      \/         |__|                            \/
  *
- *  @title KNN Stock Option (Cliff & Vesting)
+ *  @title KNN Stock Option (Vesting)
  *  @author KANNA Team
  *  @custom:github  https://github.com/kanna-coin
  *  @custom:site https://kannacoin.io
  *  @custom:discord https://discord.kannacoin.io
  */
-contract KannaStockOption {
-    address public owner;
-    uint256 public cliff;
-    uint256 public lock;
-    uint256 public vesting;
-    uint256 public duration;
-    uint256 public start;
-    address public holder;
-    KannaToken public token;
-    bool public completed;
-    bool public canceled;
+contract KannaStockOption is Ownable {
+    IERC20 _token;
+    uint256 _startDate;
+    uint256 _daysOfVesting;
+    uint256 _daysOfCliff;
+    uint256 _daysOfLock;
+    uint256 _percentOfTGE;
+    uint256 _amount;
+    address _beneficiary;
+    uint256 _tgeAmount;
+    uint256 _withdrawn;
+    uint256 _lockEndDate;
+    uint256 _cliffEndDate;
+    uint256 _vestingEndDate;
+    bool _finalized;
+    uint256 _finalizedAt;
+    bool _initialized;
+    uint256 _initializedAt;
 
-    event Completed(
-        address indexed owner,
-        address indexed holder,
+    event Initialize(
+        address tokenAddress,
+        uint256 startDate,
+        uint256 daysOfVesting,
+        uint256 daysOfCliff,
+        uint256 daysOfLock,
+        uint256 percentOfTGE,
         uint256 amount,
-        uint256 contractDuration,
-        uint256 lockDuration,
-        uint256 totalDurationElapsed
+        address beneficiary,
+        uint256 initializedAt
     );
-    event Canceled(
-        address indexed owner,
-        address indexed holder,
+
+    event Withdraw(address indexed beneficiary, uint256 amount, uint256 elapsed);
+
+    event Finalize(address indexed initiator, uint256 amount, uint256 elapsed);
+
+    function initialize(
+        address tokenAddress,
+        uint256 startDate,
+        uint256 daysOfVesting,
+        uint256 daysOfCliff,
+        uint256 daysOfLock,
+        uint256 percentOfTGE,
         uint256 amount,
-        uint256 contractDuration,
-        uint256 cliffDuration,
-        uint256 cliffDurationElapsed,
-        uint256 remainingCliffDuration
-    );
+        address beneficiary
+    ) external onlyOwner {
+        require(startDate > 0, "KannaStockOption: startDate is zero");
+        require(daysOfVesting > 0, "KannaStockOption: daysOfVesting is zero");
+        require(daysOfCliff > 0, "KannaStockOption: daysOfCliff is zero");
+        require(daysOfLock > 0, "KannaStockOption: daysOfLock is zero");
+        require(percentOfTGE > 0, "KannaStockOption: percentOfTGE is zero");
+        require(amount > 0, "KannaStockOption: amount is zero");
+        require(beneficiary != address(0), "KannaStockOption: beneficiary is zero");
+        require(
+            daysOfCliff + daysOfLock <= daysOfVesting,
+            "KannaStockOption: daysOfCliff plus daysOfLock overflows daysOfVesting"
+        );
+        require(percentOfTGE <= 100, "KannaStockOption: percentOfTGE is greater than 100");
 
-    receive() external payable {
-        revert("Cannot receive ETH");
+        _token = IERC20(tokenAddress);
+
+        require(_token.allowance(msg.sender, address(this)) >= amount, "KannaStockOption: insufficient allowance");
+
+        _startDate = startDate;
+        _daysOfVesting = daysOfVesting;
+        _daysOfCliff = daysOfCliff;
+        _daysOfLock = daysOfLock;
+        _percentOfTGE = percentOfTGE;
+        _amount = amount;
+        _beneficiary = beneficiary;
+
+        _tgeAmount = (_amount * _percentOfTGE) / 100;
+
+        _cliffEndDate = startDate + (daysOfCliff * 1 days);
+        _lockEndDate = _cliffEndDate + (daysOfLock * 1 days);
+        _vestingEndDate = startDate + (daysOfVesting * 1 days);
+
+        _finalized = false;
+        _withdrawn = 0;
+        _initialized = true;
+        _initializedAt = block.timestamp;
+
+        require(_token.transferFrom(msg.sender, address(this), amount), "KannaStockOption: insufficient balance");
     }
 
-    constructor(address _owner, address _holder, uint256 _cliff, uint256 _lock, uint256 _vesting, KannaToken _token) {
-        owner = _owner;
-        holder = _holder;
-        cliff = _cliff;
-        lock = _lock;
-        vesting = _vesting;
-        duration = cliff + lock + vesting;
-        start = block.timestamp;
-        token = _token;
+    function timestamp() public view returns (uint256) {
+        return _finalized ? _finalizedAt : block.timestamp;
     }
 
-    function amountVested() public view notCanceled returns (uint256) {
-        uint256 amount = token.balanceOf(address(this));
+    function totalVested() public view initialized returns (uint256) {
+        if (timestamp() < _cliffEndDate) return 0;
+        if (timestamp() >= _vestingEndDate) return _amount;
 
-        if (start + cliff >= block.timestamp) {
-            return 0;
-        } else if (block.timestamp >= start + duration) {
-            return amount;
+        return (_amount * (timestamp() - _startDate)) / (_vestingEndDate - _startDate);
+    }
+
+    function vestingForecast(uint256 date) public view initialized returns (uint256) {
+        require(date >= _startDate, "KannaStockOption: date is before startDate");
+
+        if (date < _cliffEndDate) return 0;
+        if (date >= _vestingEndDate) return _amount;
+
+        return (_amount * (date - _startDate)) / (_vestingEndDate - _startDate);
+    }
+
+    function availableToWithdraw() public view initialized returns (uint256) {
+        if (timestamp() < _cliffEndDate) return 0;
+        if (timestamp() >= _vestingEndDate) return _amount - _withdrawn;
+
+        if (block.timestamp < _lockEndDate && totalVested() > _tgeAmount) return _tgeAmount - _withdrawn;
+
+        return totalVested() - _withdrawn;
+    }
+
+    function finalize() public initialized {
+        require(
+            msg.sender == owner() || msg.sender == _beneficiary,
+            "KannaStockOption: caller is not the owner or beneficiary"
+        );
+        require(_finalized == false, "KannaStockOption: contract already finalized");
+
+        uint256 availableAmount = availableToWithdraw();
+
+        if (availableAmount > 0) {
+            _withdrawn += availableAmount;
+            _token.transfer(_beneficiary, availableAmount);
         }
 
-        return (amount * (block.timestamp - start)) / duration;
+        _token.transfer(owner(), _amount - totalVested());
+
+        _finalizedAt = block.timestamp;
+        _finalized = true;
     }
 
-    function daysLeftToWithdraw() public view notCanceled returns (uint256) {
-        uint256 lockDuration = start + cliff + lock;
+    function withdraw(uint256 amountToWithdraw) public initialized {
+        require(msg.sender == _beneficiary, "KannaStockOption: caller is not the beneficiary");
+        require(amountToWithdraw > 0, "KannaStockOption: amountToWithdraw is zero");
+        require(
+            amountToWithdraw <= availableToWithdraw(),
+            "KannaStockOption: amountToWithdraw is greater than availableToWithdraw"
+        );
 
-        if (block.timestamp >= lockDuration) {
-            return 0;
-        }
-
-        return (lockDuration - block.timestamp) / 1 days;
+        _withdrawn += amountToWithdraw;
+        _token.transfer(_beneficiary, amountToWithdraw);
     }
 
-    function daysLeftToCancel() public view notCanceled returns (uint256) {
-        if (block.timestamp >= start + cliff) {
-            return 0;
-        }
-
-        return (start + cliff - block.timestamp) / 1 days;
-    }
-
-    function withdraw() external notCanceled {
-        require(!completed, "Already withdrawn");
-        require(msg.sender == holder, "Only holder can call this function");
-        require(block.timestamp >= start + cliff, "Cannot withdraw while in cliff");
-        require(block.timestamp >= start + cliff + lock, "Cannot withdraw before lock duration");
-
-        uint256 balance = token.balanceOf(address(this));
-        uint256 amount;
-
-        if (block.timestamp >= start + duration) {
-            amount = balance;
-        } else {
-            amount = (balance * (block.timestamp - start)) / duration;
-        }
-
-        token.transfer(holder, amount);
-
-        uint256 leftover = balance - amount;
-
-        if (leftover > 0) {
-            token.transfer(owner, leftover);
-        }
-
-        completed = true;
-
-        emit Completed(owner, holder, amount, duration, lock, block.timestamp - start + duration);
-    }
-
-    function cancel() external notCanceled {
-        require(msg.sender == owner, "Only owner can call this function");
-        require(block.timestamp < start + cliff, "Cannot cancel after cliff");
-
-        uint256 amount = token.balanceOf(address(this));
-        token.transfer(owner, amount);
-        canceled = true;
-
-        emit Canceled(owner, holder, amount, duration, cliff, block.timestamp - start, start + cliff - block.timestamp);
-    }
-
-    modifier notCanceled() {
-        require(!canceled, "Contract already canceled");
+    modifier initialized() {
+        require(_initialized, "KannaStockOption: contract is not initialized");
         _;
     }
 }
