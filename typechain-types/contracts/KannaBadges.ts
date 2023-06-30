@@ -32,12 +32,22 @@ export declare namespace KannaBadges {
     id: PromiseOrValue<BigNumberish>;
     transferable: PromiseOrValue<boolean>;
     accumulative: PromiseOrValue<boolean>;
+    creator: PromiseOrValue<string>;
+    royaltyPercent: PromiseOrValue<BigNumberish>;
   };
 
-  export type TokenStructOutput = [number, boolean, boolean] & {
+  export type TokenStructOutput = [
+    number,
+    boolean,
+    boolean,
+    string,
+    BigNumber
+  ] & {
     id: number;
     transferable: boolean;
     accumulative: boolean;
+    creator: string;
+    royaltyPercent: BigNumber;
   };
 
   export type TokenBalanceStruct = {
@@ -53,6 +63,7 @@ export declare namespace KannaBadges {
 
 export interface KannaBadgesInterface extends utils.Interface {
   functions: {
+    "CREATOR_EARNINGS_BASIS_POINT()": FunctionFragment;
     "DEFAULT_ADMIN_ROLE()": FunctionFragment;
     "MANAGER_ROLE()": FunctionFragment;
     "MINTER_ROLE()": FunctionFragment;
@@ -72,13 +83,14 @@ export interface KannaBadgesInterface extends utils.Interface {
     "mint(address,uint16,uint256)": FunctionFragment;
     "name()": FunctionFragment;
     "owner()": FunctionFragment;
-    "register(bool,bool)": FunctionFragment;
     "register(address)": FunctionFragment;
+    "register(bool,bool,address,uint256)": FunctionFragment;
     "removeManager(address)": FunctionFragment;
     "removeMinter(address)": FunctionFragment;
     "renounceOwnership()": FunctionFragment;
     "renounceRole(bytes32,address)": FunctionFragment;
     "revokeRole(bytes32,address)": FunctionFragment;
+    "royaltyInfo(uint256,uint256)": FunctionFragment;
     "safeBatchTransferFrom(address,address,uint256[],uint256[],bytes)": FunctionFragment;
     "safeTransferFrom(address,address,uint256,uint256,bytes)": FunctionFragment;
     "setApprovalForAll(address,bool)": FunctionFragment;
@@ -94,6 +106,7 @@ export interface KannaBadgesInterface extends utils.Interface {
 
   getFunction(
     nameOrSignatureOrTopic:
+      | "CREATOR_EARNINGS_BASIS_POINT"
       | "DEFAULT_ADMIN_ROLE"
       | "MANAGER_ROLE"
       | "MINTER_ROLE"
@@ -113,13 +126,14 @@ export interface KannaBadgesInterface extends utils.Interface {
       | "mint(address,uint16,uint256)"
       | "name"
       | "owner"
-      | "register(bool,bool)"
       | "register(address)"
+      | "register(bool,bool,address,uint256)"
       | "removeManager"
       | "removeMinter"
       | "renounceOwnership"
       | "renounceRole"
       | "revokeRole"
+      | "royaltyInfo"
       | "safeBatchTransferFrom"
       | "safeTransferFrom"
       | "setApprovalForAll"
@@ -133,6 +147,10 @@ export interface KannaBadgesInterface extends utils.Interface {
       | "uri"
   ): FunctionFragment;
 
+  encodeFunctionData(
+    functionFragment: "CREATOR_EARNINGS_BASIS_POINT",
+    values?: undefined
+  ): string;
   encodeFunctionData(
     functionFragment: "DEFAULT_ADMIN_ROLE",
     values?: undefined
@@ -216,12 +234,17 @@ export interface KannaBadgesInterface extends utils.Interface {
   encodeFunctionData(functionFragment: "name", values?: undefined): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
   encodeFunctionData(
-    functionFragment: "register(bool,bool)",
-    values: [PromiseOrValue<boolean>, PromiseOrValue<boolean>]
-  ): string;
-  encodeFunctionData(
     functionFragment: "register(address)",
     values: [PromiseOrValue<string>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "register(bool,bool,address,uint256)",
+    values: [
+      PromiseOrValue<boolean>,
+      PromiseOrValue<boolean>,
+      PromiseOrValue<string>,
+      PromiseOrValue<BigNumberish>
+    ]
   ): string;
   encodeFunctionData(
     functionFragment: "removeManager",
@@ -242,6 +265,10 @@ export interface KannaBadgesInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "revokeRole",
     values: [PromiseOrValue<BytesLike>, PromiseOrValue<string>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "royaltyInfo",
+    values: [PromiseOrValue<BigNumberish>, PromiseOrValue<BigNumberish>]
   ): string;
   encodeFunctionData(
     functionFragment: "safeBatchTransferFrom",
@@ -295,6 +322,10 @@ export interface KannaBadgesInterface extends utils.Interface {
   ): string;
 
   decodeFunctionResult(
+    functionFragment: "CREATOR_EARNINGS_BASIS_POINT",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "DEFAULT_ADMIN_ROLE",
     data: BytesLike
   ): Result;
@@ -347,11 +378,11 @@ export interface KannaBadgesInterface extends utils.Interface {
   decodeFunctionResult(functionFragment: "name", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "register(bool,bool)",
+    functionFragment: "register(address)",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "register(address)",
+    functionFragment: "register(bool,bool,address,uint256)",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -371,6 +402,10 @@ export interface KannaBadgesInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "revokeRole", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "royaltyInfo",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "safeBatchTransferFrom",
     data: BytesLike
@@ -408,7 +443,7 @@ export interface KannaBadgesInterface extends utils.Interface {
     "RoleAdminChanged(bytes32,bytes32,bytes32)": EventFragment;
     "RoleGranted(bytes32,address,address)": EventFragment;
     "RoleRevoked(bytes32,address,address)": EventFragment;
-    "TokenRegistered(uint16,bool,bool)": EventFragment;
+    "TokenRegistered(uint16,bool,bool,address,uint256)": EventFragment;
     "TransferBatch(address,address,address,uint256[],uint256[])": EventFragment;
     "TransferSingle(address,address,address,uint256,uint256)": EventFragment;
     "URI(string,uint256)": EventFragment;
@@ -504,9 +539,11 @@ export interface TokenRegisteredEventObject {
   id: number;
   transferable: boolean;
   accumulative: boolean;
+  creator: string;
+  royaltyPercent: BigNumber;
 }
 export type TokenRegisteredEvent = TypedEvent<
-  [number, boolean, boolean],
+  [number, boolean, boolean, string, BigNumber],
   TokenRegisteredEventObject
 >;
 
@@ -575,6 +612,10 @@ export interface KannaBadges extends BaseContract {
   removeListener: OnEvent<this>;
 
   functions: {
+    CREATOR_EARNINGS_BASIS_POINT(
+      overrides?: CallOverrides
+    ): Promise<[BigNumber]>;
+
     DEFAULT_ADMIN_ROLE(overrides?: CallOverrides): Promise<[string]>;
 
     MANAGER_ROLE(overrides?: CallOverrides): Promise<[string]>;
@@ -670,14 +711,16 @@ export interface KannaBadges extends BaseContract {
 
     owner(overrides?: CallOverrides): Promise<[string]>;
 
-    "register(bool,bool)"(
-      transferable: PromiseOrValue<boolean>,
-      accumulative: PromiseOrValue<boolean>,
+    "register(address)"(
+      checkerAddress: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
-    "register(address)"(
-      checkerAddress: PromiseOrValue<string>,
+    "register(bool,bool,address,uint256)"(
+      transferable: PromiseOrValue<boolean>,
+      accumulative: PromiseOrValue<boolean>,
+      creator: PromiseOrValue<string>,
+      royaltyPercent: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -706,6 +749,14 @@ export interface KannaBadges extends BaseContract {
       account: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
+
+    royaltyInfo(
+      tokenId: PromiseOrValue<BigNumberish>,
+      salePrice: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<
+      [string, BigNumber] & { receiver: string; royaltyAmount: BigNumber }
+    >;
 
     safeBatchTransferFrom(
       from: PromiseOrValue<string>,
@@ -751,10 +802,12 @@ export interface KannaBadges extends BaseContract {
       arg0: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<
-      [number, boolean, boolean] & {
+      [number, boolean, boolean, string, BigNumber] & {
         id: number;
         transferable: boolean;
         accumulative: boolean;
+        creator: string;
+        royaltyPercent: BigNumber;
       }
     >;
 
@@ -773,6 +826,8 @@ export interface KannaBadges extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[string]>;
   };
+
+  CREATOR_EARNINGS_BASIS_POINT(overrides?: CallOverrides): Promise<BigNumber>;
 
   DEFAULT_ADMIN_ROLE(overrides?: CallOverrides): Promise<string>;
 
@@ -869,14 +924,16 @@ export interface KannaBadges extends BaseContract {
 
   owner(overrides?: CallOverrides): Promise<string>;
 
-  "register(bool,bool)"(
-    transferable: PromiseOrValue<boolean>,
-    accumulative: PromiseOrValue<boolean>,
+  "register(address)"(
+    checkerAddress: PromiseOrValue<string>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
-  "register(address)"(
-    checkerAddress: PromiseOrValue<string>,
+  "register(bool,bool,address,uint256)"(
+    transferable: PromiseOrValue<boolean>,
+    accumulative: PromiseOrValue<boolean>,
+    creator: PromiseOrValue<string>,
+    royaltyPercent: PromiseOrValue<BigNumberish>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -905,6 +962,14 @@ export interface KannaBadges extends BaseContract {
     account: PromiseOrValue<string>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
+
+  royaltyInfo(
+    tokenId: PromiseOrValue<BigNumberish>,
+    salePrice: PromiseOrValue<BigNumberish>,
+    overrides?: CallOverrides
+  ): Promise<
+    [string, BigNumber] & { receiver: string; royaltyAmount: BigNumber }
+  >;
 
   safeBatchTransferFrom(
     from: PromiseOrValue<string>,
@@ -948,10 +1013,12 @@ export interface KannaBadges extends BaseContract {
     arg0: PromiseOrValue<BigNumberish>,
     overrides?: CallOverrides
   ): Promise<
-    [number, boolean, boolean] & {
+    [number, boolean, boolean, string, BigNumber] & {
       id: number;
       transferable: boolean;
       accumulative: boolean;
+      creator: string;
+      royaltyPercent: BigNumber;
     }
   >;
 
@@ -971,6 +1038,8 @@ export interface KannaBadges extends BaseContract {
   ): Promise<string>;
 
   callStatic: {
+    CREATOR_EARNINGS_BASIS_POINT(overrides?: CallOverrides): Promise<BigNumber>;
+
     DEFAULT_ADMIN_ROLE(overrides?: CallOverrides): Promise<string>;
 
     MANAGER_ROLE(overrides?: CallOverrides): Promise<string>;
@@ -1066,14 +1135,16 @@ export interface KannaBadges extends BaseContract {
 
     owner(overrides?: CallOverrides): Promise<string>;
 
-    "register(bool,bool)"(
-      transferable: PromiseOrValue<boolean>,
-      accumulative: PromiseOrValue<boolean>,
+    "register(address)"(
+      checkerAddress: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<void>;
 
-    "register(address)"(
-      checkerAddress: PromiseOrValue<string>,
+    "register(bool,bool,address,uint256)"(
+      transferable: PromiseOrValue<boolean>,
+      accumulative: PromiseOrValue<boolean>,
+      creator: PromiseOrValue<string>,
+      royaltyPercent: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -1100,6 +1171,14 @@ export interface KannaBadges extends BaseContract {
       account: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<void>;
+
+    royaltyInfo(
+      tokenId: PromiseOrValue<BigNumberish>,
+      salePrice: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<
+      [string, BigNumber] & { receiver: string; royaltyAmount: BigNumber }
+    >;
 
     safeBatchTransferFrom(
       from: PromiseOrValue<string>,
@@ -1143,10 +1222,12 @@ export interface KannaBadges extends BaseContract {
       arg0: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<
-      [number, boolean, boolean] & {
+      [number, boolean, boolean, string, BigNumber] & {
         id: number;
         transferable: boolean;
         accumulative: boolean;
+        creator: string;
+        royaltyPercent: BigNumber;
       }
     >;
 
@@ -1233,15 +1314,19 @@ export interface KannaBadges extends BaseContract {
       sender?: PromiseOrValue<string> | null
     ): RoleRevokedEventFilter;
 
-    "TokenRegistered(uint16,bool,bool)"(
+    "TokenRegistered(uint16,bool,bool,address,uint256)"(
       id?: PromiseOrValue<BigNumberish> | null,
       transferable?: null,
-      accumulative?: null
+      accumulative?: null,
+      creator?: null,
+      royaltyPercent?: null
     ): TokenRegisteredEventFilter;
     TokenRegistered(
       id?: PromiseOrValue<BigNumberish> | null,
       transferable?: null,
-      accumulative?: null
+      accumulative?: null,
+      creator?: null,
+      royaltyPercent?: null
     ): TokenRegisteredEventFilter;
 
     "TransferBatch(address,address,address,uint256[],uint256[])"(
@@ -1282,6 +1367,8 @@ export interface KannaBadges extends BaseContract {
   };
 
   estimateGas: {
+    CREATOR_EARNINGS_BASIS_POINT(overrides?: CallOverrides): Promise<BigNumber>;
+
     DEFAULT_ADMIN_ROLE(overrides?: CallOverrides): Promise<BigNumber>;
 
     MANAGER_ROLE(overrides?: CallOverrides): Promise<BigNumber>;
@@ -1377,14 +1464,16 @@ export interface KannaBadges extends BaseContract {
 
     owner(overrides?: CallOverrides): Promise<BigNumber>;
 
-    "register(bool,bool)"(
-      transferable: PromiseOrValue<boolean>,
-      accumulative: PromiseOrValue<boolean>,
+    "register(address)"(
+      checkerAddress: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
-    "register(address)"(
-      checkerAddress: PromiseOrValue<string>,
+    "register(bool,bool,address,uint256)"(
+      transferable: PromiseOrValue<boolean>,
+      accumulative: PromiseOrValue<boolean>,
+      creator: PromiseOrValue<string>,
+      royaltyPercent: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -1412,6 +1501,12 @@ export interface KannaBadges extends BaseContract {
       role: PromiseOrValue<BytesLike>,
       account: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    royaltyInfo(
+      tokenId: PromiseOrValue<BigNumberish>,
+      salePrice: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
     ): Promise<BigNumber>;
 
     safeBatchTransferFrom(
@@ -1474,6 +1569,10 @@ export interface KannaBadges extends BaseContract {
   };
 
   populateTransaction: {
+    CREATOR_EARNINGS_BASIS_POINT(
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
     DEFAULT_ADMIN_ROLE(
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
@@ -1571,14 +1670,16 @@ export interface KannaBadges extends BaseContract {
 
     owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    "register(bool,bool)"(
-      transferable: PromiseOrValue<boolean>,
-      accumulative: PromiseOrValue<boolean>,
+    "register(address)"(
+      checkerAddress: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
-    "register(address)"(
-      checkerAddress: PromiseOrValue<string>,
+    "register(bool,bool,address,uint256)"(
+      transferable: PromiseOrValue<boolean>,
+      accumulative: PromiseOrValue<boolean>,
+      creator: PromiseOrValue<string>,
+      royaltyPercent: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
@@ -1606,6 +1707,12 @@ export interface KannaBadges extends BaseContract {
       role: PromiseOrValue<BytesLike>,
       account: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    royaltyInfo(
+      tokenId: PromiseOrValue<BigNumberish>,
+      salePrice: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
     safeBatchTransferFrom(

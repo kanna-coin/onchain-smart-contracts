@@ -1,5 +1,5 @@
 import { ethers } from 'hardhat';
-import { ContractTransaction, utils } from 'ethers';
+import { BigNumber, ContractTransaction, constants, utils } from 'ethers';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
@@ -34,13 +34,33 @@ export function getInterfaceID(...contractInterfaces: utils.Interface[]) {
 }
 
 const tokensTemplate = [
-  { transferable: false, accumulative: false },
-  { transferable: true, accumulative: true },
-  { transferable: true, accumulative: false },
-  { transferable: false, accumulative: true },
+  {
+    transferable: false,
+    accumulative: false,
+    creator: constants.AddressZero,
+    royaltyPercent: 0,
+  },
+  {
+    transferable: true,
+    accumulative: true,
+    creator: ethers.Wallet.createRandom().address,
+    royaltyPercent: 1_000,
+  },
+  {
+    transferable: true,
+    accumulative: false,
+    creator: ethers.Wallet.createRandom().address,
+    royaltyPercent: 1_000,
+  },
+  {
+    transferable: false,
+    accumulative: true,
+    creator: ethers.Wallet.createRandom().address,
+    royaltyPercent: 0,
+  },
 ];
 
-describe.only('Kanna Badges', () => {
+describe('Kanna Badges', () => {
   let signers: SignerWithAddress[];
   let kannaBadges: KannaBadges;
   let tokens: KannaBadges.TokenStruct[];
@@ -145,9 +165,11 @@ describe.only('Kanna Badges', () => {
     const [, managerSession] = await getManagerSession();
 
     for await (const token of tokensTemplate) {
-      const tx = await managerSession['register(bool,bool)'](
+      const tx = await managerSession['register(bool,bool,address,uint256)'](
         token.transferable,
-        token.accumulative
+        token.accumulative,
+        token.creator,
+        token.royaltyPercent
       );
 
       const event = await getTokenRegisteredEvent(tx);
@@ -156,6 +178,8 @@ describe.only('Kanna Badges', () => {
         id: event.args.id,
         transferable: event.args.transferable,
         accumulative: event.args.accumulative,
+        creator: event.args.creator,
+        royaltyPercent: event.args.royaltyPercent,
       });
     }
   };
@@ -231,13 +255,21 @@ describe.only('Kanna Badges', () => {
 
         for await (const token of tokensTemplate) {
           await expect(
-            managerSession['register(bool,bool)'](
+            managerSession['register(bool,bool,address,uint256)'](
               token.transferable,
-              token.accumulative
+              token.accumulative,
+              token.creator,
+              token.royaltyPercent
             )
           )
             .to.emit(kannaBadges, 'TokenRegistered')
-            .withArgs(++id, token.transferable, token.accumulative);
+            .withArgs(
+              ++id,
+              token.transferable,
+              token.accumulative,
+              token.creator,
+              token.royaltyPercent
+            );
         }
       });
 
@@ -247,13 +279,17 @@ describe.only('Kanna Badges', () => {
 
         const dynamicChecker = await getDynamicBadgeCheckerMock(deployerWallet);
 
-        await dynamicChecker.mock.isAccumulative.returns(true);
+        await Promise.all([
+          dynamicChecker.mock.isAccumulative.returns(true),
+          dynamicChecker.mock.creator.returns(deployerWallet.address),
+          dynamicChecker.mock.royaltyPercent.returns(BigNumber.from(10)),
+        ]);
 
         await expect(
           managerSession['register(address)'](dynamicChecker.address)
         )
           .to.emit(kannaBadges, 'TokenRegistered')
-          .withArgs(1, false, true);
+          .withArgs(1, false, true, deployerWallet.address, BigNumber.from(10));
 
         await dynamicChecker.mock.isAccumulative.returns(false);
 
@@ -261,7 +297,13 @@ describe.only('Kanna Badges', () => {
           managerSession['register(address)'](dynamicChecker.address)
         )
           .to.emit(kannaBadges, 'TokenRegistered')
-          .withArgs(2, false, false);
+          .withArgs(
+            2,
+            false,
+            false,
+            deployerWallet.address,
+            BigNumber.from(10)
+          );
       });
 
       it('should list all registered tokens', async () => {
@@ -274,6 +316,8 @@ describe.only('Kanna Badges', () => {
             id: t.id,
             transferable: t.transferable,
             accumulative: t.accumulative,
+            creator: t.creator,
+            royaltyPercent: t.royaltyPercent,
           }))
         ).to.have.deep.members(tokens);
       });
@@ -300,8 +344,14 @@ describe.only('Kanna Badges', () => {
           it('register', async () => {
             const [, userSession] = await getUserSession();
 
-            await expect(userSession['register(bool,bool)'](false, false)).to
-              .reverted;
+            await expect(
+              userSession['register(bool,bool,address,uint256)'](
+                false,
+                false,
+                constants.AddressZero,
+                0
+              )
+            ).to.reverted;
           });
 
           it('register dynamic token', async () => {
@@ -317,6 +367,30 @@ describe.only('Kanna Badges', () => {
             ).to.reverted;
           });
         });
+      });
+    });
+
+    describe('Creator Earnings (RoyaltyInfo)', async () => {
+      it('should return creator earnings', async () => {
+        await registerTokens();
+
+        const registeredTokens = await kannaBadges.tokens();
+
+        const salePrice = BigNumber.from(100);
+
+        for await (const token of registeredTokens) {
+          const royaltyInfo = await kannaBadges.royaltyInfo(
+            token.id,
+            salePrice
+          );
+
+          expect(royaltyInfo).to.deep.eq([
+            token.creator,
+            BigNumber.from(
+              salePrice.mul(token.royaltyPercent).div(BigNumber.from(100_000))
+            ),
+          ]);
+        }
       });
     });
 
@@ -611,7 +685,11 @@ describe.only('Kanna Badges', () => {
             deployerWallet
           );
 
-          await dynamicChecker.mock.isAccumulative.returns(false);
+          await Promise.all([
+            dynamicChecker.mock.isAccumulative.returns(false),
+            dynamicChecker.mock.creator.returns(deployerWallet.address),
+            dynamicChecker.mock.royaltyPercent.returns(BigNumber.from(10)),
+          ]);
 
           const tx = await managerSession['register(address)'](
             dynamicChecker.address
@@ -1079,7 +1157,11 @@ describe.only('Kanna Badges', () => {
 
         const dynamicChecker = await getDynamicBadgeCheckerMock(deployerWallet);
 
-        await dynamicChecker.mock.isAccumulative.returns(true);
+        await Promise.all([
+          dynamicChecker.mock.isAccumulative.returns(true),
+          dynamicChecker.mock.creator.returns(deployerWallet.address),
+          dynamicChecker.mock.royaltyPercent.returns(BigNumber.from(10)),
+        ]);
 
         const tx = await managerSession['register(address)'](
           dynamicChecker.address

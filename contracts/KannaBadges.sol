@@ -23,6 +23,7 @@ import {IDynamicBadgeChecker} from "./interfaces/IDynamicBadgeChecker.sol";
  *  @custom:discord https://discord.kannacoin.io
  */
 contract KannaBadges is ERC1155, Ownable, AccessControl {
+    uint256 public constant CREATOR_EARNINGS_BASIS_POINT = 100_000;
     bytes32 public constant MANAGER_ROLE = keccak256("MANAGER_ROLE");
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
     bytes32 private constant _MINT_TYPEHASH =
@@ -32,6 +33,8 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
         uint16 id;
         bool transferable;
         bool accumulative;
+        address creator;
+        uint256 royaltyPercent;
     }
 
     struct TokenBalance {
@@ -45,7 +48,13 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
     mapping(uint16 => uint256) private _totalSupply;
     mapping(uint16 => mapping(address => uint16)) private _mintIncrementalNonces;
 
-    event TokenRegistered(uint16 indexed id, bool transferable, bool accumulative);
+    event TokenRegistered(
+        uint16 indexed id,
+        bool transferable,
+        bool accumulative,
+        address creator,
+        uint256 royaltyPercent
+    );
 
     event Mint(address indexed to, uint16 indexed id, uint256 amount, uint16 nonce);
 
@@ -117,6 +126,18 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
         return _totalSupply[uint16(id)];
     }
 
+    /**
+     * @dev Returns creator earnings for a given `tokenId` and `salePrice`.
+     */
+    function royaltyInfo(
+        uint256 tokenId,
+        uint256 salePrice
+    ) external view returns (address receiver, uint256 royaltyAmount) {
+        Token memory memoryToken = tokensMap[uint16(tokenId)];
+
+        return (memoryToken.creator, (salePrice * memoryToken.royaltyPercent) / CREATOR_EARNINGS_BASIS_POINT);
+    }
+
     /** @dev Return all `TokenBalance` owned by `account`
      *
      * Requirements:
@@ -170,24 +191,29 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
 
     /** @dev Register a new Token
      *
-     * Emits a {TokenRegistered} event with `id`, `transferable` and `accumulative`.
+     * Emits a {TokenRegistered} event with `id`, `transferable`, `accumulative`, `creator` and `royaltyPercent`.
      *
      * Requirements:
      *
      * - the token `id` must not be registered.
      * - the caller must have MANAGER_ROLE.
      */
-    function register(bool transferable, bool accumulative) public onlyRole(MANAGER_ROLE) {
+    function register(
+        bool transferable,
+        bool accumulative,
+        address creator,
+        uint256 royaltyPercent
+    ) public onlyRole(MANAGER_ROLE) {
         _lastTokenId++;
 
-        tokensMap[_lastTokenId] = Token(_lastTokenId, transferable, accumulative);
+        tokensMap[_lastTokenId] = Token(_lastTokenId, transferable, accumulative, creator, royaltyPercent);
 
-        emit TokenRegistered(_lastTokenId, transferable, accumulative);
+        emit TokenRegistered(_lastTokenId, transferable, accumulative, creator, royaltyPercent);
     }
 
     /** @dev Register a dynamic Token with a dynamic checker
      *
-     * Emits a {TokenRegistered} event with `id`, `transferable` and `accumulative`.
+     * Emits a {TokenRegistered} event with `id`, `transferable`, `accumulative`, `creator` and `royaltyPercent`.
      *
      * Requirements:
      *
@@ -202,7 +228,7 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
             "`checkerAddress` needs to implement `IDynamicBadgeChecker` interface"
         );
 
-        register(false, dynamicChecker.isAccumulative());
+        register(false, dynamicChecker.isAccumulative(), dynamicChecker.creator(), dynamicChecker.royaltyPercent());
 
         _dynamicCheckers[_lastTokenId] = checkerAddress;
     }
