@@ -47,6 +47,7 @@
     "ethers": "^5.7.2",
     "ganache-cli": "^6.12.2",
     "hardhat": "^2.2.1",
+    "hardhat-gas-reporter": "^1.0.9",
     "solc": "^0.8.15",
     "solidity-coverage": "^0.8.2",
     "ts-generator": "^0.1.1",

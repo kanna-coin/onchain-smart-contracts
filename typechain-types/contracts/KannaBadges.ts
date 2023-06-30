@@ -73,15 +73,18 @@ export interface KannaBadgesInterface extends utils.Interface {
     "balanceOf(address)": FunctionFragment;
     "balanceOfBatch(address[],uint256[])": FunctionFragment;
     "batchMint(uint16,address[])": FunctionFragment;
+    "disableBridge(uint16)": FunctionFragment;
+    "enableBridge(uint16)": FunctionFragment;
     "exists(uint256)": FunctionFragment;
     "getRoleAdmin(bytes32)": FunctionFragment;
     "grantRole(bytes32,address)": FunctionFragment;
     "hasRole(bytes32,address)": FunctionFragment;
+    "holders(uint16)": FunctionFragment;
     "isApprovedForAll(address,address)": FunctionFragment;
+    "isBridgeEnabled(uint16)": FunctionFragment;
     "mint(address,uint16,uint256,bytes,uint16,uint256,uint256)": FunctionFragment;
     "mint(address,uint16)": FunctionFragment;
     "mint(address,uint16,uint256)": FunctionFragment;
-    "name()": FunctionFragment;
     "owner()": FunctionFragment;
     "register(address)": FunctionFragment;
     "register(bool,bool,address,uint256)": FunctionFragment;
@@ -96,11 +99,11 @@ export interface KannaBadgesInterface extends utils.Interface {
     "setApprovalForAll(address,bool)": FunctionFragment;
     "setURI(string)": FunctionFragment;
     "supportsInterface(bytes4)": FunctionFragment;
-    "symbol()": FunctionFragment;
     "tokens()": FunctionFragment;
     "tokensMap(uint16)": FunctionFragment;
     "totalSupply(uint256)": FunctionFragment;
     "transferOwnership(address)": FunctionFragment;
+    "transferToChain(uint16,uint16,uint256)": FunctionFragment;
     "uri(uint256)": FunctionFragment;
   };
 
@@ -116,15 +119,18 @@ export interface KannaBadgesInterface extends utils.Interface {
       | "balanceOf(address)"
       | "balanceOfBatch"
       | "batchMint"
+      | "disableBridge"
+      | "enableBridge"
       | "exists"
       | "getRoleAdmin"
       | "grantRole"
       | "hasRole"
+      | "holders"
       | "isApprovedForAll"
+      | "isBridgeEnabled"
       | "mint(address,uint16,uint256,bytes,uint16,uint256,uint256)"
       | "mint(address,uint16)"
       | "mint(address,uint16,uint256)"
-      | "name"
       | "owner"
       | "register(address)"
       | "register(bool,bool,address,uint256)"
@@ -139,11 +145,11 @@ export interface KannaBadgesInterface extends utils.Interface {
       | "setApprovalForAll"
       | "setURI"
       | "supportsInterface"
-      | "symbol"
       | "tokens"
       | "tokensMap"
       | "totalSupply"
       | "transferOwnership"
+      | "transferToChain"
       | "uri"
   ): FunctionFragment;
 
@@ -188,6 +194,14 @@ export interface KannaBadgesInterface extends utils.Interface {
     values: [PromiseOrValue<BigNumberish>, PromiseOrValue<string>[]]
   ): string;
   encodeFunctionData(
+    functionFragment: "disableBridge",
+    values: [PromiseOrValue<BigNumberish>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "enableBridge",
+    values: [PromiseOrValue<BigNumberish>]
+  ): string;
+  encodeFunctionData(
     functionFragment: "exists",
     values: [PromiseOrValue<BigNumberish>]
   ): string;
@@ -204,8 +218,16 @@ export interface KannaBadgesInterface extends utils.Interface {
     values: [PromiseOrValue<BytesLike>, PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
+    functionFragment: "holders",
+    values: [PromiseOrValue<BigNumberish>]
+  ): string;
+  encodeFunctionData(
     functionFragment: "isApprovedForAll",
     values: [PromiseOrValue<string>, PromiseOrValue<string>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "isBridgeEnabled",
+    values: [PromiseOrValue<BigNumberish>]
   ): string;
   encodeFunctionData(
     functionFragment: "mint(address,uint16,uint256,bytes,uint16,uint256,uint256)",
@@ -231,7 +253,6 @@ export interface KannaBadgesInterface extends utils.Interface {
       PromiseOrValue<BigNumberish>
     ]
   ): string;
-  encodeFunctionData(functionFragment: "name", values?: undefined): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "register(address)",
@@ -302,7 +323,6 @@ export interface KannaBadgesInterface extends utils.Interface {
     functionFragment: "supportsInterface",
     values: [PromiseOrValue<BytesLike>]
   ): string;
-  encodeFunctionData(functionFragment: "symbol", values?: undefined): string;
   encodeFunctionData(functionFragment: "tokens", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "tokensMap",
@@ -315,6 +335,14 @@ export interface KannaBadgesInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "transferOwnership",
     values: [PromiseOrValue<string>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "transferToChain",
+    values: [
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BigNumberish>
+    ]
   ): string;
   encodeFunctionData(
     functionFragment: "uri",
@@ -352,6 +380,14 @@ export interface KannaBadgesInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "batchMint", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "disableBridge",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "enableBridge",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "exists", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "getRoleAdmin",
@@ -359,8 +395,13 @@ export interface KannaBadgesInterface extends utils.Interface {
   ): Result;
   decodeFunctionResult(functionFragment: "grantRole", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "hasRole", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "holders", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "isApprovedForAll",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "isBridgeEnabled",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -375,7 +416,6 @@ export interface KannaBadgesInterface extends utils.Interface {
     functionFragment: "mint(address,uint16,uint256)",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "name", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "register(address)",
@@ -423,7 +463,6 @@ export interface KannaBadgesInterface extends utils.Interface {
     functionFragment: "supportsInterface",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "symbol", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "tokens", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "tokensMap", data: BytesLike): Result;
   decodeFunctionResult(
@@ -434,10 +473,15 @@ export interface KannaBadgesInterface extends utils.Interface {
     functionFragment: "transferOwnership",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(
+    functionFragment: "transferToChain",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "uri", data: BytesLike): Result;
 
   events: {
     "ApprovalForAll(address,address,bool)": EventFragment;
+    "BridgeTransfer(address,uint16,uint256,uint16)": EventFragment;
     "Mint(address,uint16,uint256,uint16)": EventFragment;
     "OwnershipTransferred(address,address)": EventFragment;
     "RoleAdminChanged(bytes32,bytes32,bytes32)": EventFragment;
@@ -450,6 +494,7 @@ export interface KannaBadgesInterface extends utils.Interface {
   };
 
   getEvent(nameOrSignatureOrTopic: "ApprovalForAll"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "BridgeTransfer"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Mint"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "OwnershipTransferred"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "RoleAdminChanged"): EventFragment;
@@ -472,6 +517,19 @@ export type ApprovalForAllEvent = TypedEvent<
 >;
 
 export type ApprovalForAllEventFilter = TypedEventFilter<ApprovalForAllEvent>;
+
+export interface BridgeTransferEventObject {
+  account: string;
+  id: number;
+  amount: BigNumber;
+  chainId: number;
+}
+export type BridgeTransferEvent = TypedEvent<
+  [string, number, BigNumber, number],
+  BridgeTransferEventObject
+>;
+
+export type BridgeTransferEventFilter = TypedEventFilter<BridgeTransferEvent>;
 
 export interface MintEventObject {
   to: string;
@@ -655,6 +713,16 @@ export interface KannaBadges extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
+    disableBridge(
+      chainId: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
+    enableBridge(
+      chainId: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
     exists(
       id: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
@@ -677,9 +745,19 @@ export interface KannaBadges extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[boolean]>;
 
+    holders(
+      id: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<[BigNumber]>;
+
     isApprovedForAll(
       account: PromiseOrValue<string>,
       operator: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<[boolean]>;
+
+    isBridgeEnabled(
+      chainId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<[boolean]>;
 
@@ -706,8 +784,6 @@ export interface KannaBadges extends BaseContract {
       amount: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
-
-    name(overrides?: CallOverrides): Promise<[string]>;
 
     owner(overrides?: CallOverrides): Promise<[string]>;
 
@@ -792,8 +868,6 @@ export interface KannaBadges extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[boolean]>;
 
-    symbol(overrides?: CallOverrides): Promise<[string]>;
-
     tokens(
       overrides?: CallOverrides
     ): Promise<[KannaBadges.TokenStructOutput[]]>;
@@ -818,6 +892,13 @@ export interface KannaBadges extends BaseContract {
 
     transferOwnership(
       newOwner: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
+    transferToChain(
+      id: PromiseOrValue<BigNumberish>,
+      chainId: PromiseOrValue<BigNumberish>,
+      amount: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -868,6 +949,16 @@ export interface KannaBadges extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
+  disableBridge(
+    chainId: PromiseOrValue<BigNumberish>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
+  enableBridge(
+    chainId: PromiseOrValue<BigNumberish>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
   exists(
     id: PromiseOrValue<BigNumberish>,
     overrides?: CallOverrides
@@ -890,9 +981,19 @@ export interface KannaBadges extends BaseContract {
     overrides?: CallOverrides
   ): Promise<boolean>;
 
+  holders(
+    id: PromiseOrValue<BigNumberish>,
+    overrides?: CallOverrides
+  ): Promise<BigNumber>;
+
   isApprovedForAll(
     account: PromiseOrValue<string>,
     operator: PromiseOrValue<string>,
+    overrides?: CallOverrides
+  ): Promise<boolean>;
+
+  isBridgeEnabled(
+    chainId: PromiseOrValue<BigNumberish>,
     overrides?: CallOverrides
   ): Promise<boolean>;
 
@@ -919,8 +1020,6 @@ export interface KannaBadges extends BaseContract {
     amount: PromiseOrValue<BigNumberish>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
-
-  name(overrides?: CallOverrides): Promise<string>;
 
   owner(overrides?: CallOverrides): Promise<string>;
 
@@ -1005,8 +1104,6 @@ export interface KannaBadges extends BaseContract {
     overrides?: CallOverrides
   ): Promise<boolean>;
 
-  symbol(overrides?: CallOverrides): Promise<string>;
-
   tokens(overrides?: CallOverrides): Promise<KannaBadges.TokenStructOutput[]>;
 
   tokensMap(
@@ -1029,6 +1126,13 @@ export interface KannaBadges extends BaseContract {
 
   transferOwnership(
     newOwner: PromiseOrValue<string>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
+  transferToChain(
+    id: PromiseOrValue<BigNumberish>,
+    chainId: PromiseOrValue<BigNumberish>,
+    amount: PromiseOrValue<BigNumberish>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -1079,6 +1183,16 @@ export interface KannaBadges extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
+    disableBridge(
+      chainId: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    enableBridge(
+      chainId: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
     exists(
       id: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
@@ -1101,9 +1215,19 @@ export interface KannaBadges extends BaseContract {
       overrides?: CallOverrides
     ): Promise<boolean>;
 
+    holders(
+      id: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
     isApprovedForAll(
       account: PromiseOrValue<string>,
       operator: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<boolean>;
+
+    isBridgeEnabled(
+      chainId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<boolean>;
 
@@ -1130,8 +1254,6 @@ export interface KannaBadges extends BaseContract {
       amount: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<void>;
-
-    name(overrides?: CallOverrides): Promise<string>;
 
     owner(overrides?: CallOverrides): Promise<string>;
 
@@ -1214,8 +1336,6 @@ export interface KannaBadges extends BaseContract {
       overrides?: CallOverrides
     ): Promise<boolean>;
 
-    symbol(overrides?: CallOverrides): Promise<string>;
-
     tokens(overrides?: CallOverrides): Promise<KannaBadges.TokenStructOutput[]>;
 
     tokensMap(
@@ -1241,6 +1361,13 @@ export interface KannaBadges extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
+    transferToChain(
+      id: PromiseOrValue<BigNumberish>,
+      chainId: PromiseOrValue<BigNumberish>,
+      amount: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
     uri(
       arg0: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
@@ -1258,6 +1385,19 @@ export interface KannaBadges extends BaseContract {
       operator?: PromiseOrValue<string> | null,
       approved?: null
     ): ApprovalForAllEventFilter;
+
+    "BridgeTransfer(address,uint16,uint256,uint16)"(
+      account?: PromiseOrValue<string> | null,
+      id?: PromiseOrValue<BigNumberish> | null,
+      amount?: null,
+      chainId?: null
+    ): BridgeTransferEventFilter;
+    BridgeTransfer(
+      account?: PromiseOrValue<string> | null,
+      id?: PromiseOrValue<BigNumberish> | null,
+      amount?: null,
+      chainId?: null
+    ): BridgeTransferEventFilter;
 
     "Mint(address,uint16,uint256,uint16)"(
       to?: PromiseOrValue<string> | null,
@@ -1408,6 +1548,16 @@ export interface KannaBadges extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
+    disableBridge(
+      chainId: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    enableBridge(
+      chainId: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
     exists(
       id: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
@@ -1430,9 +1580,19 @@ export interface KannaBadges extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
+    holders(
+      id: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
     isApprovedForAll(
       account: PromiseOrValue<string>,
       operator: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    isBridgeEnabled(
+      chainId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
@@ -1459,8 +1619,6 @@ export interface KannaBadges extends BaseContract {
       amount: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
-
-    name(overrides?: CallOverrides): Promise<BigNumber>;
 
     owner(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -1543,8 +1701,6 @@ export interface KannaBadges extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    symbol(overrides?: CallOverrides): Promise<BigNumber>;
-
     tokens(overrides?: CallOverrides): Promise<BigNumber>;
 
     tokensMap(
@@ -1559,6 +1715,13 @@ export interface KannaBadges extends BaseContract {
 
     transferOwnership(
       newOwner: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    transferToChain(
+      id: PromiseOrValue<BigNumberish>,
+      chainId: PromiseOrValue<BigNumberish>,
+      amount: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -1614,6 +1777,16 @@ export interface KannaBadges extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
+    disableBridge(
+      chainId: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    enableBridge(
+      chainId: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
     exists(
       id: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
@@ -1636,9 +1809,19 @@ export interface KannaBadges extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
+    holders(
+      id: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
     isApprovedForAll(
       account: PromiseOrValue<string>,
       operator: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    isBridgeEnabled(
+      chainId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
@@ -1665,8 +1848,6 @@ export interface KannaBadges extends BaseContract {
       amount: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
-
-    name(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
@@ -1749,8 +1930,6 @@ export interface KannaBadges extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
-    symbol(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
     tokens(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     tokensMap(
@@ -1765,6 +1944,13 @@ export interface KannaBadges extends BaseContract {
 
     transferOwnership(
       newOwner: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    transferToChain(
+      id: PromiseOrValue<BigNumberish>,
+      chainId: PromiseOrValue<BigNumberish>,
+      amount: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 

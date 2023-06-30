@@ -211,20 +211,6 @@ describe('Kanna Badges', () => {
       tokens = [];
     });
 
-    describe('Contract Info', async () => {
-      it('should return name', async () => {
-        const name = await kannaBadges.name();
-
-        await expect(name).eq('Kanna Badges');
-      });
-
-      it('should return symbol', async () => {
-        const symbol = await kannaBadges.symbol();
-
-        await expect(symbol).eq('KNNB');
-      });
-    });
-
     describe('Register Token', async () => {
       it('should add manager', async () => {
         const deployerWallet = await getDeployerWallet();
@@ -1310,6 +1296,126 @@ describe('Kanna Badges', () => {
       });
     });
 
+    describe('Holders', async () => {
+      beforeEach(async () => {
+        await registerTokens();
+      });
+
+      it('increase holders', async () => {
+        const [, minterSession] = await getMinterSession();
+        const userWallet = await getUserWallet();
+        const user2Wallet = await getUser2Wallet();
+
+        const tokenId = getTokenId();
+
+        await minterSession['mint(address,uint16)'](
+          userWallet.address,
+          tokenId
+        );
+
+        let holders = await kannaBadges.holders(tokenId);
+
+        expect(holders).eq(1);
+
+        await minterSession['mint(address,uint16)'](
+          user2Wallet.address,
+          tokenId
+        );
+
+        holders = await kannaBadges.holders(tokenId);
+
+        expect(holders).eq(2);
+      });
+
+      it('increase holders in batch', async () => {
+        const [, minterSession] = await getMinterSession();
+        const userWallet = await getUserWallet();
+        const user2Wallet = await getUser2Wallet();
+
+        const tokenId = getTokenId();
+
+        await minterSession.batchMint(tokenId, [
+          userWallet.address,
+          user2Wallet.address,
+        ]);
+
+        const holders = await kannaBadges.holders(tokenId);
+
+        expect(holders).eq(2);
+      });
+
+      it('decrease holders', async () => {
+        const [, minterSession] = await getMinterSession();
+        const [userWallet, userSession] = await getUserSession();
+        const user2Wallet = await getUser2Wallet();
+
+        const tokenId = getTokenId({ transferable: true, accumulative: true });
+
+        await minterSession.batchMint(tokenId, [
+          userWallet.address,
+          user2Wallet.address,
+        ]);
+
+        let holders = await kannaBadges.holders(tokenId);
+
+        expect(holders).eq(2);
+
+        userSession.safeTransferFrom(
+          userWallet.address,
+          user2Wallet.address,
+          tokenId,
+          1,
+          []
+        );
+
+        holders = await kannaBadges.holders(tokenId);
+
+        expect(holders).eq(1);
+      });
+
+      it('decrease holders for accumulative token', async () => {
+        const [, minterSession] = await getMinterSession();
+        const [userWallet, userSession] = await getUserSession();
+        const user2Wallet = await getUser2Wallet();
+
+        const tokenId = getTokenId({ transferable: true, accumulative: true });
+
+        await minterSession['mint(address,uint16,uint256)'](
+          userWallet.address,
+          tokenId,
+          5
+        );
+
+        let holders = await kannaBadges.holders(tokenId);
+
+        expect(holders).eq(1);
+
+        userSession.safeTransferFrom(
+          userWallet.address,
+          user2Wallet.address,
+          tokenId,
+          3,
+          []
+        );
+
+        holders = await kannaBadges.holders(tokenId);
+
+        expect(holders).eq(2);
+
+        userSession.safeTransferFrom(
+          userWallet.address,
+          user2Wallet.address,
+          tokenId,
+          2,
+          []
+        );
+
+        holders = await kannaBadges.holders(tokenId);
+
+        expect(holders).eq(1);
+      });
+    });
+
     describe('Supports interface', async () => {
       it('AccessControl interface', async () => {
         const accessControlInterface =
@@ -1352,6 +1458,142 @@ describe('Kanna Badges', () => {
         );
 
         expect(supportsInterface).eq(true);
+      });
+    });
+
+    describe('Bridge', async () => {
+      beforeEach(async () => {
+        await registerTokens();
+      });
+
+      it('should enable chain', async () => {
+        const chainId = 2;
+
+        await kannaBadges.enableBridge(chainId);
+
+        const isEnabled = await kannaBadges.isBridgeEnabled(chainId);
+
+        expect(isEnabled).eq(true);
+      });
+
+      it('should disable chain', async () => {
+        const chainId = 2;
+
+        await kannaBadges.enableBridge(chainId);
+
+        await kannaBadges.disableBridge(chainId);
+
+        const isEnabled = await kannaBadges.isBridgeEnabled(chainId);
+
+        expect(isEnabled).eq(false);
+      });
+
+      it('should transfer to chain', async () => {
+        const [, minterSession] = await getMinterSession();
+        const [userWallet, userSession] = await getUserSession();
+
+        const tokenId = getTokenId({ transferable: true });
+        const chainId = 2;
+        const amount = 1;
+
+        await minterSession['mint(address,uint16)'](
+          userWallet.address,
+          tokenId
+        );
+
+        await kannaBadges.enableBridge(chainId);
+
+        await expect(userSession.transferToChain(tokenId, chainId, amount))
+          .to.emit(kannaBadges, 'BridgeTransfer')
+          .withArgs(userWallet.address, tokenId, amount, chainId);
+      });
+
+      describe('should not transfer', async () => {
+        it('token not registered', async () => {
+          const [, userSession] = await getUserSession();
+
+          const tokenId = 99;
+          const chainId = 2;
+          const amount = 1;
+
+          await expect(
+            userSession.transferToChain(tokenId, chainId, amount)
+          ).to.be.revertedWith('Invalid Token');
+        });
+
+        it('amount lower than one', async () => {
+          const [, userSession] = await getUserSession();
+
+          const tokenId = getTokenId();
+          const chainId = 2;
+          const amount = 0;
+
+          await expect(
+            userSession.transferToChain(tokenId, chainId, amount)
+          ).to.be.revertedWith('Invalid amount');
+        });
+
+        it('insuficient balance', async () => {
+          const [, userSession] = await getUserSession();
+
+          const tokenId = getTokenId();
+          const chainId = 2;
+          const amount = 1;
+
+          await expect(
+            userSession.transferToChain(tokenId, chainId, amount)
+          ).to.be.revertedWith('Insuficient balance');
+        });
+
+        it('invalid chain id', async () => {
+          const [, minterSession] = await getMinterSession();
+          const [userWallet, userSession] = await getUserSession();
+
+          const tokenId = getTokenId();
+          const chainId = 2;
+          const amount = 1;
+
+          await minterSession['mint(address,uint16)'](userWallet.address, 1);
+
+          await expect(
+            userSession.transferToChain(tokenId, chainId, amount)
+          ).to.be.revertedWith('Invalid chain');
+        });
+
+        it('dynamic token', async () => {
+          const deployerWallet = await getDeployerWallet();
+          const [, managerSession] = await getManagerSession();
+          const [userWallet, userSession] = await getUserSession();
+
+          const chainId = 2;
+          const amount = 1;
+
+          await kannaBadges.enableBridge(chainId);
+
+          const dynamicChecker = await getDynamicBadgeCheckerMock(
+            deployerWallet
+          );
+
+          await Promise.all([
+            dynamicChecker.mock.isAccumulative.returns(false),
+            dynamicChecker.mock.creator.returns(deployerWallet.address),
+            dynamicChecker.mock.royaltyPercent.returns(BigNumber.from(10)),
+          ]);
+
+          const tx = await managerSession['register(address)'](
+            dynamicChecker.address
+          );
+          const event = await getTokenRegisteredEvent(tx);
+          const tokenId = event.args.id;
+
+          await dynamicChecker.mock.balanceOf
+            .withArgs(userWallet.address, tokenId)
+            .returns(1);
+
+          await expect(
+            userSession.transferToChain(tokenId, chainId, amount)
+          ).to.be.revertedWith('Token is not transferable');
+        });
       });
     });
 
@@ -1400,6 +1642,22 @@ describe('Kanna Badges', () => {
         await expect(
           userSession.removeMinter(user2Wallet.address)
         ).to.be.revertedWith(revertWith);
+      });
+
+      it('enable bridge chain', async () => {
+        const [, userSession] = await getUserSession();
+
+        await expect(userSession.enableBridge(2)).to.be.revertedWith(
+          revertWith
+        );
+      });
+
+      it('disable bridge chain', async () => {
+        const [, userSession] = await getUserSession();
+
+        await expect(userSession.disableBridge(2)).to.be.revertedWith(
+          revertWith
+        );
       });
     });
   });
