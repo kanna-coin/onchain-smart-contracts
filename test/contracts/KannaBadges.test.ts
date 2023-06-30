@@ -991,6 +991,98 @@ describe("Kanna Badges", () => {
       });
     });
 
+    describe("Holders", async () => {
+      beforeEach(async () => {
+        await registerTokens();
+      });
+
+      it("increase holders", async () => {
+        const [, minterSession] = await getMinterSession();
+        const userWallet = await getUserWallet();
+        const user2Wallet = await getUser2Wallet();
+
+        const tokenId = getTokenId();
+
+        await minterSession["mint(address,uint16)"](userWallet.address, tokenId);
+
+        let holders = await kannaBadges.holders(tokenId);
+
+        expect(holders).eq(1);
+
+        await minterSession["mint(address,uint16)"](user2Wallet.address, tokenId);
+
+        holders = await kannaBadges.holders(tokenId);
+
+        expect(holders).eq(2);
+      });
+
+      it("increase holders in batch", async () => {
+        const [, minterSession] = await getMinterSession();
+        const userWallet = await getUserWallet();
+        const user2Wallet = await getUser2Wallet();
+
+        const tokenId = getTokenId();
+
+        await minterSession.batchMint(tokenId, [
+          userWallet.address,
+          user2Wallet.address,
+        ]);
+
+        const holders = await kannaBadges.holders(tokenId);
+
+        expect(holders).eq(2);
+      });
+
+      it("decrease holders", async () => {
+        const [, minterSession] = await getMinterSession();
+        const [userWallet, userSession] = await getUserSession();
+        const user2Wallet = await getUser2Wallet();
+
+        const tokenId = getTokenId({ transferable: true, accumulative: true });
+
+        await minterSession.batchMint(tokenId, [
+          userWallet.address,
+          user2Wallet.address,
+        ]);
+
+        let holders = await kannaBadges.holders(tokenId);
+
+        expect(holders).eq(2);
+
+        userSession.safeTransferFrom(userWallet.address, user2Wallet.address, tokenId, 1, []);
+
+        holders = await kannaBadges.holders(tokenId);
+
+        expect(holders).eq(1);
+      });
+
+      it("decrease holders for accumulative token", async () => {
+        const [, minterSession] = await getMinterSession();
+        const [userWallet, userSession] = await getUserSession();
+        const user2Wallet = await getUser2Wallet();
+
+        const tokenId = getTokenId({ transferable: true, accumulative: true });
+
+        await minterSession["mint(address,uint16,uint256)"](userWallet.address, tokenId, 5);
+
+        let holders = await kannaBadges.holders(tokenId);
+
+        expect(holders).eq(1);
+
+        userSession.safeTransferFrom(userWallet.address, user2Wallet.address, tokenId, 3, []);
+
+        holders = await kannaBadges.holders(tokenId);
+
+        expect(holders).eq(2);
+
+        userSession.safeTransferFrom(userWallet.address, user2Wallet.address, tokenId, 2, []);
+
+        holders = await kannaBadges.holders(tokenId);
+
+        expect(holders).eq(1);
+      });
+    });
+
     describe("Supports interface", async () => {
       it("AccessControl interface", async () => {
         const accessControlInterface = IAccessControl__factory.createInterface();
