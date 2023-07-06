@@ -1,19 +1,19 @@
-import { ethers } from "hardhat";
-import { utils } from "ethers";
-import { MockContract } from "ethereum-waffle";
-import chai from "chai";
-import chaiAsPromised from "chai-as-promised";
+import { ethers } from 'hardhat';
+import { utils } from 'ethers';
+import { MockContract } from 'ethereum-waffle';
+import chai from 'chai';
+import chaiAsPromised from 'chai-as-promised';
 import {
   KnnHolderBadgeChecker,
   IERC165__factory,
   IDynamicBadgeChecker__factory,
-} from "../../typechain-types";
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+} from '../../typechain-types';
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import {
   getKnnHolderBadgeCheckerFactory,
   getKnnHolderBadgeChecker,
   getKnnTokenMock,
-} from "../../src/infrastructure/factories";
+} from '../../src/infrastructure/factories';
 
 chai.use(chaiAsPromised);
 const { expect } = chai;
@@ -32,7 +32,7 @@ export function getInterfaceID(...contractInterfaces: utils.Interface[]) {
   return interfaceID._hex.padEnd(10, '0');
 }
 
-describe("Knn Holder Badge Checker", () => {
+describe('Knn Holder Badge Checker', () => {
   let signers: SignerWithAddress[];
   let knnToken: MockContract;
   let holderChecker: KnnHolderBadgeChecker;
@@ -59,33 +59,37 @@ describe("Knn Holder Badge Checker", () => {
     return userAccount;
   };
 
-  describe("Setup", async () => {
+  describe('Setup', async () => {
     beforeEach(async () => {
       await deployContracts();
     });
 
-    it("should not initialize Holder Checker with invalid token address", async () => {
+    it('should not initialize Holder Checker with invalid token address', async () => {
       const deployerWallet = await getDeployerWallet();
 
-      const holderCheckerFactory = await getKnnHolderBadgeCheckerFactory(deployerWallet);
+      const holderCheckerFactory = await getKnnHolderBadgeCheckerFactory(
+        deployerWallet
+      );
 
       await expect(
-        holderCheckerFactory.deploy(ethers.constants.AddressZero)
-      ).to.be.revertedWith("Invalid token address");
+        holderCheckerFactory.deploy(
+          ethers.constants.AddressZero,
+          ethers.constants.AddressZero
+        )
+      ).to.be.revertedWith('Invalid token address');
     });
 
-    it("should return `false` when `isAccumulative`", async () => {
+    it('should return `false` when `isAccumulative`', async () => {
       const accumulative = await holderChecker.isAccumulative();
 
       expect(accumulative).to.eq(false);
     });
 
-    describe("Balance of", async () => {
-      it("should return `1` if `account` has Knn Token", async () => {
+    describe('Balance of', async () => {
+      it('should return `1` if `account` has Knn Token', async () => {
         const userWallet = await getUserWallet();
 
-        await knnToken.mock
-          .balanceOf
+        await knnToken.mock.balanceOf
           .withArgs(userWallet.address)
           .returns(ethers.BigNumber.from(10));
 
@@ -94,11 +98,10 @@ describe("Knn Holder Badge Checker", () => {
         expect(balance).to.eq(1);
       });
 
-      it("should return `0` if `account` does not have Knn Token", async () => {
+      it('should return `0` if `account` does not have Knn Token', async () => {
         const userWallet = await getUserWallet();
 
-        await knnToken.mock
-          .balanceOf
+        await knnToken.mock.balanceOf
           .withArgs(userWallet.address)
           .returns(ethers.BigNumber.from(0));
 
@@ -108,17 +111,34 @@ describe("Knn Holder Badge Checker", () => {
       });
     });
 
-    describe("Supports interface", async () => {
-      it("Dynamic Badge Checker interface", async () => {
+    describe('Creator', async () => {
+      it('should return the creator', async () => {
+        const creator = await holderChecker.creator();
+        expect(creator).not.null;
+      });
+    });
+
+    describe('RoyaltyPercent', async () => {
+      it('should return the royalty percent', async () => {
+        const royaltyPercent = await holderChecker.royaltyPercent();
+        expect(royaltyPercent).not.null;
+      });
+    });
+
+    describe('Supports interface', async () => {
+      it('Dynamic Badge Checker interface', async () => {
         const IERC165Interface = IERC165__factory.createInterface();
-        const DynamicCheckerInterface = IDynamicBadgeChecker__factory.createInterface();
+        const DynamicCheckerInterface =
+          IDynamicBadgeChecker__factory.createInterface();
 
         const interfaceId = getInterfaceID(
           DynamicCheckerInterface,
           IERC165Interface
         );
 
-        const supportsInterface = await holderChecker.supportsInterface(interfaceId);
+        const supportsInterface = await holderChecker.supportsInterface(
+          interfaceId
+        );
 
         expect(supportsInterface).to.eq(true);
       });

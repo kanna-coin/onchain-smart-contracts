@@ -24,20 +24,32 @@ import type {
 export interface DynamicBadgeCheckerInterface extends utils.Interface {
   functions: {
     "balanceOf(address,uint16)": FunctionFragment;
+    "creator()": FunctionFragment;
     "isAccumulative()": FunctionFragment;
+    "royaltyPercent()": FunctionFragment;
     "supportsInterface(bytes4)": FunctionFragment;
   };
 
   getFunction(
-    nameOrSignatureOrTopic: "balanceOf" | "isAccumulative" | "supportsInterface"
+    nameOrSignatureOrTopic:
+      | "balanceOf"
+      | "creator"
+      | "isAccumulative"
+      | "royaltyPercent"
+      | "supportsInterface"
   ): FunctionFragment;
 
   encodeFunctionData(
     functionFragment: "balanceOf",
     values: [PromiseOrValue<string>, PromiseOrValue<BigNumberish>]
   ): string;
+  encodeFunctionData(functionFragment: "creator", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "isAccumulative",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "royaltyPercent",
     values?: undefined
   ): string;
   encodeFunctionData(
@@ -46,8 +58,13 @@ export interface DynamicBadgeCheckerInterface extends utils.Interface {
   ): string;
 
   decodeFunctionResult(functionFragment: "balanceOf", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "creator", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "isAccumulative",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "royaltyPercent",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -91,7 +108,11 @@ export interface DynamicBadgeChecker extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[BigNumber]>;
 
+    creator(overrides?: CallOverrides): Promise<[string]>;
+
     isAccumulative(overrides?: CallOverrides): Promise<[boolean]>;
+
+    royaltyPercent(overrides?: CallOverrides): Promise<[BigNumber]>;
 
     supportsInterface(
       interfaceId: PromiseOrValue<BytesLike>,
@@ -105,7 +126,11 @@ export interface DynamicBadgeChecker extends BaseContract {
     overrides?: CallOverrides
   ): Promise<BigNumber>;
 
+  creator(overrides?: CallOverrides): Promise<string>;
+
   isAccumulative(overrides?: CallOverrides): Promise<boolean>;
+
+  royaltyPercent(overrides?: CallOverrides): Promise<BigNumber>;
 
   supportsInterface(
     interfaceId: PromiseOrValue<BytesLike>,
@@ -119,7 +144,11 @@ export interface DynamicBadgeChecker extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
+    creator(overrides?: CallOverrides): Promise<string>;
+
     isAccumulative(overrides?: CallOverrides): Promise<boolean>;
+
+    royaltyPercent(overrides?: CallOverrides): Promise<BigNumber>;
 
     supportsInterface(
       interfaceId: PromiseOrValue<BytesLike>,
@@ -136,7 +165,11 @@ export interface DynamicBadgeChecker extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
+    creator(overrides?: CallOverrides): Promise<BigNumber>;
+
     isAccumulative(overrides?: CallOverrides): Promise<BigNumber>;
+
+    royaltyPercent(overrides?: CallOverrides): Promise<BigNumber>;
 
     supportsInterface(
       interfaceId: PromiseOrValue<BytesLike>,
@@ -151,7 +184,11 @@ export interface DynamicBadgeChecker extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
+    creator(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
     isAccumulative(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    royaltyPercent(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     supportsInterface(
       interfaceId: PromiseOrValue<BytesLike>,
