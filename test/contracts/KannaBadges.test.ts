@@ -1126,6 +1126,25 @@ describe('Kanna Badges', () => {
         expect(token2Balance?.balance).eq(5);
       });
 
+      it("should unordered indexes", async () => {
+        const [, minterSession] = await getMinterSession();
+        const userWallet = await getUserWallet();
+
+        const token1Id = tokens[1].id;
+        const token2Id = tokens[3].id;
+
+        await minterSession["mint(address,uint16)"](userWallet.address, token1Id);
+        await minterSession["mint(address,uint16)"](userWallet.address, token2Id);
+
+        const balances = await kannaBadges["balanceOf(address)"](userWallet.address);
+
+        const token1Balance = balances.find(b => b.token.id === token1Id);
+        const token2Balance = balances.find(b => b.token.id === token2Id);
+
+        expect(token1Balance?.balance).eq(1);
+        expect(token2Balance?.balance).eq(1);
+      });
+
       it('should get empty array', async () => {
         const userWallet = await getUserWallet();
 
