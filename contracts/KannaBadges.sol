@@ -152,11 +152,14 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
             return balances;
         }
 
+        uint16 index;
+
         for (uint16 i = 0; i < _lastTokenId; i++) {
             uint16 id = i + 1;
 
             if (balanceOf(account, id) > 0) {
-                balances[i] = TokenBalance(balanceOf(account, id), tokensMap[id]);
+                balances[index] = TokenBalance(balanceOf(account, id), tokensMap[id]);
+                index++;
             }
         }
 
