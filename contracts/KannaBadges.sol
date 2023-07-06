@@ -47,7 +47,7 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
     mapping(uint16 => address) private _dynamicCheckers;
     mapping(uint16 => uint256) private _totalSupply;
     mapping(uint16 => uint256) private _holders;
-    mapping(uint16 => mapping(address => uint16)) private _mintIncrementalNonces;
+    mapping(uint16 => mapping(address => uint16)) internal _mintIncrementalNonces;
     mapping(uint16 => bool) private _bridgeChains;
 
     event TokenRegistered(
@@ -275,7 +275,7 @@ contract KannaBadges is ERC1155, Ownable, AccessControl {
         uint16 incremental,
         uint256 dueDate,
         uint256 nonce
-    ) external tokenExists(id) {
+    ) external virtual tokenExists(id) {
         require(incremental == _mintIncrementalNonces[id][to] + 1, "Invalid Nonce");
         require(block.timestamp <= dueDate, "Invalid date");
 

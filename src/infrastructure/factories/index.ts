@@ -4,6 +4,7 @@ export * from './KannaSaleFactory';
 export * from './KannaSaleL2Factory';
 export * from './KannaYieldFactory';
 export * from './KannaBadgesFactory';
+export * from './KannaBadgesL2Factory';
 export * from './AggregatorV3Factory';
 export * from './DynamicBadgeChecker';
 export * from './KnnHolderBadgeCheckerFactory';
