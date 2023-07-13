@@ -61,7 +61,7 @@ export declare namespace KannaBadges {
   ] & { balance: BigNumber; token: KannaBadges.TokenStructOutput };
 }
 
-export interface KannaBadgesInterface extends utils.Interface {
+export interface KannaBadgesL2Interface extends utils.Interface {
   functions: {
     "CREATOR_EARNINGS_BASIS_POINT()": FunctionFragment;
     "DEFAULT_ADMIN_ROLE()": FunctionFragment;
@@ -643,12 +643,12 @@ export type URIEvent = TypedEvent<[string, BigNumber], URIEventObject>;
 
 export type URIEventFilter = TypedEventFilter<URIEvent>;
 
-export interface KannaBadges extends BaseContract {
+export interface KannaBadgesL2 extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
   attach(addressOrName: string): this;
   deployed(): Promise<this>;
 
-  interface: KannaBadgesInterface;
+  interface: KannaBadgesL2Interface;
 
   queryFilter<TEvent extends TypedEvent>(
     event: TypedEventFilter<TEvent>,

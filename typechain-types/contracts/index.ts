@@ -7,6 +7,7 @@ import type * as mocks from "./mocks";
 export type { mocks };
 export type { DynamicBadgeChecker } from "./DynamicBadgeChecker";
 export type { KannaBadges } from "./KannaBadges";
+export type { KannaBadgesL2 } from "./KannaBadgesL2";
 export type { KannaPreSale } from "./KannaPreSale";
 export type { KannaSale } from "./KannaSale";
 export type { KannaSaleL2 } from "./KannaSaleL2";
