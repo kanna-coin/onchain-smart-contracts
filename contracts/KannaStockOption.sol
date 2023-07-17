@@ -43,6 +43,12 @@ contract KannaStockOption is Ownable {
     bool _initialized;
     uint256 _initializedAt;
 
+    enum Status {
+        Cliff,
+        Lock,
+        Vesting
+    }
+
     event Initialize(
         address tokenAddress,
         uint256 startDate,
@@ -157,8 +163,20 @@ contract KannaStockOption is Ownable {
         _finalized = true;
     }
 
+    function status() public view returns (Status) {
+        if (timestamp() < _cliffEndDate) return Status.Cliff;
+        if (timestamp() >= _vestingEndDate) return Status.Vesting;
+
+        return Status.Lock;
+    }
+
+    function maxTgeAmount() public view returns (uint256) {
+        return _tgeAmount;
+    }
+
     function withdraw(uint256 amountToWithdraw) public initialized {
         require(msg.sender == _beneficiary, "KannaStockOption: caller is not the beneficiary");
+        require(_finalized == false, "KannaStockOption: contract already finalized");
         require(amountToWithdraw > 0, "KannaStockOption: amountToWithdraw is zero");
         require(
             amountToWithdraw <= availableToWithdraw(),

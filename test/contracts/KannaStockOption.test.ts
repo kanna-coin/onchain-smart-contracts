@@ -10,407 +10,341 @@ const { expect } = chai;
 
 const contractName = 'KannaStockOption';
 
-const DAY_UNIT = 86400;
+const DAY_UNIT = 86400000;
 const zeros = '0'.repeat(18);
 const parse1e18 = (integer: number): string => `${integer}${zeros}`;
+
+const statusEnum = {
+  Cliff: 0,
+  Lock: 1,
+  Vesting: 2,
+};
 
 describe('KNN Stock Option', () => {
   let token: KannaToken;
 
   let deployer: SignerWithAddress;
-  let owner: SignerWithAddress;
   let holder: SignerWithAddress;
   let treasuryWallet: SignerWithAddress;
 
-  let stockFactory: KannaStockOption__factory;
+  let sopFactory: KannaStockOption__factory;
 
   beforeEach(async () => {
-    [owner, holder, deployer, treasuryWallet] = await ethers.getSigners();
+    [, holder, deployer, treasuryWallet] = await ethers.getSigners();
     token = await getKnnToken(deployer, treasuryWallet);
-    stockFactory = (await ethers.getContractFactory(
+    sopFactory = (await ethers.getContractFactory(
       contractName,
-      owner
+      treasuryWallet
     )) as KannaStockOption__factory;
   });
 
-  it('should cancel while in the cliff duration', async () => {
-    const cliff = DAY_UNIT * 90;
-    const lock = DAY_UNIT * 365;
-    const vesting = DAY_UNIT * 365;
+  it('should cancel by owner while in the cliff duration', async () => {
+    const daysOfCliff = 90;
+    const daysOfVesting = 365;
+    const daysOfLock = 60;
+    const startDate = new Date();
 
-    const contract = await stockFactory.deploy(
-      owner.address,
-      holder.address,
-      cliff,
-      lock,
-      vesting,
-      token.address
+    const contract = await initialize(
+      sopFactory,
+      treasuryWallet,
+      token,
+      startDate,
+      daysOfVesting,
+      daysOfCliff,
+      daysOfLock,
+      holder,
+      100,
+      20
     );
 
-    await contract.deployed();
+    await contract.connect(treasuryWallet).finalize();
 
-    const amount = parse1e18(100);
+    const totalVested = await contract.totalVested();
 
-    await token.connect(treasuryWallet).transfer(contract.address, amount);
+    const status = await contract.status();
 
-    const tx = await contract.cancel();
-    const { status } = await tx.wait();
-
-    expect(Boolean(status)).to.be.true;
+    expect(status).to.equal(statusEnum.Cliff);
+    expect(Number(totalVested.toString())).to.equal(0);
   });
 
-  it('should not cancel after cliff duration', async () => {
-    const cliff = DAY_UNIT * 90;
-    const lock = DAY_UNIT * 365;
-    const vesting = DAY_UNIT * 365;
+  it('should cancel by holder while in the cliff duration', async () => {
+    const daysOfCliff = 90;
+    const daysOfVesting = 365;
+    const daysOfLock = 60;
+    const startDate = new Date();
 
-    const contract = await stockFactory.deploy(
-      owner.address,
-      holder.address,
-      cliff,
-      lock,
-      vesting,
-      token.address
+    const contract = await initialize(
+      sopFactory,
+      treasuryWallet,
+      token,
+      startDate,
+      daysOfVesting,
+      daysOfCliff,
+      daysOfLock,
+      holder,
+      100,
+      20
     );
 
-    await contract.deployed();
+    await contract.connect(holder).finalize();
+    const status = await contract.status();
 
-    const amount = parse1e18(100);
+    expect(status).to.equal(statusEnum.Cliff);
 
-    await token.connect(treasuryWallet).transfer(contract.address, amount);
+    const totalVested = await contract.totalVested();
 
-    await network.provider.send('evm_increaseTime', [cliff + 1]);
-    await network.provider.send('evm_mine');
+    expect(Number(totalVested.toString())).to.equal(0);
+  });
 
-    expect(contract.cancel()).to.be.revertedWith('Cannot cancel after cliff');
+  it('should cancel after the cliff duration (as owner)', async () => {
+    const daysOfCliff = 90;
+    const daysOfVesting = 365;
+    const daysOfLock = 60;
+    const startDate = new Date(Date.now() - DAY_UNIT * (daysOfCliff + 1));
+
+    const contract = await initialize(
+      sopFactory,
+      treasuryWallet,
+      token,
+      startDate,
+      daysOfVesting,
+      daysOfCliff,
+      daysOfLock,
+      holder,
+      10000,
+      20
+    );
+
+    await contract.connect(treasuryWallet).finalize();
+
+    const totalVested = await contract.totalVested();
+
+    const status = await contract.status();
+
+    expect(status).to.equal(statusEnum.Lock);
+
+    expect(Number(totalVested.toString())).not.to.equal(0);
+  });
+
+  it('should cancel after the cliff duration (as holder)', async () => {
+    const daysOfCliff = 90;
+    const daysOfVesting = 365;
+    const daysOfLock = 60;
+    const startDate = new Date(Date.now() - DAY_UNIT * (daysOfCliff + 1));
+
+    const contract = await initialize(
+      sopFactory,
+      treasuryWallet,
+      token,
+      startDate,
+      daysOfVesting,
+      daysOfCliff,
+      daysOfLock,
+      holder,
+      10000,
+      20
+    );
+
+    await contract.connect(holder).finalize();
+
+    const totalVested = await contract.totalVested();
+
+    const status = await contract.status();
+
+    expect(status).to.equal(statusEnum.Lock);
+
+    expect(Number(totalVested.toString())).not.to.equal(0);
   });
 
   it('should not withdraw before cliff duration', async () => {
-    const cliff = DAY_UNIT * 90;
-    const lock = DAY_UNIT * 365;
-    const vesting = DAY_UNIT * 365;
+    const daysOfCliff = 90;
+    const daysOfVesting = 365;
+    const daysOfLock = 60;
+    const startDate = new Date();
 
-    const contract = await stockFactory.deploy(
-      owner.address,
-      holder.address,
-      cliff,
-      lock,
-      vesting,
-      token.address
+    const contract = await initialize(
+      sopFactory,
+      treasuryWallet,
+      token,
+      startDate,
+      daysOfVesting,
+      daysOfCliff,
+      daysOfLock,
+      holder,
+      100,
+      20
     );
 
-    await contract.deployed();
+    const totalVested = await contract.totalVested();
 
-    const amount = parse1e18(100);
+    const status = await contract.status();
 
-    await token.connect(treasuryWallet).transfer(contract.address, amount);
+    expect(status).to.equal(statusEnum.Cliff);
 
-    await network.provider.send('evm_increaseTime', [1]);
-    await network.provider.send('evm_mine');
+    expect(Number(totalVested.toString())).to.equal(0);
 
-    expect(contract.connect(holder).withdraw()).to.be.revertedWith(
-      'Cannot withdraw while in cliff'
+    expect(contract.connect(holder).withdraw(1)).to.be.reverted;
+  });
+
+  it('should not withdraw an amoount above TGE before lock duration', async () => {
+    const daysOfCliff = 300;
+    const daysOfVesting = 365;
+    const daysOfLock = 60;
+    const startDate = new Date(Date.now() - DAY_UNIT * (daysOfCliff + 1));
+
+    const contract = await initialize(
+      sopFactory,
+      treasuryWallet,
+      token,
+      startDate,
+      daysOfVesting,
+      daysOfCliff,
+      daysOfLock,
+      holder,
+      100,
+      20
+    );
+
+    const status = await contract.status();
+
+    expect(status).to.equal(statusEnum.Lock);
+
+    const withdrawTx = contract.connect(holder).withdraw(parse1e18(21));
+
+    await expect(withdrawTx).to.be.revertedWith(
+      'KannaStockOption: amountToWithdraw is greater than availableToWithdraw'
     );
   });
 
-  it('should not withdraw before lock duration', async () => {
-    const cliff = DAY_UNIT * 90;
-    const lock = DAY_UNIT * 365;
-    const vesting = DAY_UNIT * 365;
+  it('should withdraw TGE amount within lock duration', async () => {
+    const daysOfCliff = 300;
+    const daysOfVesting = 365;
+    const daysOfLock = 60;
+    const startDate = new Date(Date.now() - DAY_UNIT * (daysOfCliff + 1));
 
-    const contract = await stockFactory.deploy(
-      owner.address,
-      holder.address,
-      cliff,
-      lock,
-      vesting,
-      token.address
+    const contract = await initialize(
+      sopFactory,
+      treasuryWallet,
+      token,
+      startDate,
+      daysOfVesting,
+      daysOfCliff,
+      daysOfLock,
+      holder,
+      100,
+      20
     );
 
-    await contract.deployed();
+    const status = await contract.status();
 
-    const amount = parse1e18(100);
+    expect(status).to.equal(statusEnum.Lock);
 
-    await token.connect(treasuryWallet).transfer(contract.address, amount);
+    const withdrawTx = contract.connect(holder).withdraw(parse1e18(20));
 
-    await network.provider.send('evm_increaseTime', [cliff + 1]);
-    await network.provider.send('evm_mine');
-
-    expect(contract.connect(holder).withdraw()).to.be.revertedWith(
-      'Cannot withdraw before lock duration'
-    );
-  });
-
-  it('should allow contract to be withdrawn after the lock duration', async () => {
-    const cliff = DAY_UNIT * 90;
-    const lock = DAY_UNIT * 365;
-    const vesting = DAY_UNIT * 365;
-
-    const contract = await stockFactory.deploy(
-      owner.address,
-      holder.address,
-      cliff,
-      lock,
-      vesting,
-      token.address
-    );
-
-    await contract.deployed();
-
-    const amount = parse1e18(100);
-
-    await token.connect(treasuryWallet).transfer(contract.address, amount);
-
-    await network.provider.send('evm_increaseTime', [cliff + lock + 1]);
-    await network.provider.send('evm_mine');
-
-    const tx = await contract.connect(holder).withdraw();
-    const { status } = await tx.wait();
-
-    expect(Boolean(status)).to.be.true;
-  });
-
-  it('should not allow contract to be withdrawn twice', async () => {
-    const cliff = DAY_UNIT * 90;
-    const lock = DAY_UNIT * 365;
-    const vesting = DAY_UNIT * 365;
-
-    const contract = await stockFactory.deploy(
-      owner.address,
-      holder.address,
-      cliff,
-      lock,
-      vesting,
-      token.address
-    );
-
-    await contract.deployed();
-
-    const amount = parse1e18(100);
-
-    await token.connect(treasuryWallet).transfer(contract.address, amount);
-
-    await network.provider.send('evm_increaseTime', [cliff + lock + 1]);
-    await network.provider.send('evm_mine');
-
-    await contract.connect(holder).withdraw();
-
-    expect(contract.connect(holder).withdraw()).to.be.revertedWith(
-      'Already withdrawn'
+    await expect(withdrawTx).not.to.be.revertedWith(
+      'KannaStockOption: amountToWithdraw is greater than availableToWithdraw'
     );
   });
 
   it('should not allow contract to be withdrawn by non-holder', async () => {
-    const cliff = DAY_UNIT * 90;
-    const lock = DAY_UNIT * 365;
-    const vesting = DAY_UNIT * 365;
+    const daysOfCliff = 300;
+    const daysOfVesting = 365;
+    const daysOfLock = 60;
+    const startDate = new Date(Date.now() - DAY_UNIT * (daysOfCliff + 1));
 
-    const contract = await stockFactory.deploy(
-      owner.address,
-      holder.address,
-      cliff,
-      lock,
-      vesting,
-      token.address
+    const contract = await initialize(
+      sopFactory,
+      treasuryWallet,
+      token,
+      startDate,
+      daysOfVesting,
+      daysOfCliff,
+      daysOfLock,
+      holder,
+      100,
+      20
     );
 
-    await contract.deployed();
+    const status = await contract.status();
 
-    await network.provider.send('evm_increaseTime', [cliff + lock + 1]);
-    await network.provider.send('evm_mine');
+    expect(status).to.equal(statusEnum.Lock);
 
-    expect(contract.connect(owner).withdraw()).to.be.revertedWith(
-      'Only holder can call this function'
+    const withdrawTx = contract.connect(treasuryWallet).withdraw(parse1e18(20));
+
+    await expect(withdrawTx).to.be.revertedWith(
+      'KannaStockOption: caller is not the beneficiary'
     );
-  });
-
-  it('should not allow cancel twice', async () => {
-    const cliff = DAY_UNIT * 90;
-    const lock = DAY_UNIT * 365;
-    const vesting = DAY_UNIT * 365;
-
-    const contract = await stockFactory.deploy(
-      owner.address,
-      holder.address,
-      cliff,
-      lock,
-      vesting,
-      token.address
-    );
-
-    await contract.deployed();
-
-    const amount = parse1e18(100);
-
-    await token.connect(treasuryWallet).transfer(contract.address, amount);
-
-    await contract.cancel();
-
-    expect(contract.cancel()).to.be.revertedWith('Contract already canceled');
   });
 
   it('should not withdraw after canceled', async () => {
-    const cliff = DAY_UNIT * 90;
-    const lock = DAY_UNIT * 365;
-    const vesting = DAY_UNIT * 365;
+    const daysOfCliff = 300;
+    const daysOfVesting = 365;
+    const daysOfLock = 60;
+    const startDate = new Date(Date.now() - DAY_UNIT * (daysOfCliff + 1));
 
-    const contract = await stockFactory.deploy(
-      owner.address,
-      holder.address,
-      cliff,
-      lock,
-      vesting,
-      token.address
+    const contract = await initialize(
+      sopFactory,
+      treasuryWallet,
+      token,
+      startDate,
+      daysOfVesting,
+      daysOfCliff,
+      daysOfLock,
+      holder,
+      100,
+      20
     );
 
-    await contract.deployed();
+    const status = await contract.status();
 
-    const amount = parse1e18(100);
+    expect(status).to.equal(statusEnum.Lock);
 
-    await token.connect(treasuryWallet).transfer(contract.address, amount);
+    await contract.connect(treasuryWallet).finalize();
 
-    await contract.cancel();
+    const holderBalance = await token.balanceOf(holder.address);
 
-    await network.provider.send('evm_increaseTime', [cliff + lock + 1]);
-    await network.provider.send('evm_mine');
+    expect(Number(holderBalance.toString()) / 1e18).to.equal(20);
 
-    expect(contract.connect(owner).withdraw()).to.be.revertedWith(
-      'Contract already canceled'
+    const withdrawTx = contract.connect(holder).withdraw(parse1e18(1));
+
+    await expect(withdrawTx).to.be.revertedWith(
+      'KannaStockOption: contract already finalized'
     );
-  });
-
-  it('should retrieve the amount vested', async () => {
-    const cliff = DAY_UNIT * 90;
-    const lock = DAY_UNIT * 365;
-    const vesting = DAY_UNIT * 365;
-
-    const amount = parse1e18(100);
-
-    const contract = await stockFactory.deploy(
-      owner.address,
-      holder.address,
-      cliff,
-      lock,
-      vesting,
-      token.address
-    );
-
-    await contract.deployed();
-    await network.provider.send('evm_mine');
-
-    await token.connect(treasuryWallet).transfer(contract.address, amount);
-    await network.provider.send('evm_mine');
-
-    await network.provider.send('evm_increaseTime', [
-      cliff + lock + vesting + 1,
-    ]);
-    await network.provider.send('evm_mine');
-
-    const vested = await contract.amountVested();
-
-    expect(vested).to.equal(amount);
-  });
-
-  it('should retrieve the amount vested after cliff (1/4 duration)', async () => {
-    const cliff = DAY_UNIT * 90;
-    const lock = DAY_UNIT * 365;
-    const vesting = DAY_UNIT * 365;
-
-    const amount = parse1e18(100);
-
-    const contract = await stockFactory.deploy(
-      owner.address,
-      holder.address,
-      cliff,
-      lock,
-      vesting,
-      token.address
-    );
-
-    await contract.deployed();
-    await network.provider.send('evm_mine');
-
-    await token.connect(treasuryWallet).transfer(contract.address, amount);
-    await network.provider.send('evm_mine');
-
-    await network.provider.send('evm_increaseTime', [(cliff + lock) / 4]);
-    await network.provider.send('evm_mine');
-
-    const vested = await contract.amountVested();
-
-    expect(Number(vested) / 1e18).to.greaterThanOrEqual(
-      Number(amount) / 1e18 / 4 / 1.9
-    );
-  });
-
-  it('should retrieve amount of days left to cancel', async () => {
-    const cliff = DAY_UNIT * 90;
-    const lock = DAY_UNIT * 365;
-    const vesting = DAY_UNIT * 365;
-
-    const amount = parse1e18(100);
-
-    const contract = await stockFactory.deploy(
-      owner.address,
-      holder.address,
-      cliff,
-      lock,
-      vesting,
-      token.address
-    );
-
-    await contract.deployed();
-    await network.provider.send('evm_mine');
-
-    await token.connect(treasuryWallet).transfer(contract.address, amount);
-    await network.provider.send('evm_mine');
-
-    let daysLeft = await contract.daysLeftToCancel();
-
-    expect(daysLeft).to.equal(cliff / DAY_UNIT - 1);
-
-    await network.provider.send('evm_increaseTime', [cliff + 1]);
-    await network.provider.send('evm_mine');
-
-    daysLeft = await contract.daysLeftToCancel();
-
-    expect(daysLeft).to.equal(0);
-  });
-
-  it('should retrieve the amount of days left to withdraw', async () => {
-    const cliff = DAY_UNIT * 90;
-    const lock = DAY_UNIT * 365;
-    const vesting = DAY_UNIT * 365;
-
-    const amount = parse1e18(100);
-
-    const contract = await stockFactory.deploy(
-      owner.address,
-      holder.address,
-      cliff,
-      lock,
-      vesting,
-      token.address
-    );
-
-    await contract.deployed();
-    await network.provider.send('evm_mine');
-
-    await token.connect(treasuryWallet).transfer(contract.address, amount);
-    await network.provider.send('evm_mine');
-
-    await network.provider.send('evm_increaseTime', [cliff]);
-    await network.provider.send('evm_mine');
-
-    let daysLeft = await contract.daysLeftToWithdraw();
-
-    expect(daysLeft).to.equal(lock / DAY_UNIT - 1);
-
-    await network.provider.send('evm_increaseTime', [lock + 1]);
-    await network.provider.send('evm_mine');
-
-    daysLeft = await contract.daysLeftToWithdraw();
-
-    expect(daysLeft).to.equal(0);
   });
 });
+
+async function initialize(
+  stockFactory: KannaStockOption__factory,
+  owner: SignerWithAddress,
+  token: KannaToken,
+  startDate: Date,
+  daysOfVesting: number,
+  daysOfCliff: number,
+  daysOfLock: number,
+  beneficiary: SignerWithAddress,
+  integerAmount: number,
+  percentOfTGE: number
+) {
+  const contract = await stockFactory.deploy();
+
+  await contract.deployed();
+
+  const amount = parse1e18(integerAmount);
+
+  await token.connect(owner).increaseAllowance(contract.address, amount);
+
+  await contract
+    .connect(owner)
+    .initialize(
+      token.address,
+      Math.floor(startDate.getTime() / 1000),
+      daysOfVesting,
+      daysOfCliff,
+      daysOfLock,
+      percentOfTGE,
+      amount,
+      beneficiary.address
+    );
+
+  return contract;
+}
