@@ -4,6 +4,7 @@ import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import { getKnnToken } from '../../src/infrastructure/factories';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
+import { parse } from 'path';
 
 chai.use(chaiAsPromised);
 const { expect } = chai;
@@ -310,6 +311,80 @@ describe('KNN Stock Option', () => {
     await expect(withdrawTx).to.be.revertedWith(
       'KannaStockOption: contract already finalized'
     );
+  });
+
+  it('should retrieve a vesting forecast', async () => {
+    const daysOfCliff = 90;
+    const daysOfVesting = 365;
+    const daysOfLock = 60;
+    const startDate = new Date();
+
+    const forecastDate = new Date(
+      startDate.getTime() + DAY_UNIT * (daysOfCliff + 1)
+    );
+
+    const totalAmount = 100;
+
+    const contract = await initialize(
+      sopFactory,
+      treasuryWallet,
+      token,
+      startDate,
+      daysOfVesting,
+      daysOfCliff,
+      daysOfLock,
+      holder,
+      totalAmount,
+      20
+    );
+
+    await contract.connect(treasuryWallet).finalize();
+
+    const vestedAmount = await contract.totalVested();
+
+    const forecastAmount = await contract.vestingForecast(
+      Math.floor(forecastDate.getTime() / 1000)
+    );
+
+    const maxTgeAmount = await contract.maxTgeAmount();
+
+    expect(Number(maxTgeAmount.toString())).to.equal(Number(parse1e18(20)));
+    expect(Number(vestedAmount.toString())).to.equal(0);
+    expect(Number(forecastAmount.toString()) / 1e18).to.lte(
+      Number(parse1e18(totalAmount))
+    );
+  });
+
+  it('should withdraw after lock', async () => {
+    const daysOfCliff = 300;
+    const daysOfVesting = 365;
+    const daysOfLock = 60;
+    const startDate = new Date(Date.now() - DAY_UNIT * (daysOfVesting + 1));
+
+    const contract = await initialize(
+      sopFactory,
+      treasuryWallet,
+      token,
+      startDate,
+      daysOfVesting,
+      daysOfCliff,
+      daysOfLock,
+      holder,
+      100,
+      20
+    );
+
+    const status = await contract.status();
+
+    expect(status).to.equal(statusEnum.Vesting);
+
+    await contract.connect(holder).withdraw(parse1e18(100));
+
+    const holderBalance = await token.balanceOf(holder.address);
+    const contractBalance = await token.balanceOf(contract.address);
+
+    expect(Number(holderBalance.toString()) / 1e18).to.equal(100);
+    expect(Number(contractBalance.toString()) / 1e18).to.equal(0);
   });
 });
 
