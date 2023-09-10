@@ -187,7 +187,7 @@ describe('KNN Stock Option', () => {
     expect(contract.connect(holder).withdraw(1)).to.be.reverted;
   });
 
-  it('should not withdraw an amoount above TGE before lock duration', async () => {
+  it('should not withdraw an amoount above Grant before lock duration', async () => {
     const daysOfCliff = 300;
     const daysOfVesting = 365;
     const daysOfLock = 60;
@@ -217,7 +217,7 @@ describe('KNN Stock Option', () => {
     );
   });
 
-  it('should withdraw TGE amount within lock duration', async () => {
+  it('should withdraw Grant amount within lock duration', async () => {
     const daysOfCliff = 300;
     const daysOfVesting = 365;
     const daysOfLock = 60;
@@ -346,9 +346,9 @@ describe('KNN Stock Option', () => {
       Math.floor(forecastDate.getTime() / 1000)
     );
 
-    const maxTgeAmount = await contract.maxTgeAmount();
+    const maxGrantAmount = await contract.maxGrantAmount();
 
-    expect(Number(maxTgeAmount.toString())).to.equal(Number(parse1e18(20)));
+    expect(Number(maxGrantAmount.toString())).to.equal(Number(parse1e18(20)));
     expect(Number(vestedAmount.toString())).to.equal(0);
     expect(Number(forecastAmount.toString()) / 1e18).to.lte(
       Number(parse1e18(totalAmount))
@@ -386,6 +386,36 @@ describe('KNN Stock Option', () => {
     expect(Number(holderBalance.toString()) / 1e18).to.equal(100);
     expect(Number(contractBalance.toString()) / 1e18).to.equal(0);
   });
+
+  it('should cancel at any time', async () => {
+    const daysOfCliff = 300;
+    const daysOfVesting = 365;
+    const daysOfLock = 60;
+    const startDate = new Date(Date.now() - DAY_UNIT * (daysOfVesting - 1));
+
+    const contract = await initialize(
+      sopFactory,
+      treasuryWallet,
+      token,
+      startDate,
+      daysOfVesting,
+      daysOfCliff,
+      daysOfLock,
+      holder,
+      100,
+      20
+    );
+
+    const status = await contract.status();
+
+    expect(status).to.equal(statusEnum.Lock);
+
+    await contract.connect(holder).abort();
+
+    const contractBalance = await token.balanceOf(contract.address);
+
+    expect(Number(contractBalance.toString()) / 1e18).to.equal(0);
+  });
 });
 
 async function initialize(
@@ -398,7 +428,7 @@ async function initialize(
   daysOfLock: number,
   beneficiary: SignerWithAddress,
   integerAmount: number,
-  percentOfTGE: number
+  percentOfGrant: number
 ) {
   const contract = await stockFactory.deploy();
 
@@ -416,7 +446,7 @@ async function initialize(
       daysOfVesting,
       daysOfCliff,
       daysOfLock,
-      percentOfTGE,
+      percentOfGrant,
       amount,
       beneficiary.address
     );

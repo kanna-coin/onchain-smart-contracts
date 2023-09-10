@@ -29,10 +29,11 @@ import type {
 
 export interface KannaStockOptionInterface extends utils.Interface {
   functions: {
+    "abort()": FunctionFragment;
     "availableToWithdraw()": FunctionFragment;
     "finalize()": FunctionFragment;
     "initialize(address,uint256,uint256,uint256,uint256,uint256,uint256,address)": FunctionFragment;
-    "maxTgeAmount()": FunctionFragment;
+    "maxGrantAmount()": FunctionFragment;
     "owner()": FunctionFragment;
     "renounceOwnership()": FunctionFragment;
     "status()": FunctionFragment;
@@ -45,10 +46,11 @@ export interface KannaStockOptionInterface extends utils.Interface {
 
   getFunction(
     nameOrSignatureOrTopic:
+      | "abort"
       | "availableToWithdraw"
       | "finalize"
       | "initialize"
-      | "maxTgeAmount"
+      | "maxGrantAmount"
       | "owner"
       | "renounceOwnership"
       | "status"
@@ -59,6 +61,7 @@ export interface KannaStockOptionInterface extends utils.Interface {
       | "withdraw"
   ): FunctionFragment;
 
+  encodeFunctionData(functionFragment: "abort", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "availableToWithdraw",
     values?: undefined
@@ -78,7 +81,7 @@ export interface KannaStockOptionInterface extends utils.Interface {
     ]
   ): string;
   encodeFunctionData(
-    functionFragment: "maxTgeAmount",
+    functionFragment: "maxGrantAmount",
     values?: undefined
   ): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
@@ -105,6 +108,7 @@ export interface KannaStockOptionInterface extends utils.Interface {
     values: [PromiseOrValue<BigNumberish>]
   ): string;
 
+  decodeFunctionResult(functionFragment: "abort", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "availableToWithdraw",
     data: BytesLike
@@ -112,7 +116,7 @@ export interface KannaStockOptionInterface extends utils.Interface {
   decodeFunctionResult(functionFragment: "finalize", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "initialize", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "maxTgeAmount",
+    functionFragment: "maxGrantAmount",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
@@ -137,17 +141,27 @@ export interface KannaStockOptionInterface extends utils.Interface {
   decodeFunctionResult(functionFragment: "withdraw", data: BytesLike): Result;
 
   events: {
+    "Abort(address,uint256)": EventFragment;
     "Finalize(address,uint256,uint256)": EventFragment;
     "Initialize(address,uint256,uint256,uint256,uint256,uint256,uint256,address,uint256)": EventFragment;
     "OwnershipTransferred(address,address)": EventFragment;
     "Withdraw(address,uint256,uint256)": EventFragment;
   };
 
+  getEvent(nameOrSignatureOrTopic: "Abort"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Finalize"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Initialize"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "OwnershipTransferred"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Withdraw"): EventFragment;
 }
+
+export interface AbortEventObject {
+  beneficiary: string;
+  amount: BigNumber;
+}
+export type AbortEvent = TypedEvent<[string, BigNumber], AbortEventObject>;
+
+export type AbortEventFilter = TypedEventFilter<AbortEvent>;
 
 export interface FinalizeEventObject {
   initiator: string;
@@ -167,7 +181,7 @@ export interface InitializeEventObject {
   daysOfVesting: BigNumber;
   daysOfCliff: BigNumber;
   daysOfLock: BigNumber;
-  percentOfTGE: BigNumber;
+  percentOfGrant: BigNumber;
   amount: BigNumber;
   beneficiary: string;
   initializedAt: BigNumber;
@@ -240,6 +254,10 @@ export interface KannaStockOption extends BaseContract {
   removeListener: OnEvent<this>;
 
   functions: {
+    abort(
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
     availableToWithdraw(overrides?: CallOverrides): Promise<[BigNumber]>;
 
     finalize(
@@ -252,13 +270,13 @@ export interface KannaStockOption extends BaseContract {
       daysOfVesting: PromiseOrValue<BigNumberish>,
       daysOfCliff: PromiseOrValue<BigNumberish>,
       daysOfLock: PromiseOrValue<BigNumberish>,
-      percentOfTGE: PromiseOrValue<BigNumberish>,
+      percentOfGrant: PromiseOrValue<BigNumberish>,
       amount: PromiseOrValue<BigNumberish>,
       beneficiary: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
-    maxTgeAmount(overrides?: CallOverrides): Promise<[BigNumber]>;
+    maxGrantAmount(overrides?: CallOverrides): Promise<[BigNumber]>;
 
     owner(overrides?: CallOverrides): Promise<[string]>;
 
@@ -288,6 +306,10 @@ export interface KannaStockOption extends BaseContract {
     ): Promise<ContractTransaction>;
   };
 
+  abort(
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
   availableToWithdraw(overrides?: CallOverrides): Promise<BigNumber>;
 
   finalize(
@@ -300,13 +322,13 @@ export interface KannaStockOption extends BaseContract {
     daysOfVesting: PromiseOrValue<BigNumberish>,
     daysOfCliff: PromiseOrValue<BigNumberish>,
     daysOfLock: PromiseOrValue<BigNumberish>,
-    percentOfTGE: PromiseOrValue<BigNumberish>,
+    percentOfGrant: PromiseOrValue<BigNumberish>,
     amount: PromiseOrValue<BigNumberish>,
     beneficiary: PromiseOrValue<string>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
-  maxTgeAmount(overrides?: CallOverrides): Promise<BigNumber>;
+  maxGrantAmount(overrides?: CallOverrides): Promise<BigNumber>;
 
   owner(overrides?: CallOverrides): Promise<string>;
 
@@ -336,6 +358,8 @@ export interface KannaStockOption extends BaseContract {
   ): Promise<ContractTransaction>;
 
   callStatic: {
+    abort(overrides?: CallOverrides): Promise<void>;
+
     availableToWithdraw(overrides?: CallOverrides): Promise<BigNumber>;
 
     finalize(overrides?: CallOverrides): Promise<void>;
@@ -346,13 +370,13 @@ export interface KannaStockOption extends BaseContract {
       daysOfVesting: PromiseOrValue<BigNumberish>,
       daysOfCliff: PromiseOrValue<BigNumberish>,
       daysOfLock: PromiseOrValue<BigNumberish>,
-      percentOfTGE: PromiseOrValue<BigNumberish>,
+      percentOfGrant: PromiseOrValue<BigNumberish>,
       amount: PromiseOrValue<BigNumberish>,
       beneficiary: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<void>;
 
-    maxTgeAmount(overrides?: CallOverrides): Promise<BigNumber>;
+    maxGrantAmount(overrides?: CallOverrides): Promise<BigNumber>;
 
     owner(overrides?: CallOverrides): Promise<string>;
 
@@ -381,6 +405,15 @@ export interface KannaStockOption extends BaseContract {
   };
 
   filters: {
+    "Abort(address,uint256)"(
+      beneficiary?: PromiseOrValue<string> | null,
+      amount?: null
+    ): AbortEventFilter;
+    Abort(
+      beneficiary?: PromiseOrValue<string> | null,
+      amount?: null
+    ): AbortEventFilter;
+
     "Finalize(address,uint256,uint256)"(
       initiator?: PromiseOrValue<string> | null,
       amount?: null,
@@ -398,7 +431,7 @@ export interface KannaStockOption extends BaseContract {
       daysOfVesting?: null,
       daysOfCliff?: null,
       daysOfLock?: null,
-      percentOfTGE?: null,
+      percentOfGrant?: null,
       amount?: null,
       beneficiary?: null,
       initializedAt?: null
@@ -409,7 +442,7 @@ export interface KannaStockOption extends BaseContract {
       daysOfVesting?: null,
       daysOfCliff?: null,
       daysOfLock?: null,
-      percentOfTGE?: null,
+      percentOfGrant?: null,
       amount?: null,
       beneficiary?: null,
       initializedAt?: null
@@ -437,6 +470,10 @@ export interface KannaStockOption extends BaseContract {
   };
 
   estimateGas: {
+    abort(
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
     availableToWithdraw(overrides?: CallOverrides): Promise<BigNumber>;
 
     finalize(
@@ -449,13 +486,13 @@ export interface KannaStockOption extends BaseContract {
       daysOfVesting: PromiseOrValue<BigNumberish>,
       daysOfCliff: PromiseOrValue<BigNumberish>,
       daysOfLock: PromiseOrValue<BigNumberish>,
-      percentOfTGE: PromiseOrValue<BigNumberish>,
+      percentOfGrant: PromiseOrValue<BigNumberish>,
       amount: PromiseOrValue<BigNumberish>,
       beneficiary: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
-    maxTgeAmount(overrides?: CallOverrides): Promise<BigNumber>;
+    maxGrantAmount(overrides?: CallOverrides): Promise<BigNumber>;
 
     owner(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -486,6 +523,10 @@ export interface KannaStockOption extends BaseContract {
   };
 
   populateTransaction: {
+    abort(
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
     availableToWithdraw(
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
@@ -500,13 +541,13 @@ export interface KannaStockOption extends BaseContract {
       daysOfVesting: PromiseOrValue<BigNumberish>,
       daysOfCliff: PromiseOrValue<BigNumberish>,
       daysOfLock: PromiseOrValue<BigNumberish>,
-      percentOfTGE: PromiseOrValue<BigNumberish>,
+      percentOfGrant: PromiseOrValue<BigNumberish>,
       amount: PromiseOrValue<BigNumberish>,
       beneficiary: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
-    maxTgeAmount(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+    maxGrantAmount(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 

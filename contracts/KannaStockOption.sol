@@ -3,6 +3,7 @@ pragma solidity ^0.8.17;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 /**
  *   __
@@ -24,16 +25,16 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
  *  @custom:site https://kannacoin.io
  *  @custom:discord https://discord.kannacoin.io
  */
-contract KannaStockOption is Ownable {
+contract KannaStockOption is Ownable, ReentrancyGuard {
     IERC20 _token;
     uint256 _startDate;
     uint256 _daysOfVesting;
     uint256 _daysOfCliff;
     uint256 _daysOfLock;
-    uint256 _percentOfTGE;
+    uint256 _percentOfGrant;
     uint256 _amount;
     address _beneficiary;
-    uint256 _tgeAmount;
+    uint256 _grantAmount;
     uint256 _withdrawn;
     uint256 _lockEndDate;
     uint256 _cliffEndDate;
@@ -42,6 +43,7 @@ contract KannaStockOption is Ownable {
     uint256 _finalizedAt;
     bool _initialized;
     uint256 _initializedAt;
+    uint256 _lastWithdrawalTime;
 
     enum Status {
         Cliff,
@@ -55,7 +57,7 @@ contract KannaStockOption is Ownable {
         uint256 daysOfVesting,
         uint256 daysOfCliff,
         uint256 daysOfLock,
-        uint256 percentOfTGE,
+        uint256 percentOfGrant,
         uint256 amount,
         address beneficiary,
         uint256 initializedAt
@@ -65,28 +67,31 @@ contract KannaStockOption is Ownable {
 
     event Finalize(address indexed initiator, uint256 amount, uint256 elapsed);
 
+    event Abort(address indexed beneficiary, uint256 amount);
+
     function initialize(
         address tokenAddress,
         uint256 startDate,
         uint256 daysOfVesting,
         uint256 daysOfCliff,
         uint256 daysOfLock,
-        uint256 percentOfTGE,
+        uint256 percentOfGrant,
         uint256 amount,
         address beneficiary
     ) external onlyOwner {
+        require(_initialized == false, "KannaStockOption: contract already initialized");
         require(startDate > 0, "KannaStockOption: startDate is zero");
         require(daysOfVesting > 0, "KannaStockOption: daysOfVesting is zero");
         require(daysOfCliff > 0, "KannaStockOption: daysOfCliff is zero");
         require(daysOfLock > 0, "KannaStockOption: daysOfLock is zero");
-        require(percentOfTGE > 0, "KannaStockOption: percentOfTGE is zero");
+        require(percentOfGrant > 0, "KannaStockOption: percentOfGrant is zero");
         require(amount > 0, "KannaStockOption: amount is zero");
         require(beneficiary != address(0), "KannaStockOption: beneficiary is zero");
         require(
             daysOfCliff + daysOfLock <= daysOfVesting,
             "KannaStockOption: daysOfCliff plus daysOfLock overflows daysOfVesting"
         );
-        require(percentOfTGE <= 100, "KannaStockOption: percentOfTGE is greater than 100");
+        require(percentOfGrant <= 100, "KannaStockOption: percentOfGrant is greater than 100");
 
         _token = IERC20(tokenAddress);
 
@@ -96,11 +101,11 @@ contract KannaStockOption is Ownable {
         _daysOfVesting = daysOfVesting;
         _daysOfCliff = daysOfCliff;
         _daysOfLock = daysOfLock;
-        _percentOfTGE = percentOfTGE;
+        _percentOfGrant = percentOfGrant;
         _amount = amount;
         _beneficiary = beneficiary;
 
-        _tgeAmount = (_amount * _percentOfTGE) / 100;
+        _grantAmount = (_amount * _percentOfGrant) / 100;
 
         _cliffEndDate = startDate + (daysOfCliff * 1 days);
         _lockEndDate = _cliffEndDate + (daysOfLock * 1 days);
@@ -112,6 +117,18 @@ contract KannaStockOption is Ownable {
         _initializedAt = block.timestamp;
 
         require(_token.transferFrom(msg.sender, address(this), amount), "KannaStockOption: insufficient balance");
+
+        emit Initialize(
+            tokenAddress,
+            startDate,
+            daysOfVesting,
+            daysOfCliff,
+            daysOfLock,
+            percentOfGrant,
+            amount,
+            beneficiary,
+            block.timestamp
+        );
     }
 
     function timestamp() public view returns (uint256) {
@@ -138,12 +155,12 @@ contract KannaStockOption is Ownable {
         if (timestamp() < _cliffEndDate) return 0;
         if (timestamp() >= _vestingEndDate) return _amount - _withdrawn;
 
-        if (block.timestamp < _lockEndDate && totalVested() > _tgeAmount) return _tgeAmount - _withdrawn;
+        if (block.timestamp < _lockEndDate && totalVested() > _grantAmount) return _grantAmount - _withdrawn;
 
         return totalVested() - _withdrawn;
     }
 
-    function finalize() public initialized {
+    function finalize() public nonReentrant initialized {
         require(
             msg.sender == owner() || msg.sender == _beneficiary,
             "KannaStockOption: caller is not the owner or beneficiary"
@@ -157,10 +174,16 @@ contract KannaStockOption is Ownable {
             _token.transfer(_beneficiary, availableAmount);
         }
 
-        _token.transfer(owner(), _amount - totalVested());
+        uint256 leftover = _amount - availableAmount;
+
+        if (leftover > 0) {
+            _token.transfer(owner(), leftover);
+        }
 
         _finalizedAt = block.timestamp;
         _finalized = true;
+
+        emit Finalize(msg.sender, availableAmount, _finalizedAt - _initializedAt);
     }
 
     function status() public view returns (Status) {
@@ -170,21 +193,47 @@ contract KannaStockOption is Ownable {
         return Status.Lock;
     }
 
-    function maxTgeAmount() public view returns (uint256) {
-        return _tgeAmount;
+    function maxGrantAmount() public view returns (uint256) {
+        return _grantAmount;
     }
 
-    function withdraw(uint256 amountToWithdraw) public initialized {
+    function withdraw(uint256 amountToWithdraw) public nonReentrant initialized {
         require(msg.sender == _beneficiary, "KannaStockOption: caller is not the beneficiary");
         require(_finalized == false, "KannaStockOption: contract already finalized");
-        require(amountToWithdraw > 0, "KannaStockOption: amountToWithdraw is zero");
+        require(amountToWithdraw > 0, "KannaStockOption: invalid amountToWithdraw");
         require(
             amountToWithdraw <= availableToWithdraw(),
             "KannaStockOption: amountToWithdraw is greater than availableToWithdraw"
         );
 
+        uint256 withdrawDate = block.timestamp;
+
+        require(withdrawDate - _lastWithdrawalTime >= 1 days, "KannaStockOption: Only one withdrawal allowed per day");
+
         _withdrawn += amountToWithdraw;
         _token.transfer(_beneficiary, amountToWithdraw);
+
+        emit Withdraw(msg.sender, amountToWithdraw, withdrawDate - _initializedAt);
+
+        if (_withdrawn == _amount) {
+            _finalizedAt = withdrawDate;
+            _finalized = true;
+
+            emit Finalize(msg.sender, amountToWithdraw, _finalizedAt - _initializedAt);
+        }
+
+        _lastWithdrawalTime = withdrawDate;
+    }
+
+    function abort() public nonReentrant {
+        require(_token.balanceOf(address(this)) > 0, "KannaStockOption: contract has no balance");
+        require(msg.sender == _beneficiary, "KannaStockOption: caller is not the beneficiary");
+
+        uint256 returnedAmount = _token.balanceOf(address(this));
+
+        _token.transfer(owner(), returnedAmount);
+        _finalized = true;
+        emit Abort(msg.sender, returnedAmount);
     }
 
     modifier initialized() {
