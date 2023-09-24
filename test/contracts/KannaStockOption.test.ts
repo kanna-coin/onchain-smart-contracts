@@ -1,10 +1,9 @@
-import { ethers, network } from 'hardhat';
+import { ethers } from 'hardhat';
 import { KannaStockOption__factory, KannaToken } from '../../typechain-types';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import { getKnnToken } from '../../src/infrastructure/factories';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { parse } from 'path';
 
 chai.use(chaiAsPromised);
 const { expect } = chai;
@@ -415,6 +414,41 @@ describe('KNN Stock Option', () => {
     const contractBalance = await token.balanceOf(contract.address);
 
     expect(Number(contractBalance.toString()) / 1e18).to.equal(0);
+  });
+
+  it('should set owner on initialize', async () => {
+    const daysOfCliff = 90;
+    const daysOfVesting = 365;
+    const daysOfLock = 60;
+    const startDate = new Date();
+    const integerAmount = 100;
+
+    const contract = await sopFactory.deploy();
+    await contract.deployed();
+
+    await contract.renounceOwnership();
+
+    const amount = parse1e18(integerAmount);
+
+    await token.connect(treasuryWallet).increaseAllowance(contract.address, amount);
+
+    const tx = contract.connect(treasuryWallet).initialize(
+      token.address,
+      Math.floor(startDate.getTime() / 1000),
+      daysOfVesting,
+      daysOfCliff,
+      daysOfLock,
+      10,
+      amount,
+      holder.address
+    );
+
+    await expect(tx)
+      .to.emit(contract, 'OwnershipTransferred')
+      .withArgs(
+        ethers.constants.AddressZero,
+        treasuryWallet.address,
+      );
   });
 });
 

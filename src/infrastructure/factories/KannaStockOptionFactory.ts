@@ -1,6 +1,5 @@
 import '@nomiclabs/hardhat-waffle';
 import { ethers, waffle } from 'hardhat';
-import { MockContract } from 'ethereum-waffle';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import {
   KannaStockOption__factory,
@@ -30,9 +29,9 @@ export const getKannaStockOption = async (
 export const getKannaStockOptionMock = async (
   knnDeployerAddress: SignerWithAddress
 ) => {
-  const knnPreSale = await waffle.deployMockContract(knnDeployerAddress, [
+  const KannaStockOption = await waffle.deployMockContract(knnDeployerAddress, [
     ...KannaStockOption__factory.abi,
   ]);
 
-  return knnPreSale;
+  return KannaStockOption;
 };

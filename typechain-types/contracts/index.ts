@@ -12,6 +12,7 @@ export type { KannaPreSale } from "./KannaPreSale";
 export type { KannaSale } from "./KannaSale";
 export type { KannaSaleL2 } from "./KannaSaleL2";
 export type { KannaStockOption } from "./KannaStockOption";
+export type { KannaStockOptionManager } from "./KannaStockOptionManager";
 export type { KannaToken } from "./KannaToken";
 export type { KannaYield } from "./KannaYield";
 export type { KnnHolderBadgeChecker } from "./KnnHolderBadgeChecker";
