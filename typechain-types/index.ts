@@ -40,6 +40,8 @@ export type { FxERC20ChildTunnel } from "./contracts/interfaces/FxERC20ChildTunn
 export { FxERC20ChildTunnel__factory } from "./factories/contracts/interfaces/FxERC20ChildTunnel__factory";
 export type { IDynamicBadgeChecker } from "./contracts/interfaces/IDynamicBadgeChecker";
 export { IDynamicBadgeChecker__factory } from "./factories/contracts/interfaces/IDynamicBadgeChecker__factory";
+export type { IKannaStockOption } from "./contracts/interfaces/IKannaStockOption";
+export { IKannaStockOption__factory } from "./factories/contracts/interfaces/IKannaStockOption__factory";
 export type { KannaBadges } from "./contracts/KannaBadges";
 export { KannaBadges__factory } from "./factories/contracts/KannaBadges__factory";
 export type { KannaBadgesL2 } from "./contracts/KannaBadgesL2";

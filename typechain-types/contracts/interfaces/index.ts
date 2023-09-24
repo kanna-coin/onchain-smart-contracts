@@ -3,3 +3,4 @@
 /* eslint-disable */
 export type { FxERC20ChildTunnel } from "./FxERC20ChildTunnel";
 export type { IDynamicBadgeChecker } from "./IDynamicBadgeChecker";
+export type { IKannaStockOption } from "./IKannaStockOption";

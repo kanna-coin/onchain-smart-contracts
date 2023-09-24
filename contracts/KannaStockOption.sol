@@ -4,6 +4,7 @@ pragma solidity ^0.8.17;
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import {IKannaStockOption} from "./interfaces/IKannaStockOption.sol";
 
 /**
  *   __
@@ -25,7 +26,7 @@ import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.
  *  @custom:site https://kannacoin.io
  *  @custom:discord https://discord.kannacoin.io
  */
-contract KannaStockOption is Ownable, ReentrancyGuard {
+contract KannaStockOption is IKannaStockOption, Ownable, ReentrancyGuard {
     IERC20 _token;
     uint256 _startDate;
     uint256 _daysOfVesting;
@@ -44,12 +45,6 @@ contract KannaStockOption is Ownable, ReentrancyGuard {
     bool _initialized;
     uint256 _initializedAt;
     uint256 _lastWithdrawalTime;
-
-    enum Status {
-        Cliff,
-        Lock,
-        Vesting
-    }
 
     event Initialize(
         address tokenAddress,
@@ -230,6 +225,13 @@ contract KannaStockOption is Ownable, ReentrancyGuard {
         _token.transfer(owner(), returnedAmount);
         _finalized = true;
         emit Abort(msg.sender, returnedAmount);
+    }
+
+    /**
+     * @dev See {IERC165-supportsInterface}.
+     */
+    function supportsInterface(bytes4 interfaceId) public view virtual returns (bool) {
+        return interfaceId == type(IKannaStockOption).interfaceId;
     }
 
     modifier initialized() {
