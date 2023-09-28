@@ -16,13 +16,14 @@
     "deploy:presale": "npx hardhat run --network localhost deploy/3_KannaPreSale_deploy.ts",
     "deploy:aggregator": "npx hardhat run --network goerli deploy/aggregatorv3-mock_deploy.ts",
     "deploy:salel2": "npx hardhat run --network polygonMumbai deploy/kanna-go-live-salel2.ts",
+    "deploy:sop": "npx hardhat run --network mainnet deploy/kanna-go-live-stockoption.ts",
     "deploy": "npx hardhat run --network localhost deploy/kanna-go-live-sale.ts"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/kanna-coin/treasury-staking-monorepo.git"
   },
-  "author": "psavelis",
+  "author": "@psavelis,@rwbazevedo",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/kanna-coin/treasury-staking-monorepo/issues"

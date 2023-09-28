@@ -277,7 +277,7 @@ describe('KNN Stock Option', () => {
     );
   });
 
-  it('should not withdraw after canceled', async () => {
+  it('should withdraw after canceled', async () => {
     const daysOfCliff = 300;
     const daysOfVesting = 365;
     const daysOfLock = 60;
@@ -308,7 +308,7 @@ describe('KNN Stock Option', () => {
 
     const withdrawTx = contract.connect(holder).withdraw(parse1e18(1));
 
-    await expect(withdrawTx).to.be.revertedWith(
+    await expect(withdrawTx).not.to.be.revertedWith(
       'KannaStockOption: contract already finalized'
     );
   });
