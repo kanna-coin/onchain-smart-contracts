@@ -6,6 +6,7 @@ export * as mocks from "./mocks";
 export { DynamicBadgeChecker__factory } from "./DynamicBadgeChecker__factory";
 export { KannaBadges__factory } from "./KannaBadges__factory";
 export { KannaBadgesL2__factory } from "./KannaBadgesL2__factory";
+export { KannaDynamicPriceSale__factory } from "./KannaDynamicPriceSale__factory";
 export { KannaPreSale__factory } from "./KannaPreSale__factory";
 export { KannaSale__factory } from "./KannaSale__factory";
 export { KannaSaleL2__factory } from "./KannaSaleL2__factory";

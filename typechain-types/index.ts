@@ -46,6 +46,8 @@ export type { KannaBadges } from "./contracts/KannaBadges";
 export { KannaBadges__factory } from "./factories/contracts/KannaBadges__factory";
 export type { KannaBadgesL2 } from "./contracts/KannaBadgesL2";
 export { KannaBadgesL2__factory } from "./factories/contracts/KannaBadgesL2__factory";
+export type { KannaDynamicPriceSale } from "./contracts/KannaDynamicPriceSale";
+export { KannaDynamicPriceSale__factory } from "./factories/contracts/KannaDynamicPriceSale__factory";
 export type { KannaPreSale } from "./contracts/KannaPreSale";
 export { KannaPreSale__factory } from "./factories/contracts/KannaPreSale__factory";
 export type { KannaSale } from "./contracts/KannaSale";
