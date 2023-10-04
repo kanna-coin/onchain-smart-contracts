@@ -82,9 +82,6 @@ contract KannaStockOption is Ownable, ReentrancyGuard {
         require(_initialized == false, "KannaStockOption: contract already initialized");
         require(startDate > 0, "KannaStockOption: startDate is zero");
         require(daysOfVesting > 0, "KannaStockOption: daysOfVesting is zero");
-        require(daysOfCliff > 0, "KannaStockOption: daysOfCliff is zero");
-        require(daysOfLock > 0, "KannaStockOption: daysOfLock is zero");
-        require(percentOfGrant > 0, "KannaStockOption: percentOfGrant is zero");
         require(amount > 0, "KannaStockOption: amount is zero");
         require(beneficiary != address(0), "KannaStockOption: beneficiary is zero");
         require(
@@ -174,7 +171,7 @@ contract KannaStockOption is Ownable, ReentrancyGuard {
             _token.transfer(_beneficiary, availableAmount);
         }
 
-        uint256 leftover = _amount - availableAmount;
+        uint256 leftover = _amount - totalVested();
 
         if (leftover > 0) {
             _token.transfer(owner(), leftover);
@@ -199,7 +196,6 @@ contract KannaStockOption is Ownable, ReentrancyGuard {
 
     function withdraw(uint256 amountToWithdraw) public nonReentrant initialized {
         require(msg.sender == _beneficiary, "KannaStockOption: caller is not the beneficiary");
-        require(_finalized == false, "KannaStockOption: contract already finalized");
         require(amountToWithdraw > 0, "KannaStockOption: invalid amountToWithdraw");
         require(
             amountToWithdraw <= availableToWithdraw(),
