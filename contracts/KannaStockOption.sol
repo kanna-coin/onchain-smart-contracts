@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.17;
+pragma solidity ^0.8.21;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import {IKannaStockOption} from "./interfaces/IKannaStockOption.sol";
 
 /**
  *   __
@@ -25,7 +26,7 @@ import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.
  *  @custom:site https://kannacoin.io
  *  @custom:discord https://discord.kannacoin.io
  */
-contract KannaStockOption is Ownable, ReentrancyGuard {
+contract KannaStockOption is IKannaStockOption, Ownable, ReentrancyGuard {
     IERC20 _token;
     uint256 _startDate;
     uint256 _daysOfVesting;
@@ -44,12 +45,6 @@ contract KannaStockOption is Ownable, ReentrancyGuard {
     bool _initialized;
     uint256 _initializedAt;
     uint256 _lastWithdrawalTime;
-
-    enum Status {
-        Cliff,
-        Lock,
-        Vesting
-    }
 
     event Initialize(
         address tokenAddress,
@@ -78,7 +73,10 @@ contract KannaStockOption is Ownable, ReentrancyGuard {
         uint256 percentOfGrant,
         uint256 amount,
         address beneficiary
-    ) external onlyOwner {
+    ) external {
+        if (owner() != address(0)) {
+            _checkOwner();
+        }
         require(_initialized == false, "KannaStockOption: contract already initialized");
         require(startDate > 0, "KannaStockOption: startDate is zero");
         require(daysOfVesting > 0, "KannaStockOption: daysOfVesting is zero");
@@ -92,7 +90,8 @@ contract KannaStockOption is Ownable, ReentrancyGuard {
 
         _token = IERC20(tokenAddress);
 
-        require(_token.allowance(msg.sender, address(this)) >= amount, "KannaStockOption: insufficient allowance");
+        require(_token.allowance(_msgSender(), address(this)) >= amount, "KannaStockOption: insufficient allowance");
+        require(_token.transferFrom(_msgSender(), address(this), amount), "KannaStockOption: insufficient balance");
 
         _startDate = startDate;
         _daysOfVesting = daysOfVesting;
@@ -113,8 +112,6 @@ contract KannaStockOption is Ownable, ReentrancyGuard {
         _initialized = true;
         _initializedAt = block.timestamp;
 
-        require(_token.transferFrom(msg.sender, address(this), amount), "KannaStockOption: insufficient balance");
-
         emit Initialize(
             tokenAddress,
             startDate,
@@ -126,6 +123,10 @@ contract KannaStockOption is Ownable, ReentrancyGuard {
             beneficiary,
             block.timestamp
         );
+
+        if (owner() == address(0)) {
+            _transferOwnership(_msgSender());
+        }
     }
 
     function timestamp() public view returns (uint256) {
@@ -159,7 +160,7 @@ contract KannaStockOption is Ownable, ReentrancyGuard {
 
     function finalize() public nonReentrant initialized {
         require(
-            msg.sender == owner() || msg.sender == _beneficiary,
+            _msgSender() == owner() || _msgSender() == _beneficiary,
             "KannaStockOption: caller is not the owner or beneficiary"
         );
         require(_finalized == false, "KannaStockOption: contract already finalized");
@@ -180,7 +181,7 @@ contract KannaStockOption is Ownable, ReentrancyGuard {
         _finalizedAt = block.timestamp;
         _finalized = true;
 
-        emit Finalize(msg.sender, availableAmount, _finalizedAt - _initializedAt);
+        emit Finalize(_msgSender(), availableAmount, _finalizedAt - _initializedAt);
     }
 
     function status() public view returns (Status) {
@@ -195,7 +196,7 @@ contract KannaStockOption is Ownable, ReentrancyGuard {
     }
 
     function withdraw(uint256 amountToWithdraw) public nonReentrant initialized {
-        require(msg.sender == _beneficiary, "KannaStockOption: caller is not the beneficiary");
+        require(_msgSender() == _beneficiary, "KannaStockOption: caller is not the beneficiary");
         require(amountToWithdraw > 0, "KannaStockOption: invalid amountToWithdraw");
         require(
             amountToWithdraw <= availableToWithdraw(),
@@ -209,13 +210,13 @@ contract KannaStockOption is Ownable, ReentrancyGuard {
         _withdrawn += amountToWithdraw;
         _token.transfer(_beneficiary, amountToWithdraw);
 
-        emit Withdraw(msg.sender, amountToWithdraw, withdrawDate - _initializedAt);
+        emit Withdraw(_msgSender(), amountToWithdraw, withdrawDate - _initializedAt);
 
         if (_withdrawn == _amount) {
             _finalizedAt = withdrawDate;
             _finalized = true;
 
-            emit Finalize(msg.sender, amountToWithdraw, _finalizedAt - _initializedAt);
+            emit Finalize(_msgSender(), amountToWithdraw, _finalizedAt - _initializedAt);
         }
 
         _lastWithdrawalTime = withdrawDate;
@@ -223,13 +224,20 @@ contract KannaStockOption is Ownable, ReentrancyGuard {
 
     function abort() public nonReentrant {
         require(_token.balanceOf(address(this)) > 0, "KannaStockOption: contract has no balance");
-        require(msg.sender == _beneficiary, "KannaStockOption: caller is not the beneficiary");
+        require(_msgSender() == _beneficiary, "KannaStockOption: caller is not the beneficiary");
 
         uint256 returnedAmount = _token.balanceOf(address(this));
 
         _token.transfer(owner(), returnedAmount);
         _finalized = true;
-        emit Abort(msg.sender, returnedAmount);
+        emit Abort(_msgSender(), returnedAmount);
+    }
+
+    /**
+     * @dev See {IERC165-supportsInterface}.
+     */
+    function supportsInterface(bytes4 interfaceId) public view virtual returns (bool) {
+        return interfaceId == type(IKannaStockOption).interfaceId;
     }
 
     modifier initialized() {

@@ -77,6 +77,10 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IDynamicBadgeChecker__factory>;
     getContractFactory(
+      name: "IKannaStockOption",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.IKannaStockOption__factory>;
+    getContractFactory(
       name: "KannaBadges",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.KannaBadges__factory>;
@@ -100,6 +104,10 @@ declare module "hardhat/types/runtime" {
       name: "KannaStockOption",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.KannaStockOption__factory>;
+    getContractFactory(
+      name: "KannaStockOptionManager",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.KannaStockOptionManager__factory>;
     getContractFactory(
       name: "KannaToken",
       signerOrOptions?: ethers.Signer | FactoryOptions
@@ -198,6 +206,11 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.IDynamicBadgeChecker>;
     getContractAt(
+      name: "IKannaStockOption",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.IKannaStockOption>;
+    getContractAt(
       name: "KannaBadges",
       address: string,
       signer?: ethers.Signer
@@ -227,6 +240,11 @@ declare module "hardhat/types/runtime" {
       address: string,
       signer?: ethers.Signer
     ): Promise<Contracts.KannaStockOption>;
+    getContractAt(
+      name: "KannaStockOptionManager",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.KannaStockOptionManager>;
     getContractAt(
       name: "KannaToken",
       address: string,

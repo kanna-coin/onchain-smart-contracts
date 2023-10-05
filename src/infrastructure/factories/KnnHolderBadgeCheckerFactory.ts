@@ -19,11 +19,7 @@ export const getKnnHolderBadgeCheckerFactory = async (
 export const getKnnHolderBadgeCheckerParameters = (
   knnToken: KannaToken | MockContract
 ): [string, string] => {
-  const creator = process.env.KNN_HOLDER_BADGE_CREATOR_ADDRESS;
-
-  if (!creator) {
-    throw new Error('env KNN_HOLDER_BADGE_CREATOR_ADDRESS not set');
-  }
+  const creator = process.env.KNN_HOLDER_BADGE_CREATOR_ADDRESS ?? ethers.Wallet.createRandom().address;
 
   return [knnToken.address, creator];
 };

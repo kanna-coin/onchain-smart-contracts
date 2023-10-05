@@ -40,6 +40,8 @@ export type { FxERC20ChildTunnel } from "./contracts/interfaces/FxERC20ChildTunn
 export { FxERC20ChildTunnel__factory } from "./factories/contracts/interfaces/FxERC20ChildTunnel__factory";
 export type { IDynamicBadgeChecker } from "./contracts/interfaces/IDynamicBadgeChecker";
 export { IDynamicBadgeChecker__factory } from "./factories/contracts/interfaces/IDynamicBadgeChecker__factory";
+export type { IKannaStockOption } from "./contracts/interfaces/IKannaStockOption";
+export { IKannaStockOption__factory } from "./factories/contracts/interfaces/IKannaStockOption__factory";
 export type { KannaBadges } from "./contracts/KannaBadges";
 export { KannaBadges__factory } from "./factories/contracts/KannaBadges__factory";
 export type { KannaBadgesL2 } from "./contracts/KannaBadgesL2";
@@ -52,6 +54,8 @@ export type { KannaSaleL2 } from "./contracts/KannaSaleL2";
 export { KannaSaleL2__factory } from "./factories/contracts/KannaSaleL2__factory";
 export type { KannaStockOption } from "./contracts/KannaStockOption";
 export { KannaStockOption__factory } from "./factories/contracts/KannaStockOption__factory";
+export type { KannaStockOptionManager } from "./contracts/KannaStockOptionManager";
+export { KannaStockOptionManager__factory } from "./factories/contracts/KannaStockOptionManager__factory";
 export type { KannaToken } from "./contracts/KannaToken";
 export { KannaToken__factory } from "./factories/contracts/KannaToken__factory";
 export type { KannaYield } from "./contracts/KannaYield";

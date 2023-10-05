@@ -37,6 +37,7 @@ export interface KannaStockOptionInterface extends utils.Interface {
     "owner()": FunctionFragment;
     "renounceOwnership()": FunctionFragment;
     "status()": FunctionFragment;
+    "supportsInterface(bytes4)": FunctionFragment;
     "timestamp()": FunctionFragment;
     "totalVested()": FunctionFragment;
     "transferOwnership(address)": FunctionFragment;
@@ -54,6 +55,7 @@ export interface KannaStockOptionInterface extends utils.Interface {
       | "owner"
       | "renounceOwnership"
       | "status"
+      | "supportsInterface"
       | "timestamp"
       | "totalVested"
       | "transferOwnership"
@@ -90,6 +92,10 @@ export interface KannaStockOptionInterface extends utils.Interface {
     values?: undefined
   ): string;
   encodeFunctionData(functionFragment: "status", values?: undefined): string;
+  encodeFunctionData(
+    functionFragment: "supportsInterface",
+    values: [PromiseOrValue<BytesLike>]
+  ): string;
   encodeFunctionData(functionFragment: "timestamp", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "totalVested",
@@ -125,6 +131,10 @@ export interface KannaStockOptionInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "status", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "supportsInterface",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "timestamp", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "totalVested",
@@ -286,6 +296,11 @@ export interface KannaStockOption extends BaseContract {
 
     status(overrides?: CallOverrides): Promise<[number]>;
 
+    supportsInterface(
+      interfaceId: PromiseOrValue<BytesLike>,
+      overrides?: CallOverrides
+    ): Promise<[boolean]>;
+
     timestamp(overrides?: CallOverrides): Promise<[BigNumber]>;
 
     totalVested(overrides?: CallOverrides): Promise<[BigNumber]>;
@@ -338,6 +353,11 @@ export interface KannaStockOption extends BaseContract {
 
   status(overrides?: CallOverrides): Promise<number>;
 
+  supportsInterface(
+    interfaceId: PromiseOrValue<BytesLike>,
+    overrides?: CallOverrides
+  ): Promise<boolean>;
+
   timestamp(overrides?: CallOverrides): Promise<BigNumber>;
 
   totalVested(overrides?: CallOverrides): Promise<BigNumber>;
@@ -383,6 +403,11 @@ export interface KannaStockOption extends BaseContract {
     renounceOwnership(overrides?: CallOverrides): Promise<void>;
 
     status(overrides?: CallOverrides): Promise<number>;
+
+    supportsInterface(
+      interfaceId: PromiseOrValue<BytesLike>,
+      overrides?: CallOverrides
+    ): Promise<boolean>;
 
     timestamp(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -502,6 +527,11 @@ export interface KannaStockOption extends BaseContract {
 
     status(overrides?: CallOverrides): Promise<BigNumber>;
 
+    supportsInterface(
+      interfaceId: PromiseOrValue<BytesLike>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
     timestamp(overrides?: CallOverrides): Promise<BigNumber>;
 
     totalVested(overrides?: CallOverrides): Promise<BigNumber>;
@@ -556,6 +586,11 @@ export interface KannaStockOption extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     status(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    supportsInterface(
+      interfaceId: PromiseOrValue<BytesLike>,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
 
     timestamp(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
