@@ -9,3 +9,4 @@ export * from './AggregatorV3Factory';
 export * from './DynamicBadgeChecker';
 export * from './KnnHolderBadgeCheckerFactory';
 export * from './KannaStockOptionFactory';
+export * from './KannaStockOptionManagerFactory';
