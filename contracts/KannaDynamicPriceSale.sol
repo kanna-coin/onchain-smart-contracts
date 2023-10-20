@@ -25,7 +25,6 @@ import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
  */
 contract KannaDynamicPriceSale is Ownable, AccessControl {
     IERC20 public immutable knnToken;
-    AggregatorV3Interface public immutable priceAggregator;
 
     bytes32 public constant CLAIM_MANAGER_ROLE = keccak256("CLAIM_MANAGER_ROLE");
 
@@ -37,8 +36,6 @@ contract KannaDynamicPriceSale is Ownable, AccessControl {
     uint256 public constant USD_AGGREGATOR_DECIMALS = 1e8;
     uint256 public constant KNN_DECIMALS = 1e18;
     uint256 public knnLocked;
-    uint256 private lastKnnPriceInUSD;
-    uint256 private lastBuyTimestamp;
 
     mapping(address => uint256) private incrementalNonces;
     mapping(uint256 => bool) private claims;
@@ -57,12 +54,10 @@ contract KannaDynamicPriceSale is Ownable, AccessControl {
 
     event Withdraw(address indexed recipient, uint256 amount);
 
-    constructor(address _knnToken, address _priceAggregator) {
+    constructor(address _knnToken) {
         require(address(_knnToken) != address(0), "Invalid token address");
-        require(address(_priceAggregator) != address(0), "Invalid price aggregator address");
 
         knnToken = IERC20(_knnToken);
-        priceAggregator = AggregatorV3Interface(_priceAggregator);
     }
 
     modifier positiveAmount(uint256 amount) {
@@ -166,7 +161,7 @@ contract KannaDynamicPriceSale is Ownable, AccessControl {
         uint256 ref,
         bytes memory signature,
         uint256 incrementalNonce
-    ) external {
+    ) external positiveAmount(amountInKNN) {
         require(knnLocked >= amountInKNN, "Insufficient locked amount");
 
         bytes32 signedMessage = ECDSA.toEthSignedMessageHash(
@@ -193,30 +188,6 @@ contract KannaDynamicPriceSale is Ownable, AccessControl {
     }
 
     /**
-     * @dev Converts a given amount {amountInKNN} to WEI
-     */
-    function convertToWEI(uint256 amountInKNN, uint256 knnPriceInUSD) public view positiveAmount(amountInKNN) positiveAmount(knnPriceInUSD) returns (uint256, uint256) {
-        (, int256 answer, , , ) = priceAggregator.latestRoundData();
-
-        uint256 ethPriceInUSD = SafeCast.toUint256(answer);
-        require(ethPriceInUSD > 0, "Invalid round answer");
-
-        return ((amountInKNN * knnPriceInUSD) / ethPriceInUSD, ethPriceInUSD);
-    }
-
-    /**
-     * @dev Converts a given amount {amountInWEI} to KNN
-     */
-    function convertToKNN(uint256 amountInWEI, uint256 knnPriceInUSD) public view positiveAmount(amountInWEI) positiveAmount(knnPriceInUSD) returns (uint256, uint256) {
-        (, int256 answer, , , ) = priceAggregator.latestRoundData();
-
-        uint256 ethPriceInUSD = SafeCast.toUint256(answer);
-        require(ethPriceInUSD > 0, "Invalid round answer");
-
-        return ((amountInWEI * ethPriceInUSD) / knnPriceInUSD, ethPriceInUSD);
-    }
-
-    /**
      * @dev Allows users to buy tokens for ETH
      * See {tokenQuotation} for unitPrice.
      *
@@ -229,14 +200,8 @@ contract KannaDynamicPriceSale is Ownable, AccessControl {
         uint256 dueDate,
         uint256 nonce
     ) external payable {
-        bool priceFromCache = false;
+        require(block.timestamp <= dueDate, "Signature is expired");
 
-        if (block.timestamp > dueDate) {
-            require(block.timestamp <= lastBuyTimestamp + 180, "Signature is expired");
-
-            knnPriceInUSD = lastKnnPriceInUSD;
-            priceFromCache = true;
-        }
         require(incrementalNonce == incrementalNonces[msg.sender] + 1, "Invalid Nonce");
         require(msg.value > USD_AGGREGATOR_DECIMALS, "Invalid amount");
 
@@ -257,10 +222,6 @@ contract KannaDynamicPriceSale is Ownable, AccessControl {
         emit Purchase(msg.sender, msg.value, knnPriceInUSD, ethPriceInUSD, finalAmount);
 
         incrementalNonces[msg.sender]++;
-        if (!priceFromCache) {
-            lastKnnPriceInUSD = knnPriceInUSD;
-            lastBuyTimestamp = block.timestamp;
-        }
     }
 
     function _claim(address recipient, uint256 amountInKNN, uint256 ref) internal virtual positiveAmount(amountInKNN) {
