@@ -33,7 +33,7 @@ contract KannaDynamicPriceSale is Ownable, AccessControl {
         keccak256("Claim(address recipient,uint256 amountInKNN,uint256 ref,uint256 nonce)");
     bytes32 private constant _BUY_TYPEHASH =
         keccak256(
-            "BuyTokens(uint256 knnPriceInUSD, address recipient, uint16 incrementalNonce, uint256 dueDate, uint256 nonce)"
+            "BuyTokens(address recipient, uint256 knnPriceInUSD, uint16 incrementalNonce, uint256 dueDate, uint256 nonce)"
         );
 
     uint256 public constant USD_AGGREGATOR_DECIMALS = 1e8;
