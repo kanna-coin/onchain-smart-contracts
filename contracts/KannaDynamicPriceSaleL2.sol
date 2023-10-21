@@ -32,7 +32,9 @@ contract KannaDynamicPriceSale is Ownable, AccessControl {
     bytes32 private constant _CLAIM_TYPEHASH =
         keccak256("Claim(address recipient,uint256 amountInKNN,uint256 ref,uint256 nonce)");
     bytes32 private constant _BUY_TYPEHASH =
-        keccak256("BuyTokens(uint256 knnPriceInUSD, uint16 incrementalNonce, uint256 dueDate, uint256 nonce)");
+        keccak256(
+            "BuyTokens(uint256 knnPriceInUSD, uint16 incrementalNonce, uint256 dueDate, uint256 nonce, uint256 chainId)"
+        );
 
     uint256 public constant USD_AGGREGATOR_DECIMALS = 1e8;
     uint256 public constant KNN_DECIMALS = 1e18;
@@ -197,10 +199,9 @@ contract KannaDynamicPriceSale is Ownable, AccessControl {
         uint256 nonce
     ) external positiveAmount(amountInKNN) {
         require(knnLocked >= amountInKNN, "Insufficient locked amount");
-        require(lockNonces[recipient] == nonce + 1, "Already claimed");
 
         bytes32 signedMessage = ECDSA.toEthSignedMessageHash(
-            keccak256(abi.encode(_CLAIM_TYPEHASH, recipient, amountInKNN, ref, nonce))
+            keccak256(abi.encode(_CLAIM_TYPEHASH, recipient, amountInKNN, ref, nonce, block.chainid))
         );
 
         address signer = ECDSA.recover(signedMessage, signature);
