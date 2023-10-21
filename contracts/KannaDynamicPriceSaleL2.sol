@@ -274,4 +274,8 @@ contract KannaDynamicPriceSaleL2 is Ownable, AccessControl {
 
         emit Claim(recipient, ref, amountInKNN);
     }
+
+    function getNonceAndDueDate(address recipient, uint256 amountInSeconds) external view returns (uint256, uint256) {
+        return (incrementalNonces[recipient] + 1, block.timestamp + amountInSeconds);
+    }
 }
