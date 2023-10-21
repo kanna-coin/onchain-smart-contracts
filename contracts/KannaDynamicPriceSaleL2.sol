@@ -23,7 +23,7 @@ import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
  *  @custom:site https://kannacoin.io
  *  @custom:discord https://discord.kannacoin.io
  */
-contract KannaDynamicPriceSalL2 is Ownable, AccessControl {
+contract KannaDynamicPriceSaleL2 is Ownable, AccessControl {
     IERC20 public immutable knnToken;
     AggregatorV3Interface public immutable priceAggregator;
 

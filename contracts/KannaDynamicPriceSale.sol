@@ -197,7 +197,6 @@ contract KannaDynamicPriceSale is Ownable, AccessControl {
         uint256 nonce
     ) external positiveAmount(amountInKNN) {
         require(knnLocked >= amountInKNN, "Insufficient locked amount");
-        require(lockNonces[recipient] == nonce + 1, "Already claimed");
 
         bytes32 signedMessage = ECDSA.toEthSignedMessageHash(
             keccak256(abi.encode(_CLAIM_TYPEHASH, recipient, amountInKNN, ref, nonce))
