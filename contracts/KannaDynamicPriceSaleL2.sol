@@ -33,7 +33,7 @@ contract KannaDynamicPriceSaleL2 is Ownable, AccessControl {
         keccak256("Claim(address recipient,uint256 amountInKNN,uint256 ref,uint256 nonce,uint256 chainId)");
     bytes32 private constant _BUY_TYPEHASH =
         keccak256(
-            "BuyTokens(uint256 knnPriceInUSD, uint16 incrementalNonce, uint256 dueDate, uint256 nonce, uint256 chainId)"
+            "BuyTokens(uint256 knnPriceInUSD, address recipient, uint16 incrementalNonce, uint256 dueDate, uint256 nonce, uint256 chainId)"
         );
 
     uint256 public constant USD_AGGREGATOR_DECIMALS = 1e8;
@@ -230,6 +230,7 @@ contract KannaDynamicPriceSaleL2 is Ownable, AccessControl {
      * Emits a {Purchase} event.
      */
     function buyTokens(
+        address recipient,
         uint256 knnPriceInUSD,
         bytes memory signature,
         uint16 incrementalNonce,
@@ -237,12 +238,15 @@ contract KannaDynamicPriceSaleL2 is Ownable, AccessControl {
         uint256 nonce
     ) external payable {
         require(block.timestamp <= dueDate, "Signature is expired");
+        require(recipient == msg.sender, "Invalid recipient");
 
         require(incrementalNonce == incrementalNonces[msg.sender] + 1, "Invalid Nonce");
         require(msg.value > USD_AGGREGATOR_DECIMALS, "Invalid amount");
 
         bytes32 signedMessage = ECDSA.toEthSignedMessageHash(
-            keccak256(abi.encode(_BUY_TYPEHASH, knnPriceInUSD, incrementalNonce, dueDate, nonce, block.chainid))
+            keccak256(
+                abi.encode(_BUY_TYPEHASH, recipient, knnPriceInUSD, incrementalNonce, dueDate, nonce, block.chainid)
+            )
         );
 
         address signer = ECDSA.recover(signedMessage, signature);
