@@ -28,7 +28,7 @@ import type {
   PromiseOrValue,
 } from "../common";
 
-export interface KannaDynamicPriceSaleInterface extends utils.Interface {
+export interface KannaDynamicPriceSaleL2Interface extends utils.Interface {
   functions: {
     "CLAIM_MANAGER_ROLE()": FunctionFragment;
     "DEFAULT_ADMIN_ROLE()": FunctionFragment;
@@ -428,12 +428,12 @@ export type WithdrawEvent = TypedEvent<
 
 export type WithdrawEventFilter = TypedEventFilter<WithdrawEvent>;
 
-export interface KannaDynamicPriceSale extends BaseContract {
+export interface KannaDynamicPriceSaleL2 extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
   attach(addressOrName: string): this;
   deployed(): Promise<this>;
 
-  interface: KannaDynamicPriceSaleInterface;
+  interface: KannaDynamicPriceSaleL2Interface;
 
   queryFilter<TEvent extends TypedEvent>(
     event: TypedEventFilter<TEvent>,
