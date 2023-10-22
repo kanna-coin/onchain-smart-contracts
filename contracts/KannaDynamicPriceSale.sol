@@ -43,6 +43,7 @@ contract KannaDynamicPriceSale is Ownable, AccessControl {
     mapping(address => uint256) private incrementalNonces;
     mapping(address => uint256) private lockNonces;
     mapping(uint256 => bool) private claims;
+    mapping(uint256 => bool) private delegatedNonces;
 
     event Purchase(
         address indexed holder,
@@ -239,7 +240,7 @@ contract KannaDynamicPriceSale is Ownable, AccessControl {
         uint256 amountInKNN
     ) external payable {
         require(block.timestamp <= dueDate, "Signature is expired");
-
+        require(delegatedNonces[nonce] == false, "Nonce already used");
         require(incrementalNonce == incrementalNonces[recipient] + 1, "Invalid Nonce");
         require(msg.value > USD_AGGREGATOR_DECIMALS, "Invalid amount");
         require(availableSupply() >= amountInKNN, "Insufficient supply!");
@@ -268,6 +269,8 @@ contract KannaDynamicPriceSale is Ownable, AccessControl {
         uint256 ethPriceInUSD = (knnPriceInUSD * msg.value) / amountInKNN;
 
         emit Purchase(recipient, msg.value, knnPriceInUSD, ethPriceInUSD, amountInKNN);
+
+        delegatedNonces[nonce] = true;
 
         incrementalNonces[recipient]++;
     }
