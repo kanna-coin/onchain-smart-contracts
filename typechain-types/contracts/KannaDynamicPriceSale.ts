@@ -39,8 +39,6 @@ export interface KannaDynamicPriceSaleInterface extends utils.Interface {
     "buyTokens(address,uint256,bytes,uint16,uint256,uint256,uint256)": FunctionFragment;
     "claim(address,uint256,uint256)": FunctionFragment;
     "claimLocked(address,uint256,uint256,bytes,uint256)": FunctionFragment;
-    "convertToKNN(uint256,uint256)": FunctionFragment;
-    "convertToWEI(uint256,uint256)": FunctionFragment;
     "end(address)": FunctionFragment;
     "getNonceAndDueDate(address,uint256)": FunctionFragment;
     "getRoleAdmin(bytes32)": FunctionFragment;
@@ -50,7 +48,6 @@ export interface KannaDynamicPriceSaleInterface extends utils.Interface {
     "knnToken()": FunctionFragment;
     "lockSupply(uint256,uint256)": FunctionFragment;
     "owner()": FunctionFragment;
-    "priceAggregator()": FunctionFragment;
     "removeClaimManager(address)": FunctionFragment;
     "renounceOwnership()": FunctionFragment;
     "renounceRole(bytes32,address)": FunctionFragment;
@@ -72,8 +69,6 @@ export interface KannaDynamicPriceSaleInterface extends utils.Interface {
       | "buyTokens"
       | "claim"
       | "claimLocked"
-      | "convertToKNN"
-      | "convertToWEI"
       | "end"
       | "getNonceAndDueDate"
       | "getRoleAdmin"
@@ -83,7 +78,6 @@ export interface KannaDynamicPriceSaleInterface extends utils.Interface {
       | "knnToken"
       | "lockSupply"
       | "owner"
-      | "priceAggregator"
       | "removeClaimManager"
       | "renounceOwnership"
       | "renounceRole"
@@ -149,14 +143,6 @@ export interface KannaDynamicPriceSaleInterface extends utils.Interface {
     ]
   ): string;
   encodeFunctionData(
-    functionFragment: "convertToKNN",
-    values: [PromiseOrValue<BigNumberish>, PromiseOrValue<BigNumberish>]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "convertToWEI",
-    values: [PromiseOrValue<BigNumberish>, PromiseOrValue<BigNumberish>]
-  ): string;
-  encodeFunctionData(
     functionFragment: "end",
     values: [PromiseOrValue<string>]
   ): string;
@@ -183,10 +169,6 @@ export interface KannaDynamicPriceSaleInterface extends utils.Interface {
     values: [PromiseOrValue<BigNumberish>, PromiseOrValue<BigNumberish>]
   ): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
-  encodeFunctionData(
-    functionFragment: "priceAggregator",
-    values?: undefined
-  ): string;
   encodeFunctionData(
     functionFragment: "removeClaimManager",
     values: [PromiseOrValue<string>]
@@ -250,14 +232,6 @@ export interface KannaDynamicPriceSaleInterface extends utils.Interface {
     functionFragment: "claimLocked",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(
-    functionFragment: "convertToKNN",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "convertToWEI",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(functionFragment: "end", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "getNonceAndDueDate",
@@ -273,10 +247,6 @@ export interface KannaDynamicPriceSaleInterface extends utils.Interface {
   decodeFunctionResult(functionFragment: "knnToken", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "lockSupply", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "priceAggregator",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(
     functionFragment: "removeClaimManager",
     data: BytesLike
@@ -498,18 +468,6 @@ export interface KannaDynamicPriceSale extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
-    convertToKNN(
-      amountInWEI: PromiseOrValue<BigNumberish>,
-      knnPriceInUSD: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber, BigNumber]>;
-
-    convertToWEI(
-      amountInKNN: PromiseOrValue<BigNumberish>,
-      knnPriceInUSD: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber, BigNumber]>;
-
     end(
       leftoverRecipient: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -549,8 +507,6 @@ export interface KannaDynamicPriceSale extends BaseContract {
     ): Promise<ContractTransaction>;
 
     owner(overrides?: CallOverrides): Promise<[string]>;
-
-    priceAggregator(overrides?: CallOverrides): Promise<[string]>;
 
     removeClaimManager(
       claimManager: PromiseOrValue<string>,
@@ -637,18 +593,6 @@ export interface KannaDynamicPriceSale extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
-  convertToKNN(
-    amountInWEI: PromiseOrValue<BigNumberish>,
-    knnPriceInUSD: PromiseOrValue<BigNumberish>,
-    overrides?: CallOverrides
-  ): Promise<[BigNumber, BigNumber]>;
-
-  convertToWEI(
-    amountInKNN: PromiseOrValue<BigNumberish>,
-    knnPriceInUSD: PromiseOrValue<BigNumberish>,
-    overrides?: CallOverrides
-  ): Promise<[BigNumber, BigNumber]>;
-
   end(
     leftoverRecipient: PromiseOrValue<string>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -688,8 +632,6 @@ export interface KannaDynamicPriceSale extends BaseContract {
   ): Promise<ContractTransaction>;
 
   owner(overrides?: CallOverrides): Promise<string>;
-
-  priceAggregator(overrides?: CallOverrides): Promise<string>;
 
   removeClaimManager(
     claimManager: PromiseOrValue<string>,
@@ -776,18 +718,6 @@ export interface KannaDynamicPriceSale extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
-    convertToKNN(
-      amountInWEI: PromiseOrValue<BigNumberish>,
-      knnPriceInUSD: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber, BigNumber]>;
-
-    convertToWEI(
-      amountInKNN: PromiseOrValue<BigNumberish>,
-      knnPriceInUSD: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber, BigNumber]>;
-
     end(
       leftoverRecipient: PromiseOrValue<string>,
       overrides?: CallOverrides
@@ -827,8 +757,6 @@ export interface KannaDynamicPriceSale extends BaseContract {
     ): Promise<void>;
 
     owner(overrides?: CallOverrides): Promise<string>;
-
-    priceAggregator(overrides?: CallOverrides): Promise<string>;
 
     removeClaimManager(
       claimManager: PromiseOrValue<string>,
@@ -1011,18 +939,6 @@ export interface KannaDynamicPriceSale extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
-    convertToKNN(
-      amountInWEI: PromiseOrValue<BigNumberish>,
-      knnPriceInUSD: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    convertToWEI(
-      amountInKNN: PromiseOrValue<BigNumberish>,
-      knnPriceInUSD: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
     end(
       leftoverRecipient: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -1062,8 +978,6 @@ export interface KannaDynamicPriceSale extends BaseContract {
     ): Promise<BigNumber>;
 
     owner(overrides?: CallOverrides): Promise<BigNumber>;
-
-    priceAggregator(overrides?: CallOverrides): Promise<BigNumber>;
 
     removeClaimManager(
       claimManager: PromiseOrValue<string>,
@@ -1157,18 +1071,6 @@ export interface KannaDynamicPriceSale extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
-    convertToKNN(
-      amountInWEI: PromiseOrValue<BigNumberish>,
-      knnPriceInUSD: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    convertToWEI(
-      amountInKNN: PromiseOrValue<BigNumberish>,
-      knnPriceInUSD: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
     end(
       leftoverRecipient: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -1208,8 +1110,6 @@ export interface KannaDynamicPriceSale extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    priceAggregator(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     removeClaimManager(
       claimManager: PromiseOrValue<string>,

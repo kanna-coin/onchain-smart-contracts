@@ -25,7 +25,6 @@ import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
  */
 contract KannaDynamicPriceSale is Ownable, AccessControl {
     IERC20 public immutable knnToken;
-    AggregatorV3Interface public immutable priceAggregator;
 
     bytes32 public constant CLAIM_MANAGER_ROLE = keccak256("CLAIM_MANAGER_ROLE");
 
@@ -59,47 +58,15 @@ contract KannaDynamicPriceSale is Ownable, AccessControl {
 
     event Withdraw(address indexed recipient, uint256 amount);
 
-    constructor(address _knnToken, address _priceAggregator) {
+    constructor(address _knnToken) {
         require(address(_knnToken) != address(0), "Invalid token address");
-        require(address(_priceAggregator) != address(0), "Invalid price aggregator address");
 
         knnToken = IERC20(_knnToken);
-        priceAggregator = AggregatorV3Interface(_priceAggregator);
     }
 
     modifier positiveAmount(uint256 amount) {
         require(amount > 0, "Invalid amount");
         _;
-    }
-
-    /**
-     * @dev Converts a given amount {amountInKNN} to WEI
-     */
-    function convertToWEI(
-        uint256 amountInKNN,
-        uint256 knnPriceInUSD
-    ) public view positiveAmount(amountInKNN) positiveAmount(knnPriceInUSD) returns (uint256, uint256) {
-        (, int256 answer, , , ) = priceAggregator.latestRoundData();
-
-        uint256 ethPriceInUSD = SafeCast.toUint256(answer);
-        require(ethPriceInUSD > 0, "Invalid round answer");
-
-        return ((amountInKNN * knnPriceInUSD) / ethPriceInUSD, ethPriceInUSD);
-    }
-
-    /**
-     * @dev Converts a given amount {amountInWEI} to KNN
-     */
-    function convertToKNN(
-        uint256 amountInWEI,
-        uint256 knnPriceInUSD
-    ) public view positiveAmount(amountInWEI) positiveAmount(knnPriceInUSD) returns (uint256, uint256) {
-        (, int256 answer, , , ) = priceAggregator.latestRoundData();
-
-        uint256 ethPriceInUSD = SafeCast.toUint256(answer);
-        require(ethPriceInUSD > 0, "Invalid round answer");
-
-        return ((amountInWEI * ethPriceInUSD) / knnPriceInUSD, ethPriceInUSD);
     }
 
     /**
