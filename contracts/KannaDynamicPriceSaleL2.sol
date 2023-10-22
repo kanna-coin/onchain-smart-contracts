@@ -33,7 +33,7 @@ contract KannaDynamicPriceSaleL2 is Ownable, AccessControl {
         keccak256("Claim(address recipient,uint256 amountInKNN,uint256 ref,uint256 nonce,uint256 chainId)");
     bytes32 private constant _BUY_TYPEHASH =
         keccak256(
-            "BuyTokens(address recipient, uint256 knnPriceInUSD, uint16 incrementalNonce, uint256 dueDate, uint256 nonce, uint256 chainId)"
+            "BuyTokens(address recipient, uint256 knnPriceInUSD, uint16 incrementalNonce, uint256 dueDate, uint256 amountInETH, uint256 amountInKNN, uint256 nonce, uint256 chainId)"
         );
 
     uint256 public constant USD_AGGREGATOR_DECIMALS = 1e8;
@@ -58,47 +58,14 @@ contract KannaDynamicPriceSaleL2 is Ownable, AccessControl {
 
     event Withdraw(address indexed recipient, uint256 amount);
 
-    constructor(address _knnToken, address _priceAggregator) {
+    constructor(address _knnToken) {
         require(address(_knnToken) != address(0), "Invalid token address");
-        require(address(_priceAggregator) != address(0), "Invalid price aggregator address");
-
         knnToken = IERC20(_knnToken);
-        priceAggregator = AggregatorV3Interface(_priceAggregator);
     }
 
     modifier positiveAmount(uint256 amount) {
         require(amount > 0, "Invalid amount");
         _;
-    }
-
-    /**
-     * @dev Converts a given amount {amountInKNN} to WEI
-     */
-    function convertToWEI(
-        uint256 amountInKNN,
-        uint256 knnPriceInUSD
-    ) public view positiveAmount(amountInKNN) positiveAmount(knnPriceInUSD) returns (uint256, uint256) {
-        (, int256 answer, , , ) = priceAggregator.latestRoundData();
-
-        uint256 ethPriceInUSD = SafeCast.toUint256(answer);
-        require(ethPriceInUSD > 0, "Invalid round answer");
-
-        return ((amountInKNN * knnPriceInUSD) / ethPriceInUSD, ethPriceInUSD);
-    }
-
-    /**
-     * @dev Converts a given amount {amountInWEI} to KNN
-     */
-    function convertToKNN(
-        uint256 amountInWEI,
-        uint256 knnPriceInUSD
-    ) public view positiveAmount(amountInWEI) positiveAmount(knnPriceInUSD) returns (uint256, uint256) {
-        (, int256 answer, , , ) = priceAggregator.latestRoundData();
-
-        uint256 ethPriceInUSD = SafeCast.toUint256(answer);
-        require(ethPriceInUSD > 0, "Invalid round answer");
-
-        return ((amountInWEI * ethPriceInUSD) / knnPriceInUSD, ethPriceInUSD);
     }
 
     /**
@@ -235,16 +202,28 @@ contract KannaDynamicPriceSaleL2 is Ownable, AccessControl {
         bytes memory signature,
         uint16 incrementalNonce,
         uint256 dueDate,
-        uint256 nonce
+        uint256 nonce,
+        uint256 amountInKNN
     ) external payable {
         require(block.timestamp <= dueDate, "Signature is expired");
 
         require(incrementalNonce == incrementalNonces[recipient] + 1, "Invalid Nonce");
         require(msg.value > USD_AGGREGATOR_DECIMALS, "Invalid amount");
+        require(availableSupply() >= amountInKNN, "Insufficient supply!");
 
         bytes32 signedMessage = ECDSA.toEthSignedMessageHash(
             keccak256(
-                abi.encode(_BUY_TYPEHASH, recipient, knnPriceInUSD, incrementalNonce, dueDate, nonce, block.chainid)
+                abi.encode(
+                    _BUY_TYPEHASH,
+                    recipient,
+                    knnPriceInUSD,
+                    incrementalNonce,
+                    dueDate,
+                    msg.value,
+                    amountInKNN,
+                    nonce,
+                    block.chainid
+                )
             )
         );
 
@@ -252,13 +231,11 @@ contract KannaDynamicPriceSaleL2 is Ownable, AccessControl {
 
         _checkRole(CLAIM_MANAGER_ROLE, signer);
 
-        (uint256 finalAmount, uint256 ethPriceInUSD) = convertToKNN(msg.value, knnPriceInUSD);
+        knnToken.transfer(recipient, amountInKNN);
 
-        require(availableSupply() >= finalAmount, "Insufficient supply!");
+        uint256 ethPriceInUSD = (knnPriceInUSD * msg.value) / amountInKNN;
 
-        knnToken.transfer(recipient, finalAmount);
-
-        emit Purchase(recipient, msg.value, knnPriceInUSD, ethPriceInUSD, finalAmount);
+        emit Purchase(recipient, msg.value, knnPriceInUSD, ethPriceInUSD, amountInKNN);
 
         incrementalNonces[recipient]++;
     }

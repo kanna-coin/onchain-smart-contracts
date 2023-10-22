@@ -36,7 +36,7 @@ export interface KannaDynamicPriceSaleInterface extends utils.Interface {
     "USD_AGGREGATOR_DECIMALS()": FunctionFragment;
     "addClaimManager(address)": FunctionFragment;
     "availableSupply()": FunctionFragment;
-    "buyTokens(address,uint256,bytes,uint16,uint256,uint256)": FunctionFragment;
+    "buyTokens(address,uint256,bytes,uint16,uint256,uint256,uint256)": FunctionFragment;
     "claim(address,uint256,uint256)": FunctionFragment;
     "claimLocked(address,uint256,uint256,bytes,uint256)": FunctionFragment;
     "convertToKNN(uint256,uint256)": FunctionFragment;
@@ -124,6 +124,7 @@ export interface KannaDynamicPriceSaleInterface extends utils.Interface {
       PromiseOrValue<string>,
       PromiseOrValue<BigNumberish>,
       PromiseOrValue<BytesLike>,
+      PromiseOrValue<BigNumberish>,
       PromiseOrValue<BigNumberish>,
       PromiseOrValue<BigNumberish>,
       PromiseOrValue<BigNumberish>
@@ -477,6 +478,7 @@ export interface KannaDynamicPriceSale extends BaseContract {
       incrementalNonce: PromiseOrValue<BigNumberish>,
       dueDate: PromiseOrValue<BigNumberish>,
       nonce: PromiseOrValue<BigNumberish>,
+      amountInKNN: PromiseOrValue<BigNumberish>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -615,6 +617,7 @@ export interface KannaDynamicPriceSale extends BaseContract {
     incrementalNonce: PromiseOrValue<BigNumberish>,
     dueDate: PromiseOrValue<BigNumberish>,
     nonce: PromiseOrValue<BigNumberish>,
+    amountInKNN: PromiseOrValue<BigNumberish>,
     overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -753,6 +756,7 @@ export interface KannaDynamicPriceSale extends BaseContract {
       incrementalNonce: PromiseOrValue<BigNumberish>,
       dueDate: PromiseOrValue<BigNumberish>,
       nonce: PromiseOrValue<BigNumberish>,
+      amountInKNN: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -987,6 +991,7 @@ export interface KannaDynamicPriceSale extends BaseContract {
       incrementalNonce: PromiseOrValue<BigNumberish>,
       dueDate: PromiseOrValue<BigNumberish>,
       nonce: PromiseOrValue<BigNumberish>,
+      amountInKNN: PromiseOrValue<BigNumberish>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -1132,6 +1137,7 @@ export interface KannaDynamicPriceSale extends BaseContract {
       incrementalNonce: PromiseOrValue<BigNumberish>,
       dueDate: PromiseOrValue<BigNumberish>,
       nonce: PromiseOrValue<BigNumberish>,
+      amountInKNN: PromiseOrValue<BigNumberish>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 

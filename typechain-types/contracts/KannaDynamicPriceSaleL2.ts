@@ -36,11 +36,9 @@ export interface KannaDynamicPriceSaleL2Interface extends utils.Interface {
     "USD_AGGREGATOR_DECIMALS()": FunctionFragment;
     "addClaimManager(address)": FunctionFragment;
     "availableSupply()": FunctionFragment;
-    "buyTokens(address,uint256,bytes,uint16,uint256,uint256)": FunctionFragment;
+    "buyTokens(address,uint256,bytes,uint16,uint256,uint256,uint256)": FunctionFragment;
     "claim(address,uint256,uint256)": FunctionFragment;
     "claimLocked(address,uint256,uint256,bytes,uint256)": FunctionFragment;
-    "convertToKNN(uint256,uint256)": FunctionFragment;
-    "convertToWEI(uint256,uint256)": FunctionFragment;
     "end(address)": FunctionFragment;
     "getNonceAndDueDate(address,uint256)": FunctionFragment;
     "getRoleAdmin(bytes32)": FunctionFragment;
@@ -72,8 +70,6 @@ export interface KannaDynamicPriceSaleL2Interface extends utils.Interface {
       | "buyTokens"
       | "claim"
       | "claimLocked"
-      | "convertToKNN"
-      | "convertToWEI"
       | "end"
       | "getNonceAndDueDate"
       | "getRoleAdmin"
@@ -126,6 +122,7 @@ export interface KannaDynamicPriceSaleL2Interface extends utils.Interface {
       PromiseOrValue<BytesLike>,
       PromiseOrValue<BigNumberish>,
       PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BigNumberish>,
       PromiseOrValue<BigNumberish>
     ]
   ): string;
@@ -146,14 +143,6 @@ export interface KannaDynamicPriceSaleL2Interface extends utils.Interface {
       PromiseOrValue<BytesLike>,
       PromiseOrValue<BigNumberish>
     ]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "convertToKNN",
-    values: [PromiseOrValue<BigNumberish>, PromiseOrValue<BigNumberish>]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "convertToWEI",
-    values: [PromiseOrValue<BigNumberish>, PromiseOrValue<BigNumberish>]
   ): string;
   encodeFunctionData(
     functionFragment: "end",
@@ -247,14 +236,6 @@ export interface KannaDynamicPriceSaleL2Interface extends utils.Interface {
   decodeFunctionResult(functionFragment: "claim", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "claimLocked",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "convertToKNN",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "convertToWEI",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "end", data: BytesLike): Result;
@@ -477,6 +458,7 @@ export interface KannaDynamicPriceSaleL2 extends BaseContract {
       incrementalNonce: PromiseOrValue<BigNumberish>,
       dueDate: PromiseOrValue<BigNumberish>,
       nonce: PromiseOrValue<BigNumberish>,
+      amountInKNN: PromiseOrValue<BigNumberish>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -495,18 +477,6 @@ export interface KannaDynamicPriceSaleL2 extends BaseContract {
       nonce: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
-
-    convertToKNN(
-      amountInWEI: PromiseOrValue<BigNumberish>,
-      knnPriceInUSD: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber, BigNumber]>;
-
-    convertToWEI(
-      amountInKNN: PromiseOrValue<BigNumberish>,
-      knnPriceInUSD: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber, BigNumber]>;
 
     end(
       leftoverRecipient: PromiseOrValue<string>,
@@ -615,6 +585,7 @@ export interface KannaDynamicPriceSaleL2 extends BaseContract {
     incrementalNonce: PromiseOrValue<BigNumberish>,
     dueDate: PromiseOrValue<BigNumberish>,
     nonce: PromiseOrValue<BigNumberish>,
+    amountInKNN: PromiseOrValue<BigNumberish>,
     overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -633,18 +604,6 @@ export interface KannaDynamicPriceSaleL2 extends BaseContract {
     nonce: PromiseOrValue<BigNumberish>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
-
-  convertToKNN(
-    amountInWEI: PromiseOrValue<BigNumberish>,
-    knnPriceInUSD: PromiseOrValue<BigNumberish>,
-    overrides?: CallOverrides
-  ): Promise<[BigNumber, BigNumber]>;
-
-  convertToWEI(
-    amountInKNN: PromiseOrValue<BigNumberish>,
-    knnPriceInUSD: PromiseOrValue<BigNumberish>,
-    overrides?: CallOverrides
-  ): Promise<[BigNumber, BigNumber]>;
 
   end(
     leftoverRecipient: PromiseOrValue<string>,
@@ -753,6 +712,7 @@ export interface KannaDynamicPriceSaleL2 extends BaseContract {
       incrementalNonce: PromiseOrValue<BigNumberish>,
       dueDate: PromiseOrValue<BigNumberish>,
       nonce: PromiseOrValue<BigNumberish>,
+      amountInKNN: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -771,18 +731,6 @@ export interface KannaDynamicPriceSaleL2 extends BaseContract {
       nonce: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<void>;
-
-    convertToKNN(
-      amountInWEI: PromiseOrValue<BigNumberish>,
-      knnPriceInUSD: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber, BigNumber]>;
-
-    convertToWEI(
-      amountInKNN: PromiseOrValue<BigNumberish>,
-      knnPriceInUSD: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber, BigNumber]>;
 
     end(
       leftoverRecipient: PromiseOrValue<string>,
@@ -987,6 +935,7 @@ export interface KannaDynamicPriceSaleL2 extends BaseContract {
       incrementalNonce: PromiseOrValue<BigNumberish>,
       dueDate: PromiseOrValue<BigNumberish>,
       nonce: PromiseOrValue<BigNumberish>,
+      amountInKNN: PromiseOrValue<BigNumberish>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -1004,18 +953,6 @@ export interface KannaDynamicPriceSaleL2 extends BaseContract {
       signature: PromiseOrValue<BytesLike>,
       nonce: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<BigNumber>;
-
-    convertToKNN(
-      amountInWEI: PromiseOrValue<BigNumberish>,
-      knnPriceInUSD: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    convertToWEI(
-      amountInKNN: PromiseOrValue<BigNumberish>,
-      knnPriceInUSD: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
     ): Promise<BigNumber>;
 
     end(
@@ -1132,6 +1069,7 @@ export interface KannaDynamicPriceSaleL2 extends BaseContract {
       incrementalNonce: PromiseOrValue<BigNumberish>,
       dueDate: PromiseOrValue<BigNumberish>,
       nonce: PromiseOrValue<BigNumberish>,
+      amountInKNN: PromiseOrValue<BigNumberish>,
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
@@ -1149,18 +1087,6 @@ export interface KannaDynamicPriceSaleL2 extends BaseContract {
       signature: PromiseOrValue<BytesLike>,
       nonce: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<PopulatedTransaction>;
-
-    convertToKNN(
-      amountInWEI: PromiseOrValue<BigNumberish>,
-      knnPriceInUSD: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    convertToWEI(
-      amountInKNN: PromiseOrValue<BigNumberish>,
-      knnPriceInUSD: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
     end(
