@@ -238,9 +238,8 @@ contract KannaDynamicPriceSaleL2 is Ownable, AccessControl {
         uint256 nonce
     ) external payable {
         require(block.timestamp <= dueDate, "Signature is expired");
-        require(recipient == msg.sender, "Invalid recipient");
 
-        require(incrementalNonce == incrementalNonces[msg.sender] + 1, "Invalid Nonce");
+        require(incrementalNonce == incrementalNonces[recipient] + 1, "Invalid Nonce");
         require(msg.value > USD_AGGREGATOR_DECIMALS, "Invalid amount");
 
         bytes32 signedMessage = ECDSA.toEthSignedMessageHash(
@@ -257,11 +256,11 @@ contract KannaDynamicPriceSaleL2 is Ownable, AccessControl {
 
         require(availableSupply() >= finalAmount, "Insufficient supply!");
 
-        knnToken.transfer(msg.sender, finalAmount);
+        knnToken.transfer(recipient, finalAmount);
 
-        emit Purchase(msg.sender, msg.value, knnPriceInUSD, ethPriceInUSD, finalAmount);
+        emit Purchase(recipient, msg.value, knnPriceInUSD, ethPriceInUSD, finalAmount);
 
-        incrementalNonces[msg.sender]++;
+        incrementalNonces[recipient]++;
     }
 
     function _claim(address recipient, uint256 amountInKNN, uint256 ref) internal virtual positiveAmount(amountInKNN) {
