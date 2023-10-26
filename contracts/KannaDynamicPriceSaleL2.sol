@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.17;
+pragma solidity ^0.8.21;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
@@ -9,40 +9,41 @@ import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/interfaces/Ag
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 
 /**
+ *
  *   __                                               .__
  *  |  | ___\|/_    ____   ____ _\|/_    _______\|/_  |  |   ____
  *  |  |/ /\__  \  /    \ /    \\__  \  /  ___/\__  \ |  | _/ __ \
  *  |    <  / __ \|   |  \   |  \/ __ \_\___ \  / __ \|  |_\  ___/
  *  |__|_ \(____  /___|  /___|  (____  /____  >(____  /____/\___  >
  *       \/     \/     \/     \/     \/     \/      \/          \/
- *      .____                                     ________
- *      |    |    _____    ___.__.  ____  _______ \_____  \
- *      |    |    \__  \  <   |  |_/ __ \ \_  __ \ /  ____/
- *      |    |___  / __ \_ \___  |\  ___/  |  | \//       \
- *      |_______ \(____  / / ____| \___  > |__|   \_______ \
- *              \/     \/  \/          \/                 \/
  *
- *  @title KNN Sale for KNN Token on any Layer2's
+ *  @title KNN Sale for KNN Token
  *  @author KANNA Team
  *  @custom:github  https://github.com/kanna-coin
  *  @custom:site https://kannacoin.io
  *  @custom:discord https://discord.kannacoin.io
  */
-contract KannaSaleL2 is Ownable, AccessControl {
+contract KannaDynamicPriceSaleL2 is Ownable, AccessControl {
     IERC20 public immutable knnToken;
     AggregatorV3Interface public immutable priceAggregator;
 
     bytes32 public constant CLAIM_MANAGER_ROLE = keccak256("CLAIM_MANAGER_ROLE");
 
-    bytes32 private constant _CLAIM_TYPEHASH_L2 =
+    bytes32 private constant _CLAIM_TYPEHASH =
         keccak256("Claim(address recipient,uint256 amountInKNN,uint256 ref,uint256 nonce,uint256 chainId)");
+    bytes32 private constant _BUY_TYPEHASH =
+        keccak256(
+            "BuyTokens(address recipient, uint256 knnPriceInUSD, uint16 incrementalNonce, uint256 dueDate, uint256 amountInETH, uint256 amountInKNN, uint256 nonce, uint256 chainId)"
+        );
 
     uint256 public constant USD_AGGREGATOR_DECIMALS = 1e8;
     uint256 public constant KNN_DECIMALS = 1e18;
-    uint256 public immutable knnPriceInUSD;
     uint256 public knnLocked;
 
+    mapping(address => uint256) private incrementalNonces;
+    mapping(address => uint256) private lockNonces;
     mapping(uint256 => bool) private claims;
+    mapping(uint256 => bool) private delegatedNonces;
 
     event Purchase(
         address indexed holder,
@@ -58,14 +59,9 @@ contract KannaSaleL2 is Ownable, AccessControl {
 
     event Withdraw(address indexed recipient, uint256 amount);
 
-    constructor(address _knnToken, address _priceAggregator, uint256 targetQuotation) {
+    constructor(address _knnToken) {
         require(address(_knnToken) != address(0), "Invalid token address");
-        require(address(_priceAggregator) != address(0), "Invalid price aggregator address");
-        require(targetQuotation > 0, "Invalid quotation");
-
         knnToken = IERC20(_knnToken);
-        priceAggregator = AggregatorV3Interface(_priceAggregator);
-        knnPriceInUSD = targetQuotation;
     }
 
     modifier positiveAmount(uint256 amount) {
@@ -169,11 +165,11 @@ contract KannaSaleL2 is Ownable, AccessControl {
         uint256 ref,
         bytes memory signature,
         uint256 nonce
-    ) external {
+    ) external positiveAmount(amountInKNN) {
         require(knnLocked >= amountInKNN, "Insufficient locked amount");
 
         bytes32 signedMessage = ECDSA.toEthSignedMessageHash(
-            keccak256(abi.encode(_CLAIM_TYPEHASH_L2, recipient, amountInKNN, ref, nonce, block.chainid))
+            keccak256(abi.encode(_CLAIM_TYPEHASH, recipient, amountInKNN, ref, nonce, block.chainid))
         );
 
         address signer = ECDSA.recover(signedMessage, signature);
@@ -183,6 +179,7 @@ contract KannaSaleL2 is Ownable, AccessControl {
         _claim(recipient, amountInKNN, ref);
 
         knnLocked -= amountInKNN;
+        lockNonces[recipient] = nonce + 1;
     }
 
     /**
@@ -195,45 +192,55 @@ contract KannaSaleL2 is Ownable, AccessControl {
     }
 
     /**
-     * @dev Converts a given amount {amountInKNN} to WEI
-     */
-    function convertToWEI(uint256 amountInKNN) public view positiveAmount(amountInKNN) returns (uint256, uint256) {
-        (, int256 answer, , , ) = priceAggregator.latestRoundData();
-
-        uint256 maticPriceInUSD = SafeCast.toUint256(answer);
-        require(maticPriceInUSD > 0, "Invalid round answer");
-
-        return ((amountInKNN * knnPriceInUSD) / maticPriceInUSD, maticPriceInUSD);
-    }
-
-    /**
-     * @dev Converts a given amount {amountInWEI} to KNN
-     */
-    function convertToKNN(uint256 amountInWEI) public view positiveAmount(amountInWEI) returns (uint256, uint256) {
-        (, int256 answer, , , ) = priceAggregator.latestRoundData();
-
-        uint256 maticPriceInUSD = SafeCast.toUint256(answer);
-        require(maticPriceInUSD > 0, "Invalid round answer");
-
-        return ((amountInWEI * maticPriceInUSD) / knnPriceInUSD, maticPriceInUSD);
-    }
-
-    /**
      * @dev Allows users to buy tokens for ETH
      * See {tokenQuotation} for unitPrice.
      *
      * Emits a {Purchase} event.
      */
-    function buyTokens() external payable {
+    function buyTokens(
+        address recipient,
+        uint256 knnPriceInUSD,
+        bytes memory signature,
+        uint16 incrementalNonce,
+        uint256 dueDate,
+        uint256 nonce,
+        uint256 amountInKNN
+    ) external payable {
+        require(block.timestamp <= dueDate, "Signature is expired");
+        require(delegatedNonces[nonce] == false, "Nonce already used");
+        require(incrementalNonce == incrementalNonces[recipient] + 1, "Invalid Nonce");
         require(msg.value > USD_AGGREGATOR_DECIMALS, "Invalid amount");
+        require(availableSupply() >= amountInKNN, "Insufficient supply!");
 
-        (uint256 finalAmount, uint256 maticPriceInUSD) = convertToKNN(msg.value);
+        bytes32 signedMessage = ECDSA.toEthSignedMessageHash(
+            keccak256(
+                abi.encode(
+                    _BUY_TYPEHASH,
+                    recipient,
+                    knnPriceInUSD,
+                    incrementalNonce,
+                    dueDate,
+                    msg.value,
+                    amountInKNN,
+                    nonce,
+                    block.chainid
+                )
+            )
+        );
 
-        require(availableSupply() >= finalAmount, "Insufficient supply!");
+        address signer = ECDSA.recover(signedMessage, signature);
 
-        knnToken.transfer(msg.sender, finalAmount);
+        _checkRole(CLAIM_MANAGER_ROLE, signer);
 
-        emit Purchase(msg.sender, msg.value, knnPriceInUSD, maticPriceInUSD, finalAmount);
+        knnToken.transfer(recipient, amountInKNN);
+
+        uint256 ethPriceInUSD = (knnPriceInUSD * msg.value) / amountInKNN;
+
+        emit Purchase(recipient, msg.value, knnPriceInUSD, ethPriceInUSD, amountInKNN);
+
+        delegatedNonces[nonce] = true;
+
+        incrementalNonces[recipient]++;
     }
 
     function _claim(address recipient, uint256 amountInKNN, uint256 ref) internal virtual positiveAmount(amountInKNN) {
@@ -245,5 +252,9 @@ contract KannaSaleL2 is Ownable, AccessControl {
         claims[ref] = true;
 
         emit Claim(recipient, ref, amountInKNN);
+    }
+
+    function getNonceAndDueDate(address recipient, uint256 amountInSeconds) external view returns (uint256, uint256) {
+        return (incrementalNonces[recipient] + 1, block.timestamp + amountInSeconds);
     }
 }

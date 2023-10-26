@@ -8,6 +8,8 @@ export type { mocks };
 export type { DynamicBadgeChecker } from "./DynamicBadgeChecker";
 export type { KannaBadges } from "./KannaBadges";
 export type { KannaBadgesL2 } from "./KannaBadgesL2";
+export type { KannaDynamicPriceSale } from "./KannaDynamicPriceSale";
+export type { KannaDynamicPriceSaleL2 } from "./KannaDynamicPriceSaleL2";
 export type { KannaPreSale } from "./KannaPreSale";
 export type { KannaSale } from "./KannaSale";
 export type { KannaSaleL2 } from "./KannaSaleL2";
