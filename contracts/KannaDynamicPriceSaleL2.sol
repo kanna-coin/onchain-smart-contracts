@@ -23,16 +23,17 @@ import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
  *  @custom:site https://kannacoin.io
  *  @custom:discord https://discord.kannacoin.io
  */
-contract KannaDynamicPriceSale is Ownable, AccessControl {
+contract KannaDynamicPriceSaleL2 is Ownable, AccessControl {
     IERC20 public immutable knnToken;
+    AggregatorV3Interface public immutable priceAggregator;
 
     bytes32 public constant CLAIM_MANAGER_ROLE = keccak256("CLAIM_MANAGER_ROLE");
 
     bytes32 private constant _CLAIM_TYPEHASH =
-        keccak256("Claim(address recipient,uint256 amountInKNN,uint256 ref,uint256 nonce)");
+        keccak256("Claim(address recipient,uint256 amountInKNN,uint256 ref,uint256 nonce,uint256 chainId)");
     bytes32 private constant _BUY_TYPEHASH =
         keccak256(
-            "BuyTokens(address recipient, uint256 knnPriceInUSD, uint16 incrementalNonce, uint256 dueDate, uint256 amountInETH, uint256 amountInETH, uint256 nonce)"
+            "BuyTokens(address recipient, uint256 knnPriceInUSD, uint16 incrementalNonce, uint256 dueDate, uint256 amountInETH, uint256 amountInKNN, uint256 nonce, uint256 chainId)"
         );
 
     uint256 public constant USD_AGGREGATOR_DECIMALS = 1e8;
@@ -60,7 +61,6 @@ contract KannaDynamicPriceSale is Ownable, AccessControl {
 
     constructor(address _knnToken) {
         require(address(_knnToken) != address(0), "Invalid token address");
-
         knnToken = IERC20(_knnToken);
     }
 
@@ -169,7 +169,7 @@ contract KannaDynamicPriceSale is Ownable, AccessControl {
         require(knnLocked >= amountInKNN, "Insufficient locked amount");
 
         bytes32 signedMessage = ECDSA.toEthSignedMessageHash(
-            keccak256(abi.encode(_CLAIM_TYPEHASH, recipient, amountInKNN, ref, nonce))
+            keccak256(abi.encode(_CLAIM_TYPEHASH, recipient, amountInKNN, ref, nonce, block.chainid))
         );
 
         address signer = ECDSA.recover(signedMessage, signature);
@@ -222,7 +222,8 @@ contract KannaDynamicPriceSale is Ownable, AccessControl {
                     dueDate,
                     msg.value,
                     amountInKNN,
-                    nonce
+                    nonce,
+                    block.chainid
                 )
             )
         );

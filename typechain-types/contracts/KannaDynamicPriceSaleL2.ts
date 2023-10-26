@@ -28,7 +28,7 @@ import type {
   PromiseOrValue,
 } from "../common";
 
-export interface KannaDynamicPriceSaleInterface extends utils.Interface {
+export interface KannaDynamicPriceSaleL2Interface extends utils.Interface {
   functions: {
     "CLAIM_MANAGER_ROLE()": FunctionFragment;
     "DEFAULT_ADMIN_ROLE()": FunctionFragment;
@@ -48,6 +48,7 @@ export interface KannaDynamicPriceSaleInterface extends utils.Interface {
     "knnToken()": FunctionFragment;
     "lockSupply(uint256,uint256)": FunctionFragment;
     "owner()": FunctionFragment;
+    "priceAggregator()": FunctionFragment;
     "removeClaimManager(address)": FunctionFragment;
     "renounceOwnership()": FunctionFragment;
     "renounceRole(bytes32,address)": FunctionFragment;
@@ -78,6 +79,7 @@ export interface KannaDynamicPriceSaleInterface extends utils.Interface {
       | "knnToken"
       | "lockSupply"
       | "owner"
+      | "priceAggregator"
       | "removeClaimManager"
       | "renounceOwnership"
       | "renounceRole"
@@ -170,6 +172,10 @@ export interface KannaDynamicPriceSaleInterface extends utils.Interface {
   ): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
   encodeFunctionData(
+    functionFragment: "priceAggregator",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
     functionFragment: "removeClaimManager",
     values: [PromiseOrValue<string>]
   ): string;
@@ -247,6 +253,10 @@ export interface KannaDynamicPriceSaleInterface extends utils.Interface {
   decodeFunctionResult(functionFragment: "knnToken", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "lockSupply", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "priceAggregator",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "removeClaimManager",
     data: BytesLike
@@ -399,12 +409,12 @@ export type WithdrawEvent = TypedEvent<
 
 export type WithdrawEventFilter = TypedEventFilter<WithdrawEvent>;
 
-export interface KannaDynamicPriceSale extends BaseContract {
+export interface KannaDynamicPriceSaleL2 extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
   attach(addressOrName: string): this;
   deployed(): Promise<this>;
 
-  interface: KannaDynamicPriceSaleInterface;
+  interface: KannaDynamicPriceSaleL2Interface;
 
   queryFilter<TEvent extends TypedEvent>(
     event: TypedEventFilter<TEvent>,
@@ -507,6 +517,8 @@ export interface KannaDynamicPriceSale extends BaseContract {
     ): Promise<ContractTransaction>;
 
     owner(overrides?: CallOverrides): Promise<[string]>;
+
+    priceAggregator(overrides?: CallOverrides): Promise<[string]>;
 
     removeClaimManager(
       claimManager: PromiseOrValue<string>,
@@ -633,6 +645,8 @@ export interface KannaDynamicPriceSale extends BaseContract {
 
   owner(overrides?: CallOverrides): Promise<string>;
 
+  priceAggregator(overrides?: CallOverrides): Promise<string>;
+
   removeClaimManager(
     claimManager: PromiseOrValue<string>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -757,6 +771,8 @@ export interface KannaDynamicPriceSale extends BaseContract {
     ): Promise<void>;
 
     owner(overrides?: CallOverrides): Promise<string>;
+
+    priceAggregator(overrides?: CallOverrides): Promise<string>;
 
     removeClaimManager(
       claimManager: PromiseOrValue<string>,
@@ -979,6 +995,8 @@ export interface KannaDynamicPriceSale extends BaseContract {
 
     owner(overrides?: CallOverrides): Promise<BigNumber>;
 
+    priceAggregator(overrides?: CallOverrides): Promise<BigNumber>;
+
     removeClaimManager(
       claimManager: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -1110,6 +1128,8 @@ export interface KannaDynamicPriceSale extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    priceAggregator(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     removeClaimManager(
       claimManager: PromiseOrValue<string>,
