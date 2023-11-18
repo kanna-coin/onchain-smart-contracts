@@ -10,3 +10,5 @@ export * from './DynamicBadgeChecker';
 export * from './KnnHolderBadgeCheckerFactory';
 export * from './KannaStockOptionFactory';
 export * from './KannaStockOptionManagerFactory';
+export * from './KannaDynamicPriceSaleFactory';
+export * from './KannaDynamicPriceSaleL2Factory';

@@ -100,7 +100,9 @@ describe('KNN Stock Option', () => {
     const daysOfCliff = 90;
     const daysOfVesting = 365;
     const daysOfLock = 60;
-    const startDate = new Date(Date.now() - DAY_UNIT * (daysOfCliff + 1));
+
+    const blockTimestamp = (await ethers.provider.getBlock('latest')).timestamp;
+    const startDate = new Date((blockTimestamp * 1000) - DAY_UNIT * (daysOfCliff + 1));
 
     const contract = await initialize(
       sopFactory,
@@ -130,7 +132,9 @@ describe('KNN Stock Option', () => {
     const daysOfCliff = 90;
     const daysOfVesting = 365;
     const daysOfLock = 60;
-    const startDate = new Date(Date.now() - DAY_UNIT * (daysOfCliff + 1));
+
+    const blockTimestamp = (await ethers.provider.getBlock('latest')).timestamp;
+    const startDate = new Date((blockTimestamp * 1000) - DAY_UNIT * (daysOfCliff + 1));
 
     const contract = await initialize(
       sopFactory,
@@ -190,7 +194,9 @@ describe('KNN Stock Option', () => {
     const daysOfCliff = 300;
     const daysOfVesting = 365;
     const daysOfLock = 60;
-    const startDate = new Date(Date.now() - DAY_UNIT * (daysOfCliff + 1));
+
+    const blockTimestamp = (await ethers.provider.getBlock('latest')).timestamp;
+    const startDate = new Date((blockTimestamp * 1000) - DAY_UNIT * (daysOfCliff + 1));
 
     const contract = await initialize(
       sopFactory,
@@ -220,7 +226,9 @@ describe('KNN Stock Option', () => {
     const daysOfCliff = 300;
     const daysOfVesting = 365;
     const daysOfLock = 60;
-    const startDate = new Date(Date.now() - DAY_UNIT * (daysOfCliff + 1));
+
+    const blockTimestamp = (await ethers.provider.getBlock('latest')).timestamp;
+    const startDate = new Date((blockTimestamp * 1000) - DAY_UNIT * (daysOfCliff + 1));
 
     const contract = await initialize(
       sopFactory,
@@ -250,7 +258,9 @@ describe('KNN Stock Option', () => {
     const daysOfCliff = 300;
     const daysOfVesting = 365;
     const daysOfLock = 60;
-    const startDate = new Date(Date.now() - DAY_UNIT * (daysOfCliff + 1));
+
+    const blockTimestamp = (await ethers.provider.getBlock('latest')).timestamp;
+    const startDate = new Date((blockTimestamp * 1000) - DAY_UNIT * (daysOfCliff + 1));
 
     const contract = await initialize(
       sopFactory,
@@ -280,7 +290,9 @@ describe('KNN Stock Option', () => {
     const daysOfCliff = 300;
     const daysOfVesting = 365;
     const daysOfLock = 60;
-    const startDate = new Date(Date.now() - DAY_UNIT * (daysOfCliff + 1));
+
+    const blockTimestamp = (await ethers.provider.getBlock('latest')).timestamp;
+    const startDate = new Date((blockTimestamp * 1000) - DAY_UNIT * (daysOfCliff + 1));
 
     const contract = await initialize(
       sopFactory,
@@ -358,7 +370,9 @@ describe('KNN Stock Option', () => {
     const daysOfCliff = 300;
     const daysOfVesting = 365;
     const daysOfLock = 60;
-    const startDate = new Date(Date.now() - DAY_UNIT * (daysOfVesting + 1));
+
+    const blockTimestamp = (await ethers.provider.getBlock('latest')).timestamp;
+    const startDate = new Date((blockTimestamp * 1000) - DAY_UNIT * (daysOfVesting + 1));
 
     const contract = await initialize(
       sopFactory,
@@ -390,7 +404,9 @@ describe('KNN Stock Option', () => {
     const daysOfCliff = 300;
     const daysOfVesting = 365;
     const daysOfLock = 60;
-    const startDate = new Date(Date.now() - DAY_UNIT * (daysOfVesting - 1));
+
+    const blockTimestamp = (await ethers.provider.getBlock('latest')).timestamp;
+    const startDate = new Date((blockTimestamp * 1000) - DAY_UNIT * (daysOfVesting - 1));
 
     const contract = await initialize(
       sopFactory,
