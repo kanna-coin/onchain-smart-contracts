@@ -1,5 +1,5 @@
-import { ethers } from 'hardhat';
-import { BigNumber, ContractTransaction, constants, utils } from 'ethers';
+import { ethers, network } from 'hardhat';
+import { BigNumber, BigNumberish, ContractTransaction, constants, utils } from 'ethers';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
@@ -18,6 +18,27 @@ import {
 
 chai.use(chaiAsPromised);
 const { expect } = chai;
+
+const MINT_TYPEHASH = ethers.utils.keccak256(ethers.utils.toUtf8Bytes("Mint(address to, uint16 id, uint256 amount, uint16 incremental, uint256 dueDate, uint256 nonce)"));
+
+const getRandomNonce = () => {
+  const hex32nonce = ethers.utils.hexlify(ethers.utils.randomBytes(32));
+  const uint256Nonce = ethers.BigNumber.from(hex32nonce).sub(ethers.BigNumber.from('1'));
+
+  return uint256Nonce;
+}
+
+const mintHash = (address: string, id: BigNumberish, amount: BigNumberish, incremental: number, dueDate: BigNumberish) => {
+  const nonce = getRandomNonce();
+  const messageHash = ethers.utils.keccak256(
+    ethers.utils.defaultAbiCoder.encode(
+      ['bytes32', 'address', 'uint16', 'uint256', 'uint16', 'uint256', 'uint256'],
+      [MINT_TYPEHASH, address, id, amount, incremental, dueDate, nonce]
+    )
+  );
+
+  return [messageHash, nonce];
+};
 
 export function getInterfaceID(...contractInterfaces: utils.Interface[]) {
   let interfaceID = ethers.constants.Zero;
@@ -553,46 +574,15 @@ describe('Kanna Badges', () => {
         const [minterWallet] = await getMinterSession();
         const [userWallet, userSession] = await getUserSession();
 
-        const tokenId = getTokenId({ accumulative: true });
+        const tokenId = await getTokenId({ accumulative: true });
         const amount = 5;
         const incremental = 1;
-
-        const nonce = ethers.BigNumber.from(
-          ethers.utils.hexlify(ethers.utils.randomBytes(32))
-        ).sub(1);
-
-        const mintTypeHash = ethers.utils.keccak256(
-          ethers.utils.toUtf8Bytes(
-            'Mint(address to, uint16 id, uint256 amount, uint16 incremental, uint256 dueDate, uint256 nonce)'
-          )
-        );
 
         const dueDate = ethers.BigNumber.from(
           Math.floor(Date.now() / 1000)
         ).add(60 * 60 * 24 * 7);
 
-        const messageHash = ethers.utils.keccak256(
-          ethers.utils.defaultAbiCoder.encode(
-            [
-              'bytes32',
-              'address',
-              'uint16',
-              'uint256',
-              'uint16',
-              'uint256',
-              'uint256',
-            ],
-            [
-              mintTypeHash,
-              userWallet.address,
-              tokenId,
-              amount,
-              incremental,
-              dueDate,
-              nonce,
-            ]
-          )
-        );
+        const [messageHash, nonce] = mintHash(userWallet.address, tokenId, amount, incremental, dueDate);
 
         const signature = await minterWallet.signMessage(
           ethers.utils.arrayify(messageHash)
@@ -694,6 +684,45 @@ describe('Kanna Badges', () => {
           ).to.revertedWith('Token is not mintable');
         });
 
+        it('with expired signature', async () => {
+          const [minterWallet] = await getMinterSession();
+          const [userWallet, userSession] = await getUserSession();
+
+          const tokenId = await getTokenId({ accumulative: true });
+          const amount = 5;
+          const incremental = 1;
+
+          const blockTimestamp = (await ethers.provider.getBlock('latest')).timestamp;
+
+          const dueDate = ethers.BigNumber.from(
+            blockTimestamp
+          ).add(60 * 60 * 24 * 7);
+
+          const [messageHash, nonce] = mintHash(userWallet.address, tokenId, amount, incremental, dueDate);
+
+          const signature = await minterWallet.signMessage(
+            ethers.utils.arrayify(messageHash)
+          );
+
+          await network.provider.request({
+            method: 'evm_setNextBlockTimestamp',
+            params: [dueDate.add(1).toNumber()],
+          });
+          await network.provider.send("evm_mine");
+
+          await expect(userSession[
+            'mint(address,uint16,uint256,bytes,uint16,uint256,uint256)'
+          ](
+            userWallet.address,
+            tokenId,
+            amount,
+            signature,
+            incremental,
+            dueDate,
+            nonce
+          )).to.revertedWith('Invalid date');
+        });
+
         describe('without MINTER_ROLE', async () => {
           it('mint', async () => {
             const [, userSession] = await getUserSession();
@@ -735,46 +764,17 @@ describe('Kanna Badges', () => {
             const [userWallet, userSession] = await getUserSession();
             const user2Wallet = await getUser2Wallet();
 
-            const tokenId = getTokenId({ accumulative: true });
+            const tokenId = await getTokenId({ accumulative: true });
             const amount = 5;
             const incremental = 1;
 
-            const nonce = ethers.BigNumber.from(
-              ethers.utils.hexlify(ethers.utils.randomBytes(32))
-            ).sub(1);
+            const blockTimestamp = (await ethers.provider.getBlock('latest')).timestamp;
 
             const dueDate = ethers.BigNumber.from(
-              Math.floor(Date.now() / 1000)
+              blockTimestamp
             ).add(60 * 60 * 24 * 7);
 
-            const mintTypeHash = ethers.utils.keccak256(
-              ethers.utils.toUtf8Bytes(
-                'Mint(address to, uint16 id, uint256 amount, uint16 incremental, uint256 dueDate, uint256 nonce)'
-              )
-            );
-
-            const messageHash = ethers.utils.keccak256(
-              ethers.utils.defaultAbiCoder.encode(
-                [
-                  'bytes32',
-                  'address',
-                  'uint16',
-                  'uint256',
-                  'uint16',
-                  'uint256',
-                  'uint256',
-                ],
-                [
-                  mintTypeHash,
-                  user2Wallet.address,
-                  tokenId,
-                  amount,
-                  incremental,
-                  dueDate,
-                  nonce,
-                ]
-              )
-            );
+            const [messageHash, nonce] = mintHash(user2Wallet.address, tokenId, amount, incremental, dueDate);
 
             const signature = await userWallet.signMessage(
               ethers.utils.arrayify(messageHash)
@@ -847,42 +847,13 @@ describe('Kanna Badges', () => {
             const amount = 5;
             const incremental = 1;
 
-            const nonce = ethers.BigNumber.from(
-              ethers.utils.hexlify(ethers.utils.randomBytes(32))
-            ).sub(1);
+            const blockTimestamp = (await ethers.provider.getBlock('latest')).timestamp;
 
             const dueDate = ethers.BigNumber.from(
-              Math.floor(Date.now() / 1000)
+              blockTimestamp
             ).add(60 * 60 * 24 * 7);
 
-            const mintTypeHash = ethers.utils.keccak256(
-              ethers.utils.toUtf8Bytes(
-                'Mint(address to, uint16 id, uint256 amount, uint16 incremental, uint256 nonce)'
-              )
-            );
-
-            const messageHash = ethers.utils.keccak256(
-              ethers.utils.defaultAbiCoder.encode(
-                [
-                  'bytes32',
-                  'address',
-                  'uint16',
-                  'uint256',
-                  'uint16',
-                  'uint256',
-                  'uint256',
-                ],
-                [
-                  mintTypeHash,
-                  userWallet.address,
-                  tokenId,
-                  amount,
-                  incremental,
-                  dueDate,
-                  nonce,
-                ]
-              )
-            );
+            const [messageHash, nonce] = mintHash(userWallet.address, tokenId, amount, incremental, dueDate);
 
             const signature = await minterWallet.signMessage(
               ethers.utils.arrayify(messageHash)
@@ -942,46 +913,17 @@ describe('Kanna Badges', () => {
             const [minterWallet] = await getMinterSession();
             const [userWallet, userSession] = await getUserSession();
 
-            const tokenId = getTokenId({ accumulative: true });
+            const tokenId = await getTokenId({ accumulative: true });
             const amount = 5;
             const incremental = 2;
 
-            const nonce = ethers.BigNumber.from(
-              ethers.utils.hexlify(ethers.utils.randomBytes(32))
-            ).sub(1);
-
-            const mintTypeHash = ethers.utils.keccak256(
-              ethers.utils.toUtf8Bytes(
-                'Mint(address to, uint16 id, uint256 amount, uint16 incremental, uint256 dueDate, uint256 nonce)'
-              )
-            );
+            const blockTimestamp = (await ethers.provider.getBlock('latest')).timestamp;
 
             const dueDate = ethers.BigNumber.from(
-              Math.floor(Date.now() / 1000)
+              blockTimestamp
             ).add(60 * 60 * 24 * 7);
 
-            const messageHash = ethers.utils.keccak256(
-              ethers.utils.defaultAbiCoder.encode(
-                [
-                  'bytes32',
-                  'address',
-                  'uint16',
-                  'uint256',
-                  'uint16',
-                  'uint256',
-                  'uint256',
-                ],
-                [
-                  mintTypeHash,
-                  userWallet.address,
-                  tokenId,
-                  amount,
-                  incremental,
-                  dueDate,
-                  nonce,
-                ]
-              )
-            );
+            const [messageHash, nonce] = mintHash(userWallet.address, tokenId, amount, incremental, dueDate);
 
             const signature = await minterWallet.signMessage(
               ethers.utils.arrayify(messageHash)
@@ -1006,46 +948,17 @@ describe('Kanna Badges', () => {
             const [minterWallet] = await getMinterSession();
             const [userWallet, userSession] = await getUserSession();
 
-            const tokenId = getTokenId({ accumulative: true });
+            const tokenId = await getTokenId({ accumulative: true });
             const amount = 5;
             const incremental = 1;
 
-            const nonce = ethers.BigNumber.from(
-              ethers.utils.hexlify(ethers.utils.randomBytes(32))
-            ).sub(1);
+            const blockTimestamp = (await ethers.provider.getBlock('latest')).timestamp;
 
             const dueDate = ethers.BigNumber.from(
-              Math.floor(Date.now() / 1000)
+              blockTimestamp
             ).add(60 * 60 * 24 * 7);
 
-            const mintTypeHash = ethers.utils.keccak256(
-              ethers.utils.toUtf8Bytes(
-                'Mint(address to, uint16 id, uint256 amount, uint16 incremental, uint256 dueDate, uint256 nonce)'
-              )
-            );
-
-            const messageHash = ethers.utils.keccak256(
-              ethers.utils.defaultAbiCoder.encode(
-                [
-                  'bytes32',
-                  'address',
-                  'uint16',
-                  'uint256',
-                  'uint16',
-                  'uint256',
-                  'uint256',
-                ],
-                [
-                  mintTypeHash,
-                  userWallet.address,
-                  tokenId,
-                  amount,
-                  incremental,
-                  dueDate,
-                  nonce,
-                ]
-              )
-            );
+            const [messageHash, nonce] = mintHash(userWallet.address, tokenId, amount, incremental, dueDate);
 
             const signature = await minterWallet.signMessage(
               ethers.utils.arrayify(messageHash)
