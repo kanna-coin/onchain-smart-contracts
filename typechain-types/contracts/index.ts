@@ -6,6 +6,7 @@ export type { interfaces };
 import type * as mocks from "./mocks";
 export type { mocks };
 export type { DynamicBadgeChecker } from "./DynamicBadgeChecker";
+export type { KannaAuditStakePool } from "./KannaAuditStakePool";
 export type { KannaBadges } from "./KannaBadges";
 export type { KannaBadgesL2 } from "./KannaBadgesL2";
 export type { KannaDynamicPriceSale } from "./KannaDynamicPriceSale";

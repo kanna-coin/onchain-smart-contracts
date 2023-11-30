@@ -1,4 +1,4 @@
-import { ethers } from 'hardhat';
+import { ethers, network } from 'hardhat';
 import { utils } from 'ethers';
 import { MockContract } from 'ethereum-waffle';
 import chai from 'chai';

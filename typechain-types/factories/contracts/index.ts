@@ -4,6 +4,7 @@
 export * as interfaces from "./interfaces";
 export * as mocks from "./mocks";
 export { DynamicBadgeChecker__factory } from "./DynamicBadgeChecker__factory";
+export { KannaAuditStakePool__factory } from "./KannaAuditStakePool__factory";
 export { KannaBadges__factory } from "./KannaBadges__factory";
 export { KannaBadgesL2__factory } from "./KannaBadgesL2__factory";
 export { KannaDynamicPriceSale__factory } from "./KannaDynamicPriceSale__factory";

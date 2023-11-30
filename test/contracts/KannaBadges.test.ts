@@ -578,8 +578,10 @@ describe('Kanna Badges', () => {
         const amount = 5;
         const incremental = 1;
 
+        const blockTimestamp = (await ethers.provider.getBlock('latest')).timestamp;
+
         const dueDate = ethers.BigNumber.from(
-          Math.floor(Date.now() / 1000)
+          blockTimestamp
         ).add(60 * 60 * 24 * 7);
 
         const [messageHash, nonce] = mintHash(userWallet.address, tokenId, amount, incremental, dueDate);
