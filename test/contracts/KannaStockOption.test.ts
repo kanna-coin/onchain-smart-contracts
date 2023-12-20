@@ -1,4 +1,4 @@
-import { ethers } from 'hardhat';
+import { ethers, network } from 'hardhat';
 import { KannaStockOption__factory, KannaToken } from '../../typechain-types';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
@@ -39,10 +39,12 @@ describe('KNN Stock Option', () => {
   });
 
   it('should cancel by owner while in the cliff duration', async () => {
+    const blockTimestamp = (await ethers.provider.getBlock('latest')).timestamp;
+
     const daysOfCliff = 90;
     const daysOfVesting = 365;
     const daysOfLock = 60;
-    const startDate = new Date();
+    const startDate = new Date(blockTimestamp * 1000);
 
     const contract = await initialize(
       sopFactory,
@@ -68,10 +70,12 @@ describe('KNN Stock Option', () => {
   });
 
   it('should cancel by holder while in the cliff duration', async () => {
+    const blockTimestamp = (await ethers.provider.getBlock('latest')).timestamp;
+
     const daysOfCliff = 90;
     const daysOfVesting = 365;
     const daysOfLock = 60;
-    const startDate = new Date();
+    const startDate = new Date(blockTimestamp * 1000);
 
     const contract = await initialize(
       sopFactory,
@@ -161,10 +165,12 @@ describe('KNN Stock Option', () => {
   });
 
   it('should not withdraw before cliff duration', async () => {
+    const blockTimestamp = (await ethers.provider.getBlock('latest')).timestamp;
+
     const daysOfCliff = 90;
     const daysOfVesting = 365;
     const daysOfLock = 60;
-    const startDate = new Date();
+    const startDate = new Date(blockTimestamp * 1000);
 
     const contract = await initialize(
       sopFactory,
@@ -325,10 +331,12 @@ describe('KNN Stock Option', () => {
   });
 
   it('should retrieve a vesting forecast', async () => {
+    const blockTimestamp = (await ethers.provider.getBlock('latest')).timestamp;
+
     const daysOfCliff = 90;
     const daysOfVesting = 365;
     const daysOfLock = 60;
-    const startDate = new Date();
+    const startDate = new Date(blockTimestamp * 1000);
 
     const forecastDate = new Date(
       startDate.getTime() + DAY_UNIT * (daysOfCliff + 1)
@@ -433,10 +441,12 @@ describe('KNN Stock Option', () => {
   });
 
   it('should set owner on initialize', async () => {
+    const blockTimestamp = (await ethers.provider.getBlock('latest')).timestamp;
+
     const daysOfCliff = 90;
     const daysOfVesting = 365;
     const daysOfLock = 60;
-    const startDate = new Date();
+    const startDate = new Date(blockTimestamp * 1000);
     const integerAmount = 100;
 
     const contract = await sopFactory.deploy();

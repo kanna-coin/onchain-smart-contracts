@@ -5,7 +5,9 @@
 |contracts/DynamicBadgeChecker.sol|1/1 (100%)|0/0 (100%)|1/1 (100%)|1/1 (100%)|
 |contracts/interfaces/FxERC20ChildTunnel.sol|0/0 (100%)|0/0 (100%)|0/0 (100%)|0/0 (100%)|
 |contracts/interfaces/IDynamicBadgeChecker.sol|0/0 (100%)|0/0 (100%)|0/0 (100%)|0/0 (100%)|
+|contracts/interfaces/IKannaAuditScoreProvider.sol|0/0 (100%)|0/0 (100%)|0/0 (100%)|0/0 (100%)|
 |contracts/interfaces/IKannaStockOption.sol|0/0 (100%)|0/0 (100%)|0/0 (100%)|0/0 (100%)|
+|contracts/KannaAuditStakePool.sol|101/101 (100%)|110/112 (98.21%)|25/25 (100%)|125/125 (100%)|
 |contracts/KannaBadges.sol|73/73 (100%)|88/88 (100%)|27/27 (100%)|88/88 (100%)|
 |contracts/KannaBadgesL2.sol|6/6 (100%)|6/6 (100%)|2/2 (100%)|6/6 (100%)|
 |contracts/KannaDynamicPriceSale.sol|38/38 (100%)|50/50 (100%)|14/14 (100%)|46/46 (100%)|
@@ -18,4 +20,4 @@
 |contracts/KannaToken.sol|11/11 (100%)|18/18 (100%)|7/7 (100%)|12/12 (100%)|
 |contracts/KannaYield.sol|54/54 (100%)|44/58 (75.86%)|13/13 (100%)|83/83 (100%)|
 |contracts/KnnHolderBadgeChecker.sol|5/5 (100%)|4/4 (100%)|5/5 (100%)|7/7 (100%)|
-|**Total**|**454/458 (99.13%)**|**519/560 (92.68%)**|**155/155 (100%)**|**569/570 (99.82%)**|
+|**Total**|**555/559 (99.28%)**|**629/672 (93.6%)**|**180/180 (100%)**|**694/695 (99.86%)**|

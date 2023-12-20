@@ -3,4 +3,5 @@
 /* eslint-disable */
 export { FxERC20ChildTunnel__factory } from "./FxERC20ChildTunnel__factory";
 export { IDynamicBadgeChecker__factory } from "./IDynamicBadgeChecker__factory";
+export { IKannaAuditScoreProvider__factory } from "./IKannaAuditScoreProvider__factory";
 export { IKannaStockOption__factory } from "./IKannaStockOption__factory";

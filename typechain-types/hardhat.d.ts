@@ -77,9 +77,17 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IDynamicBadgeChecker__factory>;
     getContractFactory(
+      name: "IKannaAuditScoreProvider",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.IKannaAuditScoreProvider__factory>;
+    getContractFactory(
       name: "IKannaStockOption",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IKannaStockOption__factory>;
+    getContractFactory(
+      name: "KannaAuditStakePool",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.KannaAuditStakePool__factory>;
     getContractFactory(
       name: "KannaBadges",
       signerOrOptions?: ethers.Signer | FactoryOptions
@@ -214,10 +222,20 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.IDynamicBadgeChecker>;
     getContractAt(
+      name: "IKannaAuditScoreProvider",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.IKannaAuditScoreProvider>;
+    getContractAt(
       name: "IKannaStockOption",
       address: string,
       signer?: ethers.Signer
     ): Promise<Contracts.IKannaStockOption>;
+    getContractAt(
+      name: "KannaAuditStakePool",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.KannaAuditStakePool>;
     getContractAt(
       name: "KannaBadges",
       address: string,

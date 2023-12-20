@@ -100,7 +100,13 @@ const config: HardhatUserConfig = {
   },
   gasReporter: {
     enabled: true,
-    currency: 'USD'
+    currency: 'USD',
+    gasPrice: 25,
+    coinmarketcap: process.env.COINMARKETCAP_API_KEY || '',
+    outputFile: 'GAS_REPORT',
+  },
+  mocha: {
+    timeout: 100_000_000
   },
 };
 

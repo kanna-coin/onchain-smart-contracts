@@ -1,4 +1,4 @@
-import { ethers } from 'hardhat';
+import { ethers, network } from 'hardhat';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
@@ -250,10 +250,12 @@ describe('KNN Stock Option Manager', () => {
 
         const stockOption = KannaStockOption__factory.connect(event.args.contractAddress, treasuryWallet);
 
+        const blockTimestamp = (await ethers.provider.getBlock('latest')).timestamp;
+
         const daysOfCliff = 90;
         const daysOfVesting = 365;
         const daysOfLock = 60;
-        const startDate = Math.floor(Date.now() / 1000);
+        const startDate = blockTimestamp;
         const integerAmount = 100;
 
         const amount = parse1e18(integerAmount);
@@ -315,7 +317,8 @@ describe('KNN Stock Option Manager', () => {
       });
 
       it("vesting forecast", async () => {
-        const forecastDate = new Date();
+        const blockTimestamp = (await ethers.provider.getBlock('latest')).timestamp;
+        const forecastDate = new Date(blockTimestamp * 1000);
 
         const vestingForecast = await stockOptionManager.vestingForecast(Math.floor(forecastDate.getTime() / 1000));
 
@@ -356,7 +359,8 @@ describe('KNN Stock Option Manager', () => {
         });
 
         it("vesting forecast", async () => {
-          const forecastDate = new Date();
+          const blockTimestamp = (await ethers.provider.getBlock('latest')).timestamp;
+          const forecastDate = new Date(blockTimestamp * 1000);
 
           const vestingForecast = await stockOptionManager.vestingForecast(Math.floor(forecastDate.getTime() / 1000));
 
@@ -385,7 +389,8 @@ describe('KNN Stock Option Manager', () => {
         });
 
         it("vesting forecast", async () => {
-          const forecastDate = new Date();
+          const blockTimestamp = (await ethers.provider.getBlock('latest')).timestamp;
+          const forecastDate = new Date(blockTimestamp * 1000);
 
           const vestingForecast = await stockOptionManager.vestingForecast(Math.floor(forecastDate.getTime() / 1000));
 
@@ -411,7 +416,8 @@ describe('KNN Stock Option Manager', () => {
         });
 
         it("vesting forecast", async () => {
-          const forecastDate = new Date();
+          const blockTimestamp = (await ethers.provider.getBlock('latest')).timestamp;
+          const forecastDate = new Date(blockTimestamp * 1000);
 
           const vestingForecast = await stockOptionManager.vestingForecast(Math.floor(forecastDate.getTime() / 1000));
 
