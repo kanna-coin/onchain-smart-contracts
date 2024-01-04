@@ -439,43 +439,6 @@ describe('KNN Stock Option', () => {
 
     expect(Number(contractBalance.toString()) / 1e18).to.equal(0);
   });
-
-  it('should set owner on initialize', async () => {
-    const blockTimestamp = (await ethers.provider.getBlock('latest')).timestamp;
-
-    const daysOfCliff = 90;
-    const daysOfVesting = 365;
-    const daysOfLock = 60;
-    const startDate = new Date(blockTimestamp * 1000);
-    const integerAmount = 100;
-
-    const contract = await sopFactory.deploy();
-    await contract.deployed();
-
-    await contract.renounceOwnership();
-
-    const amount = parse1e18(integerAmount);
-
-    await token.connect(treasuryWallet).increaseAllowance(contract.address, amount);
-
-    const tx = contract.connect(treasuryWallet).initialize(
-      token.address,
-      Math.floor(startDate.getTime() / 1000),
-      daysOfVesting,
-      daysOfCliff,
-      daysOfLock,
-      10,
-      amount,
-      holder.address
-    );
-
-    await expect(tx)
-      .to.emit(contract, 'OwnershipTransferred')
-      .withArgs(
-        ethers.constants.AddressZero,
-        treasuryWallet.address,
-      );
-  });
 });
 
 async function initialize(
@@ -500,16 +463,16 @@ async function initialize(
 
   await contract
     .connect(owner)
-    .initialize(
-      token.address,
-      Math.floor(startDate.getTime() / 1000),
-      daysOfVesting,
-      daysOfCliff,
-      daysOfLock,
-      percentOfGrant,
-      amount,
-      beneficiary.address
-    );
+  ['initialize(address,uint256,uint256,uint256,uint256,uint256,uint256,address)'](
+    token.address,
+    Math.floor(startDate.getTime() / 1000),
+    daysOfVesting,
+    daysOfCliff,
+    daysOfLock,
+    percentOfGrant,
+    amount,
+    beneficiary.address
+  );
 
   return contract;
 }

@@ -38,6 +38,107 @@ const _abi = [
     type: "function",
   },
   {
+    inputs: [
+      {
+        internalType: "address",
+        name: "tokenAddress",
+        type: "address",
+      },
+      {
+        internalType: "uint256",
+        name: "startDate",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "daysOfVesting",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "daysOfCliff",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "daysOfLock",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "percentOfGrant",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "amount",
+        type: "uint256",
+      },
+      {
+        internalType: "address",
+        name: "beneficiary",
+        type: "address",
+      },
+    ],
+    name: "initialize",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
+        name: "tokenAddress",
+        type: "address",
+      },
+      {
+        internalType: "uint256",
+        name: "startDate",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "daysOfVesting",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "daysOfCliff",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "daysOfLock",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "percentOfGrant",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "amount",
+        type: "uint256",
+      },
+      {
+        internalType: "address",
+        name: "beneficiary",
+        type: "address",
+      },
+      {
+        internalType: "address",
+        name: "ownerAddress",
+        type: "address",
+      },
+    ],
+    name: "initialize",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
     inputs: [],
     name: "status",
     outputs: [

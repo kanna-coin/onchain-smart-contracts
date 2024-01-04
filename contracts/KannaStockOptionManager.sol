@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.21;
 
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {KannaStockOption} from "./KannaStockOption.sol";
 import {IKannaStockOption} from "./interfaces/IKannaStockOption.sol";
@@ -62,10 +63,40 @@ contract KannaStockOptionManager is Ownable {
     /**
      * @dev Deploy a new contract
      */
-    function deployContract() public onlyOwner hasTemplateDefined {
-        bytes32 _salt = keccak256(abi.encodePacked(_nonce, block.timestamp));
+    function deployContract() public onlyOwner {
+        address newContract = _deployContract();
 
-        address newContract = createClone(_salt, contractTemplate);
+        _registerContract(newContract);
+    }
+
+    /**
+     * @dev Deploy a new contract and initialize it
+     */
+    function initializeContract(
+        address tokenAddress,
+        uint256 startDate,
+        uint256 daysOfVesting,
+        uint256 daysOfCliff,
+        uint256 daysOfLock,
+        uint256 percentOfGrant,
+        uint256 amount,
+        address beneficiary
+    ) public onlyOwner {
+        address newContract = _deployContract();
+
+        IERC20(tokenAddress).transferFrom(_msgSender(), newContract, amount);
+
+        IKannaStockOption(newContract).initialize(
+            tokenAddress,
+            startDate,
+            daysOfVesting,
+            daysOfCliff,
+            daysOfLock,
+            percentOfGrant,
+            amount,
+            beneficiary,
+            _msgSender()
+        );
 
         _registerContract(newContract);
     }
@@ -153,6 +184,15 @@ contract KannaStockOptionManager is Ownable {
         }
 
         return _availableToWithdraw;
+    }
+
+    /**
+     * @dev Deploy a new contract
+     */
+    function _deployContract() internal hasTemplateDefined returns (address) {
+        bytes32 _salt = keccak256(abi.encodePacked(_nonce, block.timestamp));
+
+        return createClone(_salt, contractTemplate);
     }
 
     // creates clone using minimal proxy

@@ -34,6 +34,7 @@ export interface KannaStockOptionManagerInterface extends utils.Interface {
     "contracts()": FunctionFragment;
     "deployContract()": FunctionFragment;
     "hasContract(address)": FunctionFragment;
+    "initializeContract(address,uint256,uint256,uint256,uint256,uint256,uint256,address)": FunctionFragment;
     "owner()": FunctionFragment;
     "registerContract(address)": FunctionFragment;
     "registerContractUnsafe(address)": FunctionFragment;
@@ -52,6 +53,7 @@ export interface KannaStockOptionManagerInterface extends utils.Interface {
       | "contracts"
       | "deployContract"
       | "hasContract"
+      | "initializeContract"
       | "owner"
       | "registerContract"
       | "registerContractUnsafe"
@@ -79,6 +81,19 @@ export interface KannaStockOptionManagerInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "hasContract",
     values: [PromiseOrValue<string>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "initializeContract",
+    values: [
+      PromiseOrValue<string>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<string>
+    ]
   ): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
   encodeFunctionData(
@@ -129,6 +144,10 @@ export interface KannaStockOptionManagerInterface extends utils.Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "hasContract",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "initializeContract",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
@@ -266,6 +285,18 @@ export interface KannaStockOptionManager extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[boolean]>;
 
+    initializeContract(
+      tokenAddress: PromiseOrValue<string>,
+      startDate: PromiseOrValue<BigNumberish>,
+      daysOfVesting: PromiseOrValue<BigNumberish>,
+      daysOfCliff: PromiseOrValue<BigNumberish>,
+      daysOfLock: PromiseOrValue<BigNumberish>,
+      percentOfGrant: PromiseOrValue<BigNumberish>,
+      amount: PromiseOrValue<BigNumberish>,
+      beneficiary: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
     owner(overrides?: CallOverrides): Promise<[string]>;
 
     registerContract(
@@ -320,6 +351,18 @@ export interface KannaStockOptionManager extends BaseContract {
     overrides?: CallOverrides
   ): Promise<boolean>;
 
+  initializeContract(
+    tokenAddress: PromiseOrValue<string>,
+    startDate: PromiseOrValue<BigNumberish>,
+    daysOfVesting: PromiseOrValue<BigNumberish>,
+    daysOfCliff: PromiseOrValue<BigNumberish>,
+    daysOfLock: PromiseOrValue<BigNumberish>,
+    percentOfGrant: PromiseOrValue<BigNumberish>,
+    amount: PromiseOrValue<BigNumberish>,
+    beneficiary: PromiseOrValue<string>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
   owner(overrides?: CallOverrides): Promise<string>;
 
   registerContract(
@@ -371,6 +414,18 @@ export interface KannaStockOptionManager extends BaseContract {
       _contract: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<boolean>;
+
+    initializeContract(
+      tokenAddress: PromiseOrValue<string>,
+      startDate: PromiseOrValue<BigNumberish>,
+      daysOfVesting: PromiseOrValue<BigNumberish>,
+      daysOfCliff: PromiseOrValue<BigNumberish>,
+      daysOfLock: PromiseOrValue<BigNumberish>,
+      percentOfGrant: PromiseOrValue<BigNumberish>,
+      amount: PromiseOrValue<BigNumberish>,
+      beneficiary: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<void>;
 
     owner(overrides?: CallOverrides): Promise<string>;
 
@@ -459,6 +514,18 @@ export interface KannaStockOptionManager extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
+    initializeContract(
+      tokenAddress: PromiseOrValue<string>,
+      startDate: PromiseOrValue<BigNumberish>,
+      daysOfVesting: PromiseOrValue<BigNumberish>,
+      daysOfCliff: PromiseOrValue<BigNumberish>,
+      daysOfLock: PromiseOrValue<BigNumberish>,
+      percentOfGrant: PromiseOrValue<BigNumberish>,
+      amount: PromiseOrValue<BigNumberish>,
+      beneficiary: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
     owner(overrides?: CallOverrides): Promise<BigNumber>;
 
     registerContract(
@@ -514,6 +581,18 @@ export interface KannaStockOptionManager extends BaseContract {
     hasContract(
       _contract: PromiseOrValue<string>,
       overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    initializeContract(
+      tokenAddress: PromiseOrValue<string>,
+      startDate: PromiseOrValue<BigNumberish>,
+      daysOfVesting: PromiseOrValue<BigNumberish>,
+      daysOfCliff: PromiseOrValue<BigNumberish>,
+      daysOfLock: PromiseOrValue<BigNumberish>,
+      percentOfGrant: PromiseOrValue<BigNumberish>,
+      amount: PromiseOrValue<BigNumberish>,
+      beneficiary: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
     owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;

@@ -242,13 +242,8 @@ describe('KNN Stock Option Manager', () => {
           );
       });
 
-      it("should initialize a new deployed contract", async () => {
+      it("should deploy and initialize a new stock option contract", async () => {
         await setDefaultTemplate();
-
-        const tx = await stockOptionManager.deployContract();
-        const event = await getContractRegisteredEvent(tx);
-
-        const stockOption = KannaStockOption__factory.connect(event.args.contractAddress, treasuryWallet);
 
         const blockTimestamp = (await ethers.provider.getBlock('latest')).timestamp;
 
@@ -260,9 +255,9 @@ describe('KNN Stock Option Manager', () => {
 
         const amount = parse1e18(integerAmount);
 
-        await token.connect(treasuryWallet).increaseAllowance(stockOption.address, amount);
+        await token.connect(treasuryWallet).increaseAllowance(stockOptionManager.address, amount);
 
-        const initializeTx = stockOption.connect(treasuryWallet).initialize(
+        const initializeTx = await stockOptionManager.connect(treasuryWallet).initializeContract(
           token.address,
           startDate,
           daysOfVesting,
@@ -272,6 +267,9 @@ describe('KNN Stock Option Manager', () => {
           amount,
           holder.address
         );
+
+        const event = await getContractRegisteredEvent(initializeTx);
+        const stockOption = KannaStockOption__factory.connect(event.args.contractAddress, treasuryWallet);
 
         await expect(initializeTx)
           .to.emit(stockOption, 'OwnershipTransferred')
@@ -466,6 +464,33 @@ describe('KNN Stock Option Manager', () => {
 
         await expect(
           userSession.deployContract()
+        ).to.revertedWith(revertWith);
+      });
+
+      it('initialize contract', async () => {
+        const [, userSession] = await getUserSession();
+
+        await setDefaultTemplate();
+
+        const blockTimestamp = (await ethers.provider.getBlock('latest')).timestamp;
+
+        const daysOfCliff = 90;
+        const daysOfVesting = 365;
+        const daysOfLock = 60;
+        const startDate = blockTimestamp;
+        const amount = parse1e18(100);
+
+        await expect(
+          userSession.initializeContract(
+            token.address,
+            startDate,
+            daysOfVesting,
+            daysOfCliff,
+            daysOfLock,
+            10,
+            amount,
+            holder.address
+          )
         ).to.revertedWith(revertWith);
       });
     });
