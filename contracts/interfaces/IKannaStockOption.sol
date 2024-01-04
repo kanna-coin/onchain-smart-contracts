@@ -30,6 +30,27 @@ interface IKannaStockOption is IERC165 {
         Vesting
     }
 
+    function initialize(
+        address tokenAddress,
+        uint256 startDate,
+        uint256 daysOfVesting,
+        uint256 daysOfCliff,
+        uint256 daysOfLock,
+        uint256 percentOfGrant,
+        uint256 amount,
+        address beneficiary
+    ) external;
+    function initialize(
+        address tokenAddress,
+        uint256 startDate,
+        uint256 daysOfVesting,
+        uint256 daysOfCliff,
+        uint256 daysOfLock,
+        uint256 percentOfGrant,
+        uint256 amount,
+        address beneficiary,
+        address ownerAddress
+    ) external;
     function totalVested() external view returns (uint256);
     function vestingForecast(uint256 date) external view returns (uint256);
     function availableToWithdraw() external view returns (uint256);

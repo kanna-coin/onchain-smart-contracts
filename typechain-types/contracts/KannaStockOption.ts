@@ -33,6 +33,7 @@ export interface KannaStockOptionInterface extends utils.Interface {
     "availableToWithdraw()": FunctionFragment;
     "finalize()": FunctionFragment;
     "initialize(address,uint256,uint256,uint256,uint256,uint256,uint256,address)": FunctionFragment;
+    "initialize(address,uint256,uint256,uint256,uint256,uint256,uint256,address,address)": FunctionFragment;
     "maxGrantAmount()": FunctionFragment;
     "owner()": FunctionFragment;
     "renounceOwnership()": FunctionFragment;
@@ -50,7 +51,8 @@ export interface KannaStockOptionInterface extends utils.Interface {
       | "abort"
       | "availableToWithdraw"
       | "finalize"
-      | "initialize"
+      | "initialize(address,uint256,uint256,uint256,uint256,uint256,uint256,address)"
+      | "initialize(address,uint256,uint256,uint256,uint256,uint256,uint256,address,address)"
       | "maxGrantAmount"
       | "owner"
       | "renounceOwnership"
@@ -70,7 +72,7 @@ export interface KannaStockOptionInterface extends utils.Interface {
   ): string;
   encodeFunctionData(functionFragment: "finalize", values?: undefined): string;
   encodeFunctionData(
-    functionFragment: "initialize",
+    functionFragment: "initialize(address,uint256,uint256,uint256,uint256,uint256,uint256,address)",
     values: [
       PromiseOrValue<string>,
       PromiseOrValue<BigNumberish>,
@@ -79,6 +81,20 @@ export interface KannaStockOptionInterface extends utils.Interface {
       PromiseOrValue<BigNumberish>,
       PromiseOrValue<BigNumberish>,
       PromiseOrValue<BigNumberish>,
+      PromiseOrValue<string>
+    ]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "initialize(address,uint256,uint256,uint256,uint256,uint256,uint256,address,address)",
+    values: [
+      PromiseOrValue<string>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<string>,
       PromiseOrValue<string>
     ]
   ): string;
@@ -120,7 +136,14 @@ export interface KannaStockOptionInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "finalize", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "initialize", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "initialize(address,uint256,uint256,uint256,uint256,uint256,uint256,address)",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "initialize(address,uint256,uint256,uint256,uint256,uint256,uint256,address,address)",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "maxGrantAmount",
     data: BytesLike
@@ -274,7 +297,7 @@ export interface KannaStockOption extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
-    initialize(
+    "initialize(address,uint256,uint256,uint256,uint256,uint256,uint256,address)"(
       tokenAddress: PromiseOrValue<string>,
       startDate: PromiseOrValue<BigNumberish>,
       daysOfVesting: PromiseOrValue<BigNumberish>,
@@ -283,6 +306,19 @@ export interface KannaStockOption extends BaseContract {
       percentOfGrant: PromiseOrValue<BigNumberish>,
       amount: PromiseOrValue<BigNumberish>,
       beneficiary: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
+    "initialize(address,uint256,uint256,uint256,uint256,uint256,uint256,address,address)"(
+      tokenAddress: PromiseOrValue<string>,
+      startDate: PromiseOrValue<BigNumberish>,
+      daysOfVesting: PromiseOrValue<BigNumberish>,
+      daysOfCliff: PromiseOrValue<BigNumberish>,
+      daysOfLock: PromiseOrValue<BigNumberish>,
+      percentOfGrant: PromiseOrValue<BigNumberish>,
+      amount: PromiseOrValue<BigNumberish>,
+      beneficiary: PromiseOrValue<string>,
+      ownerAddress: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -331,7 +367,7 @@ export interface KannaStockOption extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
-  initialize(
+  "initialize(address,uint256,uint256,uint256,uint256,uint256,uint256,address)"(
     tokenAddress: PromiseOrValue<string>,
     startDate: PromiseOrValue<BigNumberish>,
     daysOfVesting: PromiseOrValue<BigNumberish>,
@@ -340,6 +376,19 @@ export interface KannaStockOption extends BaseContract {
     percentOfGrant: PromiseOrValue<BigNumberish>,
     amount: PromiseOrValue<BigNumberish>,
     beneficiary: PromiseOrValue<string>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
+  "initialize(address,uint256,uint256,uint256,uint256,uint256,uint256,address,address)"(
+    tokenAddress: PromiseOrValue<string>,
+    startDate: PromiseOrValue<BigNumberish>,
+    daysOfVesting: PromiseOrValue<BigNumberish>,
+    daysOfCliff: PromiseOrValue<BigNumberish>,
+    daysOfLock: PromiseOrValue<BigNumberish>,
+    percentOfGrant: PromiseOrValue<BigNumberish>,
+    amount: PromiseOrValue<BigNumberish>,
+    beneficiary: PromiseOrValue<string>,
+    ownerAddress: PromiseOrValue<string>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -384,7 +433,7 @@ export interface KannaStockOption extends BaseContract {
 
     finalize(overrides?: CallOverrides): Promise<void>;
 
-    initialize(
+    "initialize(address,uint256,uint256,uint256,uint256,uint256,uint256,address)"(
       tokenAddress: PromiseOrValue<string>,
       startDate: PromiseOrValue<BigNumberish>,
       daysOfVesting: PromiseOrValue<BigNumberish>,
@@ -393,6 +442,19 @@ export interface KannaStockOption extends BaseContract {
       percentOfGrant: PromiseOrValue<BigNumberish>,
       amount: PromiseOrValue<BigNumberish>,
       beneficiary: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    "initialize(address,uint256,uint256,uint256,uint256,uint256,uint256,address,address)"(
+      tokenAddress: PromiseOrValue<string>,
+      startDate: PromiseOrValue<BigNumberish>,
+      daysOfVesting: PromiseOrValue<BigNumberish>,
+      daysOfCliff: PromiseOrValue<BigNumberish>,
+      daysOfLock: PromiseOrValue<BigNumberish>,
+      percentOfGrant: PromiseOrValue<BigNumberish>,
+      amount: PromiseOrValue<BigNumberish>,
+      beneficiary: PromiseOrValue<string>,
+      ownerAddress: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -505,7 +567,7 @@ export interface KannaStockOption extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
-    initialize(
+    "initialize(address,uint256,uint256,uint256,uint256,uint256,uint256,address)"(
       tokenAddress: PromiseOrValue<string>,
       startDate: PromiseOrValue<BigNumberish>,
       daysOfVesting: PromiseOrValue<BigNumberish>,
@@ -514,6 +576,19 @@ export interface KannaStockOption extends BaseContract {
       percentOfGrant: PromiseOrValue<BigNumberish>,
       amount: PromiseOrValue<BigNumberish>,
       beneficiary: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    "initialize(address,uint256,uint256,uint256,uint256,uint256,uint256,address,address)"(
+      tokenAddress: PromiseOrValue<string>,
+      startDate: PromiseOrValue<BigNumberish>,
+      daysOfVesting: PromiseOrValue<BigNumberish>,
+      daysOfCliff: PromiseOrValue<BigNumberish>,
+      daysOfLock: PromiseOrValue<BigNumberish>,
+      percentOfGrant: PromiseOrValue<BigNumberish>,
+      amount: PromiseOrValue<BigNumberish>,
+      beneficiary: PromiseOrValue<string>,
+      ownerAddress: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -565,7 +640,7 @@ export interface KannaStockOption extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
-    initialize(
+    "initialize(address,uint256,uint256,uint256,uint256,uint256,uint256,address)"(
       tokenAddress: PromiseOrValue<string>,
       startDate: PromiseOrValue<BigNumberish>,
       daysOfVesting: PromiseOrValue<BigNumberish>,
@@ -574,6 +649,19 @@ export interface KannaStockOption extends BaseContract {
       percentOfGrant: PromiseOrValue<BigNumberish>,
       amount: PromiseOrValue<BigNumberish>,
       beneficiary: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    "initialize(address,uint256,uint256,uint256,uint256,uint256,uint256,address,address)"(
+      tokenAddress: PromiseOrValue<string>,
+      startDate: PromiseOrValue<BigNumberish>,
+      daysOfVesting: PromiseOrValue<BigNumberish>,
+      daysOfCliff: PromiseOrValue<BigNumberish>,
+      daysOfLock: PromiseOrValue<BigNumberish>,
+      percentOfGrant: PromiseOrValue<BigNumberish>,
+      amount: PromiseOrValue<BigNumberish>,
+      beneficiary: PromiseOrValue<string>,
+      ownerAddress: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 

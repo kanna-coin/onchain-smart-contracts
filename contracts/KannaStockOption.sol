@@ -73,10 +73,56 @@ contract KannaStockOption is IKannaStockOption, Ownable, ReentrancyGuard {
         uint256 percentOfGrant,
         uint256 amount,
         address beneficiary
+    ) external onlyOwner {
+        _initialize(
+            tokenAddress,
+            startDate,
+            daysOfVesting,
+            daysOfCliff,
+            daysOfLock,
+            percentOfGrant,
+            amount,
+            beneficiary
+        );
+    }
+
+    function initialize(
+        address tokenAddress,
+        uint256 startDate,
+        uint256 daysOfVesting,
+        uint256 daysOfCliff,
+        uint256 daysOfLock,
+        uint256 percentOfGrant,
+        uint256 amount,
+        address beneficiary,
+        address ownerAddress
     ) external {
-        if (owner() != address(0)) {
-            _checkOwner();
-        }
+        require(owner() == address(0), "KannaStockOption: owner is already set");
+
+        _transferOwnership(ownerAddress);
+
+        _initialize(
+            tokenAddress,
+            startDate,
+            daysOfVesting,
+            daysOfCliff,
+            daysOfLock,
+            percentOfGrant,
+            amount,
+            beneficiary
+        );
+    }
+
+    function _initialize(
+        address tokenAddress,
+        uint256 startDate,
+        uint256 daysOfVesting,
+        uint256 daysOfCliff,
+        uint256 daysOfLock,
+        uint256 percentOfGrant,
+        uint256 amount,
+        address beneficiary
+    ) internal {
         require(_initialized == false, "KannaStockOption: contract already initialized");
         require(startDate > 0, "KannaStockOption: startDate is zero");
         require(daysOfVesting > 0, "KannaStockOption: daysOfVesting is zero");
@@ -90,8 +136,11 @@ contract KannaStockOption is IKannaStockOption, Ownable, ReentrancyGuard {
 
         _token = IERC20(tokenAddress);
 
-        require(_token.allowance(_msgSender(), address(this)) >= amount, "KannaStockOption: insufficient allowance");
-        require(_token.transferFrom(_msgSender(), address(this), amount), "KannaStockOption: insufficient balance");
+        uint256 balance = _token.balanceOf(address(this));
+
+        if (balance < amount) {
+            _token.transferFrom(_msgSender(), address(this), amount - balance);
+        }
 
         _startDate = startDate;
         _daysOfVesting = daysOfVesting;
@@ -123,10 +172,6 @@ contract KannaStockOption is IKannaStockOption, Ownable, ReentrancyGuard {
             beneficiary,
             block.timestamp
         );
-
-        if (owner() == address(0)) {
-            _transferOwnership(_msgSender());
-        }
     }
 
     function timestamp() public view returns (uint256) {
