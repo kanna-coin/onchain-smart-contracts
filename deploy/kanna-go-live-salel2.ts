@@ -17,7 +17,7 @@ async function main() {
 
   const knnSaleL2 = await getKnnSaleL2(deployerWallet, fxKnnToken);
   console.log(`knnSaleL2: ${knnSaleL2.address}\n`);
-  sleep(2);
+  await sleep(2);
 
   await run('verify:verify', {
     address: knnSaleL2.address,

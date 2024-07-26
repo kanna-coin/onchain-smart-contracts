@@ -140,6 +140,14 @@ declare module "hardhat/types/runtime" {
       name: "AggregatorV3Mock",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.AggregatorV3Mock__factory>;
+    getContractFactory(
+      name: "IKannaRoleProvier",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.IKannaRoleProvier__factory>;
+    getContractFactory(
+      name: "KannaRoles",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.KannaRoles__factory>;
 
     getContractAt(
       name: "AggregatorV3Interface",
@@ -301,6 +309,16 @@ declare module "hardhat/types/runtime" {
       address: string,
       signer?: ethers.Signer
     ): Promise<Contracts.AggregatorV3Mock>;
+    getContractAt(
+      name: "IKannaRoleProvier",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.IKannaRoleProvier>;
+    getContractAt(
+      name: "KannaRoles",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.KannaRoles>;
 
     // default types
     getContractFactory(

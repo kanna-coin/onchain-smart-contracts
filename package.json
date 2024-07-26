@@ -18,6 +18,7 @@
     "deploy:salel2": "npx hardhat run --network polygonMumbai deploy/kanna-go-live-salel2.ts",
     "deploy:sop": "npx hardhat run --network mainnet deploy/kanna-go-live-stockoption.ts",
     "deploy:sop-manager": "npx hardhat run --network mainnet deploy/kanna-go-live-stockoption-manager.ts",
+    "deploy:roles": "npx hardhat run --network polygon deploy/kanna-go-live-roles.ts",
     "deploy": "npx hardhat run --network localhost deploy/kanna-go-live-sale.ts"
   },
   "repository": {

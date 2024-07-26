@@ -12,7 +12,7 @@ async function main() {
 
   const kannaBadges = await getKannaBadgesL2(deployerWallet, uri);
   console.log(`kannaBadgesL2: ${kannaBadges.address}\n`);
-  sleep(30);
+  await sleep(30);
 
   await run("verify:verify", {
     address: kannaBadges.address,

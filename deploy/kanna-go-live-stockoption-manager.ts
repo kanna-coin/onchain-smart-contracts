@@ -10,12 +10,11 @@ async function main() {
 
   const knnSopManager = await getKannaStockOptionManager(deployerWallet);
   console.log(`kannaSopManager: ${knnSopManager.address}\n`);
-  sleep(10);
+  await sleep(10);
 
   await run('verify:verify', {
     address: knnSopManager.address,
   });
-  sleep(10);
 }
 
 main()
