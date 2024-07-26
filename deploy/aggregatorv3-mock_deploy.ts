@@ -26,7 +26,7 @@ async function main() {
   await aggregator.deployed();
 
   console.log(`AggregatorV3Mock: ${address}\n`);
-  sleep(2);
+  await sleep(2);
 
   await run('verify:verify', {
     address,

@@ -10,7 +10,7 @@ async function main() {
 
   const knnToken = await getKnnToken(deployerWallet);
   console.log(`knnToken: ${knnToken.address}\n`);
-  sleep(2);
+  await sleep(2);
 
   await run("verify:verify", {
     address: knnToken.address,

@@ -10,12 +10,11 @@ async function main() {
 
   const knnSop = await getKannaStockOption(deployerWallet);
   console.log(`kannaSop: ${knnSop.address}\n`);
-  sleep(10);
+  await sleep(10);
 
   await run('verify:verify', {
     address: knnSop.address,
   });
-  sleep(10);
 }
 
 main()
