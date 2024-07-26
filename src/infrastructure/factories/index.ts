@@ -13,3 +13,4 @@ export * from './KannaStockOptionManagerFactory';
 export * from './KannaDynamicPriceSaleFactory';
 export * from './KannaDynamicPriceSaleL2Factory';
 export * from './KannaAuditStakePoolFactory';
+export * from './KannaRolesFactory';

@@ -72,3 +72,7 @@ export type { KnnHolderBadgeChecker } from "./contracts/KnnHolderBadgeChecker";
 export { KnnHolderBadgeChecker__factory } from "./factories/contracts/KnnHolderBadgeChecker__factory";
 export type { AggregatorV3Mock } from "./contracts/mocks/AggregatorV3Mock";
 export { AggregatorV3Mock__factory } from "./factories/contracts/mocks/AggregatorV3Mock__factory";
+export type { IKannaRoleProvier } from "./contracts/Roles/IKannaRoleProvier";
+export { IKannaRoleProvier__factory } from "./factories/contracts/Roles/IKannaRoleProvier__factory";
+export type { KannaRoles } from "./contracts/Roles/KannaRoles";
+export { KannaRoles__factory } from "./factories/contracts/Roles/KannaRoles__factory";
