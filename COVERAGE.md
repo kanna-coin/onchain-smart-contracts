@@ -7,6 +7,7 @@
 |contracts/interfaces/IDynamicBadgeChecker.sol|0/0 (100%)|0/0 (100%)|0/0 (100%)|0/0 (100%)|
 |contracts/interfaces/IKannaAuditScoreProvider.sol|0/0 (100%)|0/0 (100%)|0/0 (100%)|0/0 (100%)|
 |contracts/interfaces/IKannaStockOption.sol|0/0 (100%)|0/0 (100%)|0/0 (100%)|0/0 (100%)|
+|contracts/KannaAuditAnswers.sol|86/86 (100%)|100/100 (100%)|34/34 (100%)|104/104 (100%)|
 |contracts/KannaAuditStakePool.sol|101/101 (100%)|110/112 (98.21%)|25/25 (100%)|125/125 (100%)|
 |contracts/KannaBadges.sol|73/73 (100%)|88/88 (100%)|27/27 (100%)|88/88 (100%)|
 |contracts/KannaBadgesL2.sol|6/6 (100%)|6/6 (100%)|2/2 (100%)|6/6 (100%)|
@@ -22,4 +23,4 @@
 |contracts/KnnHolderBadgeChecker.sol|5/5 (100%)|4/4 (100%)|5/5 (100%)|7/7 (100%)|
 |contracts/Roles/IKannaRoleProvier.sol|0/0 (100%)|0/0 (100%)|0/0 (100%)|0/0 (100%)|
 |contracts/Roles/KannaRoles.sol|27/27 (100%)|34/34 (100%)|20/20 (100%)|28/28 (100%)|
-|**Total**|**582/586 (99.32%)**|**663/706 (93.91%)**|**200/200 (100%)**|**722/723 (99.86%)**|
+|**Total**|**668/672 (99.4%)**|**763/806 (94.67%)**|**234/234 (100%)**|**826/827 (99.88%)**|

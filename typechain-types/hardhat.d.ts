@@ -85,6 +85,10 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IKannaStockOption__factory>;
     getContractFactory(
+      name: "KannaAuditAnswers",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.KannaAuditAnswers__factory>;
+    getContractFactory(
       name: "KannaAuditStakePool",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.KannaAuditStakePool__factory>;
@@ -239,6 +243,11 @@ declare module "hardhat/types/runtime" {
       address: string,
       signer?: ethers.Signer
     ): Promise<Contracts.IKannaStockOption>;
+    getContractAt(
+      name: "KannaAuditAnswers",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.KannaAuditAnswers>;
     getContractAt(
       name: "KannaAuditStakePool",
       address: string,
