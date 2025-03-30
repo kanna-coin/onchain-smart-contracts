@@ -63,6 +63,7 @@ export interface KannaAuditAnswersInterface extends utils.Interface {
     "renounceOwnership()": FunctionFragment;
     "setAnswer(string,string)": FunctionFragment;
     "setAnswerKey(string,string,string[])": FunctionFragment;
+    "setAnswerKeys(string[],string[],string[][])": FunctionFragment;
     "setAnswers(string[],string[])": FunctionFragment;
     "setWalletAnswer(address,string,string)": FunctionFragment;
     "setWalletAnswers(address,string[],string[])": FunctionFragment;
@@ -95,6 +96,7 @@ export interface KannaAuditAnswersInterface extends utils.Interface {
       | "renounceOwnership"
       | "setAnswer"
       | "setAnswerKey"
+      | "setAnswerKeys"
       | "setAnswers"
       | "setWalletAnswer"
       | "setWalletAnswers"
@@ -189,6 +191,14 @@ export interface KannaAuditAnswersInterface extends utils.Interface {
       PromiseOrValue<string>,
       PromiseOrValue<string>,
       PromiseOrValue<string>[]
+    ]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "setAnswerKeys",
+    values: [
+      PromiseOrValue<string>[],
+      PromiseOrValue<string>[],
+      PromiseOrValue<string>[][]
     ]
   ): string;
   encodeFunctionData(
@@ -289,6 +299,10 @@ export interface KannaAuditAnswersInterface extends utils.Interface {
   decodeFunctionResult(functionFragment: "setAnswer", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "setAnswerKey",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "setAnswerKeys",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "setAnswers", data: BytesLike): Result;
@@ -514,6 +528,13 @@ export interface KannaAuditAnswers extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
+    setAnswerKeys(
+      questionsUuid: PromiseOrValue<string>[],
+      answerKeys: PromiseOrValue<string>[],
+      alternatives: PromiseOrValue<string>[][],
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
     setAnswers(
       questionsUuid: PromiseOrValue<string>[],
       answers: PromiseOrValue<string>[],
@@ -653,6 +674,13 @@ export interface KannaAuditAnswers extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
+  setAnswerKeys(
+    questionsUuid: PromiseOrValue<string>[],
+    answerKeys: PromiseOrValue<string>[],
+    alternatives: PromiseOrValue<string>[][],
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
   setAnswers(
     questionsUuid: PromiseOrValue<string>[],
     answers: PromiseOrValue<string>[],
@@ -785,6 +813,13 @@ export interface KannaAuditAnswers extends BaseContract {
       questionUuid: PromiseOrValue<string>,
       answerKey: PromiseOrValue<string>,
       alternatives: PromiseOrValue<string>[],
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    setAnswerKeys(
+      questionsUuid: PromiseOrValue<string>[],
+      answerKeys: PromiseOrValue<string>[],
+      alternatives: PromiseOrValue<string>[][],
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -973,6 +1008,13 @@ export interface KannaAuditAnswers extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
+    setAnswerKeys(
+      questionsUuid: PromiseOrValue<string>[],
+      answerKeys: PromiseOrValue<string>[],
+      alternatives: PromiseOrValue<string>[][],
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
     setAnswers(
       questionsUuid: PromiseOrValue<string>[],
       answers: PromiseOrValue<string>[],
@@ -1110,6 +1152,13 @@ export interface KannaAuditAnswers extends BaseContract {
       questionUuid: PromiseOrValue<string>,
       answerKey: PromiseOrValue<string>,
       alternatives: PromiseOrValue<string>[],
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    setAnswerKeys(
+      questionsUuid: PromiseOrValue<string>[],
+      answerKeys: PromiseOrValue<string>[],
+      alternatives: PromiseOrValue<string>[][],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
