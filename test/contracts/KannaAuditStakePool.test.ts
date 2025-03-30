@@ -17,26 +17,11 @@ const hundred = parseBigNumber(100);
 
 const stakes = [
   {
-    totalPrize: parseBigNumber(2000),
-    maxInStakePool: parseBigNumber(6000),
-    maxPrizePercentage: 50,
-    fee: parseBigNumber(2),
-    minToStake: parseBigNumber(30),
-    maxToStake: parseBigNumber(150),
-    minDaysInStake: 30,
-    feeDiscounts: [
-      20, 25,
-      50, 50,
-      80, 100
-    ],
-    amountToSkate: parseBigNumber(6000),
-  },
-  {
     totalPrize: parseBigNumber(1000),
-    maxInStakePool: parseBigNumber(8000),
-    maxPrizePercentage: 20,
+    maxInStakePool: parseBigNumber(3000),
+    maxPrizePercentage: 50,
     fee: parseBigNumber(0.5),
-    minToStake: parseBigNumber(20),
+    minToStake: parseBigNumber(50),
     maxToStake: parseBigNumber(100),
     minDaysInStake: 90,
     feeDiscounts: [

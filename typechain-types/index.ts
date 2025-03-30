@@ -44,6 +44,8 @@ export type { IKannaAuditScoreProvider } from "./contracts/interfaces/IKannaAudi
 export { IKannaAuditScoreProvider__factory } from "./factories/contracts/interfaces/IKannaAuditScoreProvider__factory";
 export type { IKannaStockOption } from "./contracts/interfaces/IKannaStockOption";
 export { IKannaStockOption__factory } from "./factories/contracts/interfaces/IKannaStockOption__factory";
+export type { KannaAuditAnswers } from "./contracts/KannaAuditAnswers";
+export { KannaAuditAnswers__factory } from "./factories/contracts/KannaAuditAnswers__factory";
 export type { KannaAuditStakePool } from "./contracts/KannaAuditStakePool";
 export { KannaAuditStakePool__factory } from "./factories/contracts/KannaAuditStakePool__factory";
 export type { KannaBadges } from "./contracts/KannaBadges";

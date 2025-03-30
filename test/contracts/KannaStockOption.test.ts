@@ -1,4 +1,4 @@
-import { ethers, network } from 'hardhat';
+import { ethers } from 'hardhat';
 import { KannaStockOption__factory, KannaToken } from '../../typechain-types';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';

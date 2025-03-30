@@ -1,12 +1,11 @@
-import { ethers, network } from 'hardhat';
-import { Signer, BigNumber, BigNumberish, constants, utils, Wallet } from 'ethers';
+import { ethers } from 'hardhat';
+import { constants, utils, Wallet } from 'ethers';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import { MockContract } from 'ethereum-waffle';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { KannaRoles } from '../../../typechain-types';
 import { getKannaRoleProvierMock, getKannaRoles } from '../../../src/infrastructure/factories';
-import exp from 'constants';
 
 chai.use(chaiAsPromised);
 const { expect } = chai;
