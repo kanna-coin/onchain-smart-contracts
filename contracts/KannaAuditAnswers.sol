@@ -181,35 +181,39 @@ contract KannaAuditAnswers is IKannaAuditScoreProvider, Ownable {
      * - the caller must have admin role.
      * - the contract must be active.
      *
-     * Emit a {QuestionRegistred} event.
+     * Emit a {AnswerKeySet} event.
      */
     function setAnswerKey(
         string memory questionUuid,
         string memory answerKey,
         string[] memory alternatives
     ) external isActive onlyOwner {
-        bytes32 questionId = keccak256(bytes(questionUuid));
+        _setAnswerKey(questionUuid, answerKey, alternatives);
+    }
 
-        require(_questionRegistered(questionId), "Question not registered");
-        require(bytes(answerKey).length > 0, "Answer key connot be empty");
+    /**
+     * @dev Set the answer key for
+     * multiple questions in batch
+     *
+     * Requirements:
+     *
+     * - the caller must have admin role.
+     * - the contract must be active.
+     *
+     * Emit {AnswerKeySet} events.
+     */
+    function setAnswerKeys(
+        string[] memory questionsUuid,
+        string[] memory answerKeys,
+        string[][] memory alternatives
+    ) external isActive onlyOwner {
+        require(questionsUuid.length > 0, "Questions cannot be empty");
+        require(questionsUuid.length == answerKeys.length, "Questions and answerKeys length mismatch");
+        require(questionsUuid.length == alternatives.length, "Questions and alternatives length mismatch");
 
-        bytes32 answerKeyBytes = keccak256(bytes(answerKey));
-
-        require(!questions[questionId].hasOptions || questions[questionId].options[answerKeyBytes], "Answer key must be one of the options");
-
-        questions[questionId].answerKey = answerKeyBytes;
-
-        for (uint256 i = 0; i < alternatives.length; i++) {
-            require(bytes(alternatives[i]).length > 0, "Alternarive key connot be empty");
-
-            bytes32 alternativeBytes = keccak256(bytes(alternatives[i]));
-
-            require(!questions[questionId].hasOptions || questions[questionId].options[alternativeBytes], "Alternative must be one of the options");
-
-            questions[questionId].alternatives[alternativeBytes] = true;
+        for (uint256 i = 0; i < questionsUuid.length; i++) {
+            _setAnswerKey(questionsUuid[i], answerKeys[i], alternatives[i]);
         }
-
-        emit AnswerKeySet(questionId, block.timestamp);
     }
 
     function setAnswer(string memory questionUuid, string memory answer) external isActive isStaked(msg.sender) {
@@ -267,6 +271,35 @@ contract KannaAuditAnswers is IKannaAuditScoreProvider, Ownable {
         totalPoints += points;
 
         emit QuestionRegistered(questionId, points, block.timestamp);
+    }
+
+    function _setAnswerKey(
+        string memory questionUuid,
+        string memory answerKey,
+        string[] memory alternatives
+    ) internal {
+        bytes32 questionId = keccak256(bytes(questionUuid));
+
+        require(_questionRegistered(questionId), "Question not registered");
+        require(bytes(answerKey).length > 0, "Answer key connot be empty");
+
+        bytes32 answerKeyBytes = keccak256(bytes(answerKey));
+
+        require(!questions[questionId].hasOptions || questions[questionId].options[answerKeyBytes], "Answer key must be one of the options");
+
+        questions[questionId].answerKey = answerKeyBytes;
+
+        for (uint256 i = 0; i < alternatives.length; i++) {
+            require(bytes(alternatives[i]).length > 0, "Alternarive key connot be empty");
+
+            bytes32 alternativeBytes = keccak256(bytes(alternatives[i]));
+
+            require(!questions[questionId].hasOptions || questions[questionId].options[alternativeBytes], "Alternative must be one of the options");
+
+            questions[questionId].alternatives[alternativeBytes] = true;
+        }
+
+        emit AnswerKeySet(questionId, block.timestamp);
     }
 
     function _setAnswers(address wallet, string[] memory questionsUuid, string[] memory answers) internal {

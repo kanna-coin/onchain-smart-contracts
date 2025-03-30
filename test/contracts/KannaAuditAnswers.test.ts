@@ -5,7 +5,7 @@ import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import { MockContract } from 'ethereum-waffle';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { KannaAuditAnswers, IKannaAuditScoreProvider__factory, IAccessControl__factory, IERC165__factory } from '../../typechain-types';
+import { KannaAuditAnswers, IKannaAuditScoreProvider__factory, IERC165__factory } from '../../typechain-types';
 import { getKannaAuditAnswers, getKannaAuditStakePoolMock } from '../../src/infrastructure/factories';
 
 
@@ -357,12 +357,29 @@ describe('KannaAuditAnswers', () => {
         const alternatives: string[] = [];
 
         const tx = await ownerSession.setAnswerKey(questionId, answerKey, alternatives);
-
         const blockTimestamp = (await ethers.provider.getBlock('latest')).timestamp;
 
         await expect(tx)
           .to.emit(ownerSession, 'AnswerKeySet')
           .withArgs(questionIdBytes, blockTimestamp);
+      });
+
+      it('should set answer key in batch', async () => {
+        const [ownerSession] = await getOwnerSession();
+
+        const answerKeys = ['a', 'answerKey', 'any'];
+        const alternatives = [[], [], []];
+
+        const tx = await ownerSession.setAnswerKeys(questionIds, answerKeys, alternatives);
+        const blockTimestamp = (await ethers.provider.getBlock('latest')).timestamp;
+
+        for (const questionId of questionIds) {
+          const questionIdBytes = utils.keccak256(utils.toUtf8Bytes(questionId));
+
+          await expect(tx)
+            .to.emit(ownerSession, 'AnswerKeySet')
+            .withArgs(questionIdBytes, blockTimestamp);
+        }
       });
 
       it('should set answer key with alternative', async () => {
@@ -482,6 +499,57 @@ describe('KannaAuditAnswers', () => {
 
           await expect(ownerSession.setAnswerKey(questionId, answerKey, alternatives))
             .to.be.revertedWith('Contract is not active');
+        });
+
+        it('when not owner in batch', async () => {
+          const [userSession] = await getUserSession();
+
+          const questionId = uuidv4();
+          const answerKey = 'answerKey';
+          const alternatives: string[] = [];
+
+          await expect(userSession.setAnswerKeys([questionId], [answerKey], [alternatives]))
+            .to.be.revertedWith('Ownable: caller is not the owner');
+        });
+
+        it('when not active in batch', async () => {
+          const [ownerSession] = await getOwnerSession();
+
+          await ownerSession.finalize();
+
+          const questionId = uuidv4();
+          const answerKey = 'answerKey';
+          const alternatives: string[] = [];
+
+          await expect(ownerSession.setAnswerKeys([questionId], [answerKey], [alternatives]))
+            .to.be.revertedWith('Contract is not active');
+        });
+
+        it('questions be empty in batch', async () => {
+          const [ownerSession] = await getOwnerSession();
+
+          await expect(ownerSession.setAnswerKeys([], [], []))
+            .to.be.revertedWith('Questions cannot be empty');
+        });
+
+        it('mismatch question and answer keys length in batch', async () => {
+          const [ownerSession] = await getOwnerSession();
+
+          const questionId = uuidv4();
+          const alternatives: string[] = [];
+
+          await expect(ownerSession.setAnswerKeys([questionId], [], [alternatives]))
+            .to.be.revertedWith('Questions and answerKeys length mismatch');
+        });
+
+        it('mismatch question and alternatives length in batch', async () => {
+          const [ownerSession] = await getOwnerSession();
+
+          const questionId = uuidv4();
+          const answerKey = 'answerKey';
+
+          await expect(ownerSession.setAnswerKeys([questionId], [answerKey], []))
+            .to.be.revertedWith('Questions and alternatives length mismatch');
         });
       });
     });
