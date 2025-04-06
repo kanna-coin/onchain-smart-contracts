@@ -951,28 +951,28 @@ describe('KannaAuditAnswers', () => {
             questions: [questionIds[0], questionIds[1]],
             answers: ['a', 'wrong'],
             expectedPoints: 10,
-            expectedScore: 17,
+            expectedScore: utils.parseEther('16.666666666666666666'),
           },
           {
             wallet: user2Wallet.address,
             questions: [questionIds[1], questionIds[2]],
             answers: ['answer', 'any'],
             expectedPoints: 50,
-            expectedScore: 84,
+            expectedScore: utils.parseEther('83.333333333333333333'),
           },
           {
             wallet: user3Wallet.address,
             questions: [questionIds[0], questionIds[1]],
             answers: ['b', 'alternative'],
             expectedPoints: 20,
-            expectedScore: 34,
+            expectedScore: utils.parseEther('33.333333333333333333'),
           },
           {
             wallet: user4Wallet.address,
             questions: [questionIds[0], questionIds[1], questionIds[2]],
             answers: ['b', 'wrong', 'any'],
             expectedPoints: 30,
-            expectedScore: 50,
+            expectedScore: utils.parseEther('50'),
           },
         ];
 
