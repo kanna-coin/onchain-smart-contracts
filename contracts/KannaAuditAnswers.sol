@@ -134,9 +134,9 @@ contract KannaAuditAnswers is IKannaAuditScoreProvider, Ownable {
      * @dev Returns the score of a wallet
      */
     function getScore(address wallet) external isStaked(wallet) view returns (uint256) {
-        uint256 points = _pointsOf(wallet) * 100;
+        uint256 points = _pointsOf(wallet);
 
-        return points / totalPoints + (points % totalPoints == 0 ? 0 : 1);
+        return (points * 10**20) / totalPoints;
     }
 
     /**
